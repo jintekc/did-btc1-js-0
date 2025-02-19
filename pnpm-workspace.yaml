@@ -1,0 +1,4 @@
+packages:
+  - packages/cryptosuite
+  - packages/key-pair
+  - packages/method

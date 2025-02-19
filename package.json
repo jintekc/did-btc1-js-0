@@ -1,0 +1,76 @@
+{
+  "name": "did-btc1-js",
+  "version": "0.1.0",
+  "description": "Monorepo for did:btc1 js/ts implementation and supporting packages.",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "del": "rimraf",
+    "clean": "pnpm npkill -d $(pwd)/packages -t dist && pnpm npkill -d $(pwd) -t node_modules",
+    "wipe": "rimraf node_modules pnpm-lock.json",
+    "wipe:clean": "pnpm wipe && pnpm clean",
+    "wip:install": "pnpm wipe:clean && pnpm install -r --force",
+    "force:install": "pnpm install --force",
+    "build": "pnpm --recursive --stream build",
+    "build:tests:node": "pnpm --recursive --stream build:tests:node",
+    "lint": "pnpm --recursive --stream lint",
+    "lint:fix": "pnpm --recursive --stream lint:fix",
+    "publish:all": "pnpm --filter cryptosuite publish && pnpm --filter method publish",
+    "test": "pnpm --recursive --stream test",
+    "test:node": "pnpm --recursive --stream test:node",
+    "workflow": "pnpm lint && pnpm install -r && pnpm lint && pnpm build && pnpm build:tests:node",
+    "build-test": "pnpm --recursive --stream build && pnpm --recursive --stream build:tests:node && pnpm --recursive --stream test:node",
+    "cryptosuite": "pnpm --filter cryptosuite",
+    "method": "pnpm --filter method",
+    "version": "pnpm version",
+    "version:no-git": "pnpm version --no-commit-hooks --no-git-tag-version"
+  },
+  "keywords": [
+    "did",
+    "decentralized identity",
+    "dids",
+    "decentralized identifiers",
+    "did method",
+    "btc1",
+    "did btc1",
+    "did:btc1",
+    "bitcoin"
+  ],
+  "license": "MPL-2.0",
+  "homepage": "https://github.com/jintekc/did-btc1-js",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:jintekc/did-btc1-js.git"
+  },
+  "bugs": "https://github.com/jintekc/did-btc1-js/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.28.0",
+    "@npmcli/package-json": "^6.1.1",
+    "@typescript-eslint/eslint-plugin": "^8.24.1",
+    "audit-ci": "^7.1.0",
+    "eslint-plugin-mocha": "^10.5.0",
+    "globals": "^15.15.0",
+    "npkill": "^0.12.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@ipshipyard/node-datachannel",
+      "classic-level",
+      "dtrace-provider",
+      "esbuild",
+      "@sphereon/pex"
+    ]
+  },
+  "dependencies": {
+    "typescript": "^5.7.3"
+  }
+}
