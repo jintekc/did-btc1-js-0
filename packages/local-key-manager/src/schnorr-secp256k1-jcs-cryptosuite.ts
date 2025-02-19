@@ -1,0 +1,1 @@
+export default class SchnorrSecp256k1JcsCryptosuite {}
