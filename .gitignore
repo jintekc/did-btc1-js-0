@@ -151,7 +151,7 @@ dist
 .svelte-kit
 
 # MacOS
-.DS_Store
+.DS_STORE
 
 # IntelliJ
 .idea

@@ -1,1 +1,0 @@
-export default class SchnorrSecp256k1RdfcCryptosuite {}

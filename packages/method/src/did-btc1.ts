@@ -6,15 +6,12 @@ import {
   DidMethod,
   EMPTY_DID_RESOLUTION_RESULT
 } from '@web5/dids';
-import Client from 'bitcoin-core';
 import { initEccLib } from 'bitcoinjs-lib';
 import * as tinysecp from 'tiny-secp256k1';
-import { DidBtc1Create } from './crud/did-btc1-create.js';
-import { DidBtc1Read } from './crud/did-btc1-resolve.js';
-import { DidBtc1Update } from './crud/did-btc1-update.js';
-import Bitcoind from './bitcoin/bitcoin-client.js';
-import { ClientConfig } from './types/bitcoind.js';
-import { DidBtc1Utils } from './utils/did-btc1-utils.js';
+import { Btc1Create } from './crud/create.js';
+import { Btc1Read } from './crud/read.js';
+import { Btc1Update } from './crud/update.js';
+import DidBtc1Utils from './did-btc1-utils.js';
 import {
   Btc1Networks,
   CreateResponse,
@@ -24,6 +21,7 @@ import {
   GetSigningMethod,
   UpdateParams
 } from './types/btc1.js';
+import { DidBtc1Error } from './utils/errors.js';
 
 /** initEccLib */
 initEccLib(tinysecp);
@@ -38,13 +36,6 @@ initEccLib(tinysecp);
 export class DidBtc1 implements DidMethod {
   /** Name of the DID method, as defined in the DID BTC1 specification */
   public static methodName = 'btc1';
-  public bitcoind?: Bitcoind;
-
-  constructor(config?: ClientConfig) {
-    this.bitcoind = config
-      ? new Bitcoind(new Client(config))
-      : Bitcoind.connect();
-  }
 
   /**
    * @static @async @method
@@ -60,7 +51,7 @@ export class DidBtc1 implements DidMethod {
    * @returns {CreateResponse} Promise resolving to an object containing the created DID and DID Document
    */
   static async create({
-    pubKeyBytes,
+    publicKey,
     intermediateDocument,
     options = {}
   }: DidBtc1CreateParams): Promise<CreateResponse> {
@@ -69,48 +60,52 @@ export class DidBtc1 implements DidMethod {
     options.network ??= 'mainnet';
 
     // Options Check 1: Validate that one of pubKeyBytes or intermediateDocument is not null
-    if (!pubKeyBytes && !intermediateDocument) {
-      throw new Error('Invalid param: pubKeyBytes or intermediateDocument required');
+    if (!publicKey && !intermediateDocument) {
+      throw new DidBtc1Error('Invalid param: publicKey or intermediateDocument required');
     }
 
     // Set default idType based on data passed
-    options.idType ??= pubKeyBytes ? 'key' : 'external';
+    options.idType ??= publicKey ? 'key' : 'external';
 
     // Deconstruct optional options
     const { idType, version, network } = options;
 
     // Options Check 2: Validate that the idType is set to either key or external
     if (!(idType in DidBtc1IdTypes)) {
-      throw new Error('Invalid option: idType required, must be key or external');
+      throw new DidBtc1Error('Invalid option: idType required, must be key or external');
     }
 
     // Options Check 3: Validate pubKeybytes exists if idType = key
-    if (!pubKeyBytes && idType === 'key') {
-      throw new Error('Invalid param-option: pubKeyBytes required if idType is key');
+    if (!publicKey && idType === 'key') {
+      throw new DidBtc1Error('Invalid param-option: publicKey required if idType is key');
+    }
+
+    if(publicKey && publicKey?.length !== 33) {
+      throw new DidBtc1Error('Invalid param-option: publicKey must be secp256k1 compressed public key (33 bytes)');
     }
 
     // Options Check 4: Validate intermediateDocument exists if idType = external
     if (!intermediateDocument && idType === 'external') {
-      throw new Error('Invalid param-option: intermediateDocument required if idType is external');
+      throw new DidBtc1Error('Invalid param-option: intermediateDocument required if idType is external');
     }
 
     // Options Check 5: Validate network in Btc1Networks if not null
     if (!(network in Btc1Networks)) {
-      throw new Error('Invalid option: network required, must be mainnet, testnet, signet or regtest');
+      throw new DidBtc1Error('Invalid option: network required, must be mainnet, testnet, signet or regtest');
     }
 
     // Options Check 6: Validate version as positive number if not null
     if (isNaN(Number(version))) {
-      throw new Error('Invalid option: version required, must be positive number');
+      throw new DidBtc1Error('Invalid option: version required, must be positive number');
     }
 
-    pubKeyBytes = pubKeyBytes!;
+    publicKey = publicKey!;
     intermediateDocument = intermediateDocument!;
 
-    // If idType is key, call DidBtc1Create.deterministic; else call DidBtc1Create.external
+    // If idType is key, call Btc1Create.deterministic; else call Btc1Create.external
     return idType === 'key'
-      ? DidBtc1Create.deterministic({ version, network, pubKeyBytes })
-      : await DidBtc1Create.external({ network, version, intermediateDocument });
+      ? Btc1Create.deterministic({ version, network, publicKey })
+      : await Btc1Create.external({ network, version, intermediateDocument });
   }
 
   /**
@@ -149,10 +144,10 @@ export class DidBtc1 implements DidMethod {
 
       // Resolve the DID Document based on the hrp
       const initialDocument = hrp === 'x'
-        ? await DidBtc1Read.external({ identifier, identifierComponents, options })
-        : DidBtc1Read.deterministic({ version, network, pubKeyBytes: genesisBytes });
+        ? await Btc1Read.external({ identifier, identifierComponents, options })
+        : Btc1Read.deterministic({ version, network, publicKey: genesisBytes });
 
-      didResolutionResult.didDocument = await DidBtc1Read.targetDocument({ initialDocument, options });
+      didResolutionResult.didDocument = await Btc1Read.targetDocument({ initialDocument, options });
       // Return the resolved DID Document
       return didResolutionResult;
     } catch (error: any) {
@@ -197,7 +192,7 @@ export class DidBtc1 implements DidMethod {
     options
   }: UpdateParams): Promise<void> {
     // Construct an unsigned update payload
-    const updatePayload = DidBtc1Update.constructPayload({
+    const updatePayload = Btc1Update.constructPayload({
       identifier,
       documentPatch,
       sourceDocument,
@@ -213,11 +208,11 @@ export class DidBtc1 implements DidMethod {
       throw new DidError(DidErrorCode.InvalidDidDocument, 'Verification method must be of type Multikey');
     }
     // Validate the first 4 chars as z66P of the verificationMethod publicKeyMultibase
-    if (verificationMethod.publicKeyMultibase?.slice(0, 4) !== 'z662') {
+    if (verificationMethod.publicKeyMultibase?.slice(0, 4) !== 'z66P') {
       throw new DidError(DidErrorCode.InvalidDidDocument, 'Malformed verification method publicKeyMultibase');
     }
-    const didUpdateInvocation = DidBtc1Update.invokePayload({ identifier, updatePayload, verificationMethod, options });
-    return DidBtc1Update.announcePayload({ sourceDocument, beaconIds, didUpdateInvocation });
+    const didUpdateInvocation = Btc1Update.invokePayload({ identifier, updatePayload, verificationMethod, options });
+    return Btc1Update.announcePayload({ sourceDocument, beaconIds, didUpdateInvocation });
   }
 
   /**
@@ -249,7 +244,7 @@ export class DidBtc1 implements DidMethod {
       vm => DidBtc1Utils.extractDidFragment(vm.id) === (DidBtc1Utils.extractDidFragment(methodId)
         ?? DidBtc1Utils.extractDidFragment(didDocument.assertionMethod?.[0]))
     );
-    if (!(verificationMethod && verificationMethod.publicKeyJwk)) {
+    if (!(verificationMethod && verificationMethod.publicKeyMultibase)) {
       throw new DidError(
         DidErrorCode.InternalError,
         'A verification method intended for signing could not be determined from the DID Document'

@@ -9,8 +9,8 @@
       "path": "packages/method"
     },
     {
-      "name": "local-key-manager",
-      "path": "packages/local-key-manager"
+      "name": "key-manager",
+      "path": "packages/key-manager"
     }
   ],
   "settings": {

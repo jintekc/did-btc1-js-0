@@ -56,6 +56,7 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@sphereon/pex",
       "classic-level",
       "esbuild",
       "@ipshipyard/node-datachannel",
