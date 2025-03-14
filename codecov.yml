@@ -5,27 +5,23 @@ component_management:
   default_rules:
     statuses:
       - type: project
-        target: auto       # auto compares coverage to the previous base commit
-        threshold: 5%      # allows a 5% drop from the previous base commit coverage
+        target: auto      
+        threshold: 5%     
       - type: patch
-        target: 90         # every PR opened should strive for at least 90% coverage
+        target: 90        
 
   individual_components:
-    - component_id: package-applicant
-      name: applicant
-      paths: ["packages/applicant/**"]
+    - component_id: package-cryptosuite
+      name: cryptosuite
+      paths: ["packages/cryptosuite/**"]
 
-    - component_id: package-common
-      name: common
-      paths: ["packages/common/**"]
+    - component_id: package-key-pair
+      name: key-pair
+      paths: ["packages/key-pair/**"]
 
-    - component_id: package-issuer
-      name: issuer
-      paths: ["packages/issuer/**"]
-
-    - component_id: package-server
-      name: server
-      paths: ["packages/server/**"]
+    - component_id: package-method
+      name: method
+      paths: ["packages/method/**"]
 
 coverage:
   status:
@@ -34,4 +30,4 @@ coverage:
         informational: true
     patch:
       default:
-        informational: true # Don't gate PRs based on Codecov passing thresholds
+        informational: true

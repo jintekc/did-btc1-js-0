@@ -1,6 +1,6 @@
 {
   "name": "did-btc1-js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Monorepo for did:btc1 js/ts implementation and supporting packages.",
   "type": "module",
   "workspaces": [
@@ -14,16 +14,18 @@
     "wip:install": "pnpm wipe:clean && pnpm install -r --force",
     "force:install": "pnpm install --force",
     "build": "pnpm --recursive --stream build",
-    "build:tests:node": "pnpm --recursive --stream build:tests:node",
     "lint": "pnpm --recursive --stream lint",
     "lint:fix": "pnpm --recursive --stream lint:fix",
-    "publish:all": "pnpm --filter cryptosuite publish && pnpm --filter method publish",
+    "publish:all": "pnpm cryptosuite publish && pnpm key-pair publish && pnpm method publish",
     "test": "pnpm --recursive --stream test",
     "test:node": "pnpm --recursive --stream test:node",
     "workflow": "pnpm lint && pnpm install -r && pnpm lint && pnpm build && pnpm build:tests:node",
-    "build-test": "pnpm --recursive --stream build && pnpm --recursive --stream build:tests:node && pnpm --recursive --stream test:node",
+    "build:tests": "pnpm build && pnpm --recursive --stream build:tests && pnpm test:node",
     "cryptosuite": "pnpm --filter cryptosuite",
+    "key-pair": "pnpm --filter key-pair",
     "method": "pnpm --filter method",
+    "release": "pnpm build && pnpm pack && mv *.tgz release/",
+    "prepublish": "pnpm build && pnpm release",
     "version": "pnpm version",
     "version:no-git": "pnpm version --no-commit-hooks --no-git-tag-version"
   },
@@ -71,6 +73,8 @@
     ]
   },
   "dependencies": {
+    "@eslint/js": "^9.22.0",
+    "@typescript-eslint/parser": "^8.26.1",
     "typescript": "^5.7.3"
   }
 }

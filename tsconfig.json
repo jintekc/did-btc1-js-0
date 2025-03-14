@@ -13,9 +13,6 @@
     "declarationDir": "dist/types",
     "outDir": "dist/esm"
   },
-  "include": [
-    "src"
-  ],
   "exclude": [
     "eslint.config.cjs",
     "node_modules",
