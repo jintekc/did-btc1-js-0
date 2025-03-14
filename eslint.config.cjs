@@ -23,7 +23,7 @@ module.exports = [
       '@typescript-eslint' : tsPlugin,
       'mocha'              : mochaPlugin
     },
-    files   : ['**/*.ts'],
+    files   : ['**/*.ts', '**/tests/*.ts'],
     rules: {
       'no-unsafe-optional-chaining' : 'off',
       'key-spacing'                 : [

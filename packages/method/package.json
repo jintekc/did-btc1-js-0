@@ -71,6 +71,7 @@
     },
     "dependencies": {
         "@did-btc1/bip340-cryptosuite": "^2.2.2",
+        "@did-btc1/bip340-key-pair": "^0.4.0",
         "@eslint/js": "^9.22.0",
         "@helia/strings": "^4.0.2",
         "@noble/curves": "^1.8.1",
@@ -113,13 +114,5 @@
         "rimraf": "^6.0.1",
         "typescript": "^5.6.2",
         "typescript-eslint": "^8.19.1"
-    },
-    "pnpm": {
-        "onlyBuiltDependencies": [
-            "@ipshipyard/node-datachannel",
-            "classic-level",
-            "dtrace-provider",
-            "esbuild"
-        ]
     }
 }

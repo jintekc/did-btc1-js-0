@@ -1,8 +1,7 @@
-import { MultibaseKeyPair, ProofBytes } from '@did-btc1/bip340-cryptosuite';
-import { KeyValueStore, RequireOnly } from '@web5/common';
-import { DidVerificationMethod } from '@web5/dids';
+import { ProofBytes } from '@did-btc1/bip340-cryptosuite';
+import { RequireOnly } from '@web5/common';
 import { BlockV3 } from '../bitcoin/types.js';
-import { Btc1DidDocument } from '../btc1/did-document.js';
+import { Btc1DidDocument, Btc1VerificationMethod } from '../btc1/did-document.js';
 import {
   DidComponents,
   DidCreateOptions,
@@ -51,7 +50,7 @@ export type RecoveryOptions = {
 export type InvokePayloadParams = {
   identifier: string;
   updatePayload: UpdatePayload;
-  verificationMethod: DidVerificationMethod;
+  verificationMethod: Btc1VerificationMethod;
   options: RecoveryOptions;
 }
 
@@ -86,7 +85,7 @@ export type TargetDocumentParams = {
 };
 export type BroadcastPayloadParams = {
   beaconService: BeaconService;
-  didUpdateInvocation: DidVerificationMethod;
+  didUpdateInvocation: Btc1VerificationMethod;
   options: DidResolutionOptions;
 }
 export enum DidBtc1IdTypes {
@@ -101,30 +100,5 @@ export enum Btc1Networks {
 }
 export type PublicKeyBytes = Uint8Array;
 
-export type Btc1KeyManagerOptions = {
-  importKey?: boolean;
-  active?: boolean
-};
-
-/** Alias type for Btc1KeyManager keyUri */
-export type KeyIdentifier = string;
-
 /** Alias type for a publicKeyMultbase encoded as a Bip340 Multikey (z + base58btc(bip340Header + publicKey) */
 export type Bip340Encoding = string;
-
-/** Params for initializing a Btc1KeyManager class instance. */
-export type KeyManagerParams = {
-  /**
-   * An optional property to specify a custom `KeyValueStore` instance for key management. If not
-   * provided, {@link Btc1KeyManager | `Btc1KeyManager`} uses a default `MemoryStore` instance.
-   * This store is responsible for managing cryptographic keys, allowing them to be retrieved,
-   * stored, and managed during cryptographic operations.
-   */
-  keyStore?: KeyValueStore<KeyIdentifier, MultibaseKeyPair>;
-
-  /**
-   * An optional property to specify a key URI for the key manager. If not provided, the key manager
-   * will generate a key URI based on the public key of the key pair.
-   */
-  keyUri?: KeyIdentifier;
-};
