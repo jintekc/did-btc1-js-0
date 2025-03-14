@@ -1,21 +1,21 @@
 {
   "folders": [
     {
-      "name": "@did-btc1",
+      "name": "did-btc1-js",
       "path": "."
-    },
-    {
-      "name": "method",
-      "path": "packages/method"
     },
     {
       "name": "cryptosuite",
       "path": "packages/cryptosuite"
     },
     {
-      "name": "bip340-keypair",
-      "path": "packages/cryptosuite"
-    }
+      "name": "key-pair",
+      "path": "packages/key-pair"
+    },
+    {
+      "name": "method",
+      "path": "packages/method"
+    },
   ],
   "settings": {
     "eslint.workingDirectories": [
@@ -71,7 +71,7 @@
         "args": [
           "--recursive",
           "--stream",
-          "build:tests:node"
+          "build:tests"
         ],
         "problemMatcher": [
           "$tsc"
