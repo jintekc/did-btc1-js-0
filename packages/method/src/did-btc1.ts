@@ -8,7 +8,7 @@ import {
 } from '@web5/dids';
 import { initEccLib } from 'bitcoinjs-lib';
 import * as tinysecp from 'tiny-secp256k1';
-import { Btc1Create, DidCreateResponse } from './btc1/crud/create.js';
+import { Btc1Create } from './btc1/crud/create.js';
 import { Btc1Read } from './btc1/crud/read.js';
 import { Btc1Update } from './btc1/crud/update.js';
 import { Btc1DidDocument } from './btc1/did-document.js';
@@ -71,7 +71,7 @@ export class DidBtc1 implements DidMethod {
    * @param {DidCreateOptions} params.options See {@link DidCreateOptions} for create options.
    * @param {string} params.options.version Version number of the btc1 method.
    * @param {string} params.options.network Bitcoin network name (mainnet, testnet, signet, regtest).
-   * @returns {Promise<CreateResponse>} Promise resolving to a CreateResponse object.
+   * @returns {Promise<DidCreateResponse>} Promise resolving to {@link DidCreateResponse}.
    * @throws {DidBtc1Error} if any of the checks fail
    */
   public static async create(params: DidCreateParams): Promise<DidCreateResponse> {

@@ -13,28 +13,19 @@ import { DocumentBytes } from '../../types/crud.js';
 
 const { canonicalhash } = canonicalization;
 
-export type NetworkVersionParams = {
-  version?: string | undefined;
-  network?: string | undefined;
-};
-export type DidCreateDeterministicParams = {
+export type Optional<T> = Partial<T>;
+export interface NetworkVersion {
   version: string;
   network: string;
+};
+export interface DidCreateDeterministic extends NetworkVersion {
   pubKeyBytes: PublicKeyBytes;
 };
-export type DidCreateExternalParams = {
-  version: string;
-  network: string;
+export interface DidCreateExternalParams extends NetworkVersion {
   documentBytes: DocumentBytes;
 };
-export type DidCreateResponse = {
-    did: string;
-    initialDocument: Btc1DidDocument;
-};
-export interface CreateDidBtc1IdentifierParams {
-  genesisBytes: Uint8Array;
-  newtork?: string;
-  version?: string;
+export interface CreateDidBtc1IdentifierParams extends Optional<NetworkVersion> {
+  genesisBytes: GenesisBytesType;
 }
 
 export type DidBtc1Identifier = string;
@@ -49,6 +40,7 @@ export type DidBtc1Identifier = string;
  * @export
  * @class Btc1Create
  * @type {Btc1Create}
+ * @implements {DidBtc1.create}
  */
 export class Btc1Create {
   /**
@@ -59,12 +51,11 @@ export class Btc1Create {
    *
    * @public
    * @static
-   *
-   * @param {DidCreateDeterministicParams} params See {@link DidCreateDeterministicParams} for details.
+   * @param {DidCreateDeterministic} params See {@link DidCreateDeterministic} for details.
    * @param {string} params.version did-btc1 identifier version.
    * @param {string} params.network did-btc1 bitcoin network.
    * @param {PublicKeyBytes} params.pubKeyBytes public key bytes for id creation.
-   * @returns {CreateResponse} object containing the created did and initial document.
+   * @returns {CreateResponse} Object of type {@link DidCreateResponse}.
    * @throws {DidError} if the public key is missing or invalid.
    */
   public static deterministic({ version, network, publicKey }: {
@@ -84,20 +75,19 @@ export class Btc1Create {
     // Generate the beacon services from the network and public key
     const service = BeaconUtils.generateBeaconServices({ network: getNetwork(network), beaconType: 'SingletonBeacon', publicKey });
 
+    const initialDocument = new Btc1DidDocument({
+      id,
+      service,
+      verificationMethod   : [{
+        id                 : '#initialKey',
+        type               : 'Multikey',
+        controller         : id,
+        publicKeyMultibase,
+      }],
+    });
+
     // Return did & initialDocument
-    return {
-      did             : id,
-      initialDocument : new Btc1DidDocument({
-        id,
-        service,
-        verificationMethod   : [{
-          id                 : '#initialKey',
-          type               : 'Multikey',
-          controller         : id,
-          publicKeyMultibase,
-        }],
-      })
-    };
+    return { did: id, initialDocument };
   }
 
   /**
@@ -202,12 +192,12 @@ export class Btc1Create {
    * @param {string} params.idType Identifier type (key or external).
    * @param {string} params.network Bitcoin network name.
    * @param {number} params.version Identifier version.
-   * @param {PublicKeyBytes | DocumentBytes} params.genesisBytes Public key or an intermediate document bytes.
+   * @param {GenesisBytesType} params.genesisBytes Public key or an intermediate document bytes.
    * @returns {DidBtc1Identifier} The new did:btc1 identifier.
    */
   public static didBtc1Identifier({ idType, genesisBytes, network, version }: {
     idType: string;
-    genesisBytes: Uint8Array;
+    genesisBytes: GenesisBytesType;
     network?: string;
     version?: string;
   }): DidBtc1Identifier {

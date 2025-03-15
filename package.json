@@ -5,6 +5,7 @@
   "type": "module",
   "workspaces": [
     "packages/cryptosuite",
+    "packages/common",
     "packages/key-pair",
     "packages/method"
   ],
@@ -31,6 +32,7 @@
     "cryptosuite": "pnpm --filter cryptosuite",
     "key-pair": "pnpm --filter key-pair",
     "method": "pnpm --filter method",
+    "common": "pnpm --filter common",
     "prepublish": "pnpm --recursive --stream prepublish"
   },
   "keywords": [

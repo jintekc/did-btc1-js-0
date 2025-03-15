@@ -1,4 +1,4 @@
-import { PrivateKeyBytes, ProofBytes } from '@did-btc1/cryptosuite';
+import { Bytes, PublicKeyBytes, PrivateKeyBytes, ProofBytes } from '@did-btc1/cryptosuite';
 import { BlockV3 } from '../bitcoin/types.js';
 import { Btc1DidDocument, Btc1VerificationMethod } from '../btc1/did-document.js';
 import { DidResolutionOptions, DidUpdatePayload } from '../btc1/crud/interface.js';
@@ -29,9 +29,6 @@ export type InvokePayloadParams = {
   verificationMethod: Btc1VerificationMethod;
   options: RecoveryOptions;
 }
-
-export type Bytes = Uint8Array;
-export type DocumentBytes = Bytes;
 export type KeyPairType = {
   privateKey: PrivateKeyBytes;
   publicKey: PublicKeyBytes;

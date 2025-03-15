@@ -14,6 +14,44 @@
             "require": "./dist/cjs/index.js"
         }
     },
+    "files": [
+        "dist",
+        "src"
+    ],
+    "license": "MPL-2.0",
+    "contributors": [
+        {
+            "name": "dcdpr",
+            "url": "https://github.com/dcdpr"
+        },
+        {
+            "name": "jintekc",
+            "url": "https://github.com/jintekc",
+            "email": "github@jintek.consulting"
+        }
+    ],
+    "homepage": "https://github.com/jintekc/did-btc1-js/tree/main/packages/method",
+    "repository": {
+        "type": "git",
+        "url": "git+ssh://git@github.com:jintekc/did-btc1-js.git",
+        "directory": "packages/method"
+    },
+    "bugs": "https://github.com/jintekc/did-btc1-js/issues",
+    "publishConfig": {
+        "access": "public"
+    },
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "keywords": [
+        "did",
+        "dids",
+        "decentralized identity",
+        "decentralized identifiers",
+        "did method",
+        "did:btc1",
+        "bitcoin"
+    ],
     "scripts": {
         "del": "rimraf",
         "clean": "rimraf dist coverage tests/compiled",
@@ -36,43 +74,6 @@
         "version": "pnpm version",
         "version:no-git": "pnpm version --no-commit-hooks --no-git-tag-version",
         "version:new": "[ -z \"$NEW_VERSION\" ] && echo 'ERROR: NEW_VERSION is not set' && exit 1 || (git checkout -b $NEW_VERSION && git tag $NEW_VERSION && pnpm version:no-git $NEW_VERSION)"
-    },
-    "contributors": [
-        {
-            "name": "dcdpr",
-            "url": "https://github.com/dcdpr"
-        },
-        {
-            "name": "jintekc",
-            "url": "https://github.com/jintekc",
-            "email": "github@jintek.consulting"
-        }
-    ],
-    "homepage": "https://github.com/jintekc/did-btc1-js/tree/main/packages/method",
-    "repository": {
-        "type": "git",
-        "url": "git+ssh://git@github.com:jintekc/did-btc1-js.git",
-        "directory": "packages/method"
-    },
-    "bugs": "https://github.com/jintekc/did-btc1-js/issues",
-    "files": [
-        "dist",
-        "src"
-    ],
-    "keywords": [
-        "did",
-        "dids",
-        "decentralized identity",
-        "decentralized identifiers",
-        "did method",
-        "did:btc1",
-        "bitcoin"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "engines": {
-        "node": ">=22.0.0"
     },
     "dependencies": {
         "@did-btc1/cryptosuite": "workspace:*",
