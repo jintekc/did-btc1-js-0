@@ -64,6 +64,35 @@ export interface ApplyDidUpdateParams {
   genesisBytes: any;
 }
 
+
+// Template types for documentation purposes
+export type ResolveInitialDocument = {
+  identifier: string;
+  components: DidComponents;
+  options: DidResolutionOptions
+};
+export type RequireOnlyNetworkVersion = RequireOnly<DidCreateOptions, 'network' & 'version'>;
+
+// Deterministic
+export type DidReadDeterministicParams = {
+  identifier: string;
+  components: DidComponents;
+};
+
+export interface DidReadIdentifierParams extends RequireOnlyNetworkVersion {
+  genesisBytes: Uint8Array;
+}
+
+// External
+export type DidReadExternal = DidReadDeterministicParams & {
+  options: DidResolutionOptions;
+}
+export type DidReadSidecar = {
+    components: DidComponents;
+    initialDocument: Btc1DidDocument
+};
+export type DidReadCas = Omit<DidReadExternal, 'options'>
+
 /**
  * Implements {@link https://dcdpr.github.io/did-btc1/#read | 4.2 Read}.
  *
@@ -88,6 +117,8 @@ export interface ApplyDidUpdateParams {
  * @implements {DidBtc1.resolve}
  */
 export class Btc1Read {
+
+
   /**
    * Implements {@link https://dcdpr.github.io/did-btc1/#deterministically-generate-initial-did-document | 4.2.2.1 Deterministically Generate Initial DID Document}.
    *
