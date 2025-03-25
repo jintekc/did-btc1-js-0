@@ -1,6 +1,8 @@
 import { default as RpcClient } from 'bitcoin-core';
-import { DEFAULT_CLIENT_CONFIG } from './constants.js';
 import '../exts.js';
+import { BitcoinRpcError } from '../utils/errors.js';
+import { DEFAULT_RPC_CLIENT_CONFIG } from './constants.js';
+import { IBitcoinRpc } from './interface.js';
 import {
   AddMultiSigAddressParams,
   BatchOption,
@@ -27,6 +29,7 @@ import {
   FeeEstimateMode,
   FundRawTxOptions,
   FundRawTxResult,
+  GetBlockParams,
   GetUTXOsResult,
   IClientConfig,
   ImportDescriptorRequest,
@@ -46,12 +49,10 @@ import {
   RawTransactionV0,
   RawTransactionV1,
   RawTransactionV2,
-  Recipients,
   ReturnFormatOptions,
   RpcClientConfig,
   ScanBlocksParams,
   ScriptDecoded,
-  SendAllOptions,
   SendAllParams,
   SendAllResult,
   SendManyParams,
@@ -62,8 +63,6 @@ import {
   VerbosityLevel,
   WalletTransaction
 } from './types.js';
-import { BitcoinRpcError } from '../utils/error.js';
-import { IBitcoinRpc } from './interface.js';
 
 /**
  * Encapsulates a {@link RpcClient | Client} object from {@link https://www.npmjs.com/package/bitcoin-core | `bitcoin-core`}.
@@ -160,7 +159,7 @@ export default class BitcoinRpc implements IBitcoinRpc {
 
   /**
    * Static method connects to a bitcoin node running the bitcoin core daemon (bitcoind).
-   * To use default polar config, do not pass a config. See {@link DEFAULT_CLIENT_CONFIG} for default config.
+   * To use default polar config, do not pass a config. See {@link DEFAULT_RPC_CLIENT_CONFIG} for default config.
    * @required A locally running {@link https://github.com/jamaljsr/polar | Polar Lightning} regtest node.
    *
    * @public
@@ -173,7 +172,7 @@ export default class BitcoinRpc implements IBitcoinRpc {
    * ```
    */
   public static connect(config?: RpcClientConfig): BitcoinRpc {
-    const client = this.initialize(config ?? DEFAULT_CLIENT_CONFIG);
+    const client = this.initialize(config ?? DEFAULT_RPC_CLIENT_CONFIG);
     return new BitcoinRpc(client);
   }
 
@@ -332,12 +331,30 @@ export default class BitcoinRpc implements IBitcoinRpc {
 
   /**
    * Returns the block data associated with a `blockhash` of a valid block.
-   * @param {string} blockhash The blockhash of the block to query.
-   * @param {VerbosityLevel} verbosity The verbosity level. See {@link VerbosityLevel}.
-   * @returns {BlockResponse} A promise resolving to a Bitcoin Block formatted depending on `verbosity` level.
+   * See {@link IBitcoinRpc.getBlock} for details.
+   * @param {GetBlockParams} params See {@link GetBlockParams} for details.
+   * @param {?string} params.blockhash The blockhash of the block to query.
+   * @param {?number} params.height The block height of the block to query.
+   * @param {?VerbosityLevel} params.verbosity The verbosity level. See {@link VerbosityLevel}.
+   * @returns {BlockResponse} A promise resolving to a {@link BlockResponse} formatted depending on `verbosity` level.
+   * @throws {BitcoinRpcError} If neither `blockhash` nor `height` is provided.
    */
-  public async getBlock(blockhash: string, verbosity?: VerbosityLevel): Promise<BlockResponse> {
+  public async getBlock({ blockhash, height, verbosity }: GetBlockParams): Promise<BlockResponse | undefined> {
+    console.log('getBlock', { blockhash, height, verbosity });
+    // Check if blockhash or height is provided, if neither throw an error
+    if(!blockhash && height === undefined) {
+      throw new BitcoinRpcError('blockhash or height required', 'INVALID_PARAMS_GET_BLOCK', { blockhash, height });
+    }
+
+    // If height is provided, get the blockhash
+    blockhash ??= await this.getBlockHash(height!);
+    if(!blockhash || typeof blockhash !== 'string') {
+      return undefined;
+    }
+    // Get the block data
     const block = await this.command([{ method: 'getblock', parameters: [blockhash, verbosity ?? 3] }]);
+
+    // Return the block data depending on verbosity level
     switch(verbosity) {
       case 0:
         return block as BlockV0;

@@ -1,16 +1,43 @@
-import { Canonicalize } from '@did-btc1/cryptosuite';
-import { PublicKey } from '@did-btc1/key-pair';
-import { sha256 } from '@noble/hashes/sha256';
+import { canonicalization } from '@did-btc1/cryptosuite';
+import { PublicKey, PublicKeyBytes } from '@did-btc1/key-pair';
 import { bech32 } from '@scure/base';
 import type { DidService, DidVerificationMethod } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { getNetwork } from '../../bitcoin/network.js';
 import { DidBtc1 } from '../../did-btc1.js';
+import { BeaconUtils } from '../beacons/utils.js';
 import { ID_PLACEHOLDER_VALUE } from '../constants.js';
 import { Btc1DidDocument } from '../did-document.js';
-import { DidCreateResponse, IntermediateVerificationMethod } from '../interface.js';
-import { CreateIdentifierParams, DidCreateDeterministic, DidCreateExternal } from '../types.js';
-import { Btc1Utils } from '../utils.js';
+import { IntermediateDocument, IntermediateVerificationMethod } from './interface.js';
+import { DocumentBytes } from '../../types/crud.js';
+
+const { canonicalhash } = canonicalization;
+
+export type NetworkVersionParams = {
+  version?: string | undefined;
+  network?: string | undefined;
+};
+export type DidCreateDeterministicParams = {
+  version: string;
+  network: string;
+  pubKeyBytes: PublicKeyBytes;
+};
+export type DidCreateExternalParams = {
+  version: string;
+  network: string;
+  documentBytes: DocumentBytes;
+};
+export type DidCreateResponse = {
+    did: string;
+    initialDocument: Btc1DidDocument;
+};
+export interface CreateDidBtc1IdentifierParams {
+  genesisBytes: Uint8Array;
+  newtork?: string;
+  version?: string;
+}
+
+export type DidBtc1Identifier = string;
 /**
  * Implements section {@link https://dcdpr.github.io/did-btc1/#create | 4.1 Create}
  *
@@ -25,67 +52,88 @@ import { Btc1Utils } from '../utils.js';
  */
 export class Btc1Create {
   /**
-     * Create a did:btc1 identifier and associated DID Document deterministically from public key bytes
-     * @param {CreateDeterministic} params Required params for calling the deterministic method
-     * @param {string} params.version did-btc1 identifier version
-     * @param {string} params.network did-btc1 bitcoin network
-     * @param {PublicKeyBytes} params.pubKeyBytes public key bytes for id creation
-     * @returns {CreateResponse} object containing the created did and initial document
-     */
-  static deterministic({ version, network, publicKey }: DidCreateDeterministic): DidCreateResponse {
+   * Implements {@link https://dcdpr.github.io/did-btc1/#deterministic-key-based-creation | 4.1.1 Deterministic Key-Based Creation}.
+   *
+   * For deterministic creation, the did:btc1 identifier encodes a secp256k1 public key. The key is then used to
+   * deterministically generate the initial DID document.
+   *
+   * @public
+   * @static
+   *
+   * @param {DidCreateDeterministicParams} params See {@link DidCreateDeterministicParams} for details.
+   * @param {string} params.version did-btc1 identifier version.
+   * @param {string} params.network did-btc1 bitcoin network.
+   * @param {PublicKeyBytes} params.pubKeyBytes public key bytes for id creation.
+   * @returns {CreateResponse} object containing the created did and initial document.
+   * @throws {DidError} if the public key is missing or invalid.
+   */
+  public static deterministic({ version, network, publicKey }: {
+    network: string;
+    version: string;
+    publicKey: PublicKeyBytes;
+  }): {
+    did: string;
+    initialDocument: Btc1DidDocument;
+  } {
     // Create key-type identifier from genesisBytes
-    const identifier = this.identifier({ idType: 'key', network, version, genesisBytes: publicKey });
+    const id = this.didBtc1Identifier({ idType: 'key', network, version, genesisBytes: publicKey });
+
     // Get xOnlyPublicKey from publicKey
     const publicKeyMultibase = new PublicKey(publicKey).multibase;
+
     // Generate the beacon services from the network and public key
-    const service = Btc1Utils.generateBeaconServices({ network: getNetwork(network), publicKey });
+    const service = BeaconUtils.generateBeaconServices({ network: getNetwork(network), beaconType: 'SingletonBeacon', publicKey });
+
     // Return did & initialDocument
     return {
-      did             : identifier,
-      initialDocument : {
-        '@context' : [
-          'https://www.w3.org/ns/did/v1',
-          'https://w3id.org/security/multikey/v1',
-          'https://github.com/dcdpr/did-btc1'
-        ],
-        id                   : identifier,
-        authentication       : ['#initialKey'],
-        assertionMethod      : ['#initialKey'],
-        capabilityInvocation : ['#initialKey'],
-        capabilityDelegation : ['#initialKey'],
+      did             : id,
+      initialDocument : new Btc1DidDocument({
+        id,
+        service,
         verificationMethod   : [{
           id                 : '#initialKey',
           type               : 'Multikey',
-          controller         : identifier,
+          controller         : id,
           publicKeyMultibase,
         }],
-        service
-      }
+      })
     };
   }
 
   /**
-   * @static @async @method
-   * @name external
-   * @description Create an external identifier and document
-   * @param {CreateExternal} params Required params for calling the external method
-   * @param {string} params.version: identifier version
-   * @param {string} params.network: bitcoin network name
-   * @param {PublicKeyBytes} params.pubKeyBytes: public key bytes used for the identifier
-   * @param {string} params.initialDocument: Intermediate DID Document to add the deterministic DID to.
-   * @returns a Promise resolving to a @see {@link CreateResponse} object
-   * @throws a {@link DidError} if the verificationMethod or service objects are missing required properties
+   * Implements {@link https://dcdpr.github.io/did-btc1/#external-initial-document-creation | 4.1.2 External Initial Document Creation}.
+   *
+   * Creates a did:btc1 identifier from some initiating arbitrary DID document. This allows for more complex
+   * initial DID documents, including the ability to include Service Endpoints and Beacons that support aggregation.
+   * Inputs include `intermediateDocument`, optional version and network returning initialDidDocument. The
+   * intermediateDocument should be a valid DID document except all places where the DID document requires the use of
+   * the identifier (e.g. the id field). These fields should use placeholder value
+   * `did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`. The intermediateDocument should include at
+   * least one verificationMethod and service of the type SingletonBeacon.
+   *
+   * @public
+   * @static
+   * @async
+   * @param {DidCreateExternalParams} params See {@link DidCreateExternalParams} for details.
+   * @param {string} params.version Identifier version.
+   * @param {string} params.network Identifier network name.
+   * @param {string} params.documentBytes Intermediate DID Document bytes.
+   * @returns {DidCreateResponse} A Promise resolving to {@link DidCreateResponse}.
+   * @throws {DidError} if the verificationMethod or service objects are missing required properties
    */
-  static async external({ network, version, intermediateDocument }: DidCreateExternal): Promise<DidCreateResponse> {
+  public static async external({ network, version, intermediateDocument }: {
+    version: string;
+    network: string;
+    intermediateDocument: IntermediateDocument;
+  }): Promise<{ did: string; initialDocument: Btc1DidDocument; }> {
     // Deconstruct vm and service from intermediateDocument
     const { verificationMethod, service } = intermediateDocument ?? {};
 
     // Validate verificationMethod not null and contains at least one object
     if (!verificationMethod || !verificationMethod.length) {
-      throw new DidError(
-        DidErrorCode.InvalidDidDocument, 'At least one verificationMethod object required'
-      );
+      throw new DidError(DidErrorCode.InvalidDidDocument, 'At least one verificationMethod object required');
     }
+
     // Validate the properties for each verificationMethod object in the document
     if (verificationMethod?.some((vm: DidVerificationMethod) => !(vm.id || vm.type || vm.publicKeyMultibase))) {
       throw new DidError(
@@ -118,16 +166,20 @@ export class Btc1Create {
     );
 
     // Sha256 hash the canonicalized byte array of the intermediateDocument
-    const genesisBytes = sha256(Buffer.from(Canonicalize.jcs(intermediateDocument)));
+    const genesisBytes = await canonicalhash(intermediateDocument);
+
     // Set idType to external
     const idType = 'external';
+
     // Set did to result of createIdentifier
-    const did = this.identifier({ idType, genesisBytes, version, network });
+    const did = this.didBtc1Identifier({ idType, genesisBytes, version, network });
 
     // Create copy of intermediateDocument initialDocument as DidDocument
     const initialDocument = intermediateDocument as Btc1DidDocument;
+
     // Set initialDocument id to did.
     initialDocument.id = did;
+
     // Set verificationMethod.controller to did.
     initialDocument.verificationMethod = verificationMethod.map(
       (vm: DidVerificationMethod) => ({ ...vm, controller: intermediateDocument.id })
@@ -138,29 +190,46 @@ export class Btc1Create {
   }
 
   /**
-   * @description: Create a `did:btc1` identifier from a set of parameters.
-     * For required params, @see {@link CreateIdentifierParams}.
-     * @param params.idType: string used to determine the type of id to create (key or external).
-     * @param params.network: string bitcoin network name used for the id.
-     * @param params.version: number of the btc1 method version used for the id.
-     * @param params.genesisBytes: uint8array of bytes used to initialize the id.
-     * @returns: string btc1 identifier.
-     */
-  public static identifier({ idType, network, version, genesisBytes }: CreateIdentifierParams): string {
+   * Implements {@link https://dcdpr.github.io/did-btc1/#didbtc1-identifier-construction | 4.1.3 did:btc1 Identifier Construction}.
+   *
+   * Convenience function used to construct did:btc1 identifiers. Takes in idType, genesisBytes, version and network.
+   * If idType is “key”, then genesisBytes is a compressed SEC encoded secp256k1 public key.
+   * If idType is “external”, then genesisBytes is the byte representation of a SHA256 hash of an intermediate document.
+   *
+   * @public
+   * @static
+   * @param {CreateDidBtc1IdentifierParams} params See {@link CreateDidBtc1IdentifierParams} for details.
+   * @param {string} params.idType Identifier type (key or external).
+   * @param {string} params.network Bitcoin network name.
+   * @param {number} params.version Identifier version.
+   * @param {PublicKeyBytes | DocumentBytes} params.genesisBytes Public key or an intermediate document bytes.
+   * @returns {DidBtc1Identifier} The new did:btc1 identifier.
+   */
+  public static didBtc1Identifier({ idType, genesisBytes, network, version }: {
+    idType: string;
+    genesisBytes: Uint8Array;
+    network?: string;
+    version?: string;
+  }): DidBtc1Identifier {
     // Set version to 1 if not passed
     const v = Number(version) || 1;
+
     // Set the hrp based on idType
     const hrp = idType === 'key' ? 'k' : 'x';
+
     // Set the base did method prefix
     let didMethodPrefix = `did:${DidBtc1.methodName}`;
+
     // If version > 1, append it to the didMethodPrefix
     if (v > 1) {
       didMethodPrefix = `${didMethodPrefix}:${version}`;
     }
+
     // If network !== mainnet, append it to the didMethodPrefix
     if (network !== 'mainnet') {
       didMethodPrefix = `${didMethodPrefix}:${network}`;
     }
+
     // Create DID from method prefix and Bech32 encoded public key
     return `${didMethodPrefix}:${bech32.encodeFromBytes(hrp, genesisBytes)}`;
   }

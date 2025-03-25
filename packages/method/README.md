@@ -1,5 +1,3 @@
-# DID BTC1 JS
+# @did-btc1/method
 
-## Summary
-
-Reference implementation of the [did:btc1 DID Method Specification](https://dcdpr.github.io/did-btc1/) in TypeScript & JavaScript.
+* TS/JS implementation of thd [did:btc1 DID Method](https://dcdpr.github.io/did-btc1/).

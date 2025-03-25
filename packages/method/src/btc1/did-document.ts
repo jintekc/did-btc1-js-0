@@ -1,5 +1,10 @@
-import { DidVerificationMethod, DidDocument } from '@web5/dids';
+import { DidService, DidVerificationMethod, DidDocument as IDidDocument } from '@web5/dids';
+import { DidDocumentError } from '../utils/errors.js';
 import { BeaconService } from './beacons/interface.js';
+import { BeaconUtils } from './beacons/utils.js';
+import { BTC1_DID_DOCUMENT_CONTEXT } from './constants.js';
+import { DidBtc1Identifier } from './crud/create.js';
+import { Btc1Utils } from './utils.js';
 
 /**
  * DID BTC1 Verification Method extends the DidVerificationMethod class adding helper methods and properties
@@ -23,101 +28,164 @@ export class Btc1VerificationMethod implements DidVerificationMethod {
   // TODO: Add helper methods and properties
 }
 
+export interface IBtc1DidDocument extends IDidDocument {
+  id: string;
+  controller?: string | string[];
+  '@context'?: string | (string | Record<string, any>)[];
+  verificationMethod: DidVerificationMethod[];
+  authentication?: (string | DidVerificationMethod)[];
+  assertionMethod?: (string | DidVerificationMethod)[];
+  capabilityInvocation?: (string | DidVerificationMethod)[];
+  capabilityDelegation?: (string | DidVerificationMethod)[];
+  service: BeaconService[];
+}
+
 /**
  * BTC1 DID Document extends the DidDocument class adding helper methods and properties
  * @export
  * @class Btc1DidDocument
  * @type {Btc1DidDocument}
- * @implements {DidDocument}
+ * @implements {IBtc1DidDocument}
  */
-export class Btc1DidDocument implements DidDocument {
+export class Btc1DidDocument implements IBtc1DidDocument {
   id: string;
-  '@context'?: string | (string | Record<string, any>)[] | undefined;
-  alsoKnownAs?: string[] | undefined;
-  controller?: string | string[] | undefined;
+  controller?: string | string[];
+  '@context'?: string | (string | Record<string, any>)[] = BTC1_DID_DOCUMENT_CONTEXT;
   verificationMethod: DidVerificationMethod[];
-  assertionMethod?: (string | DidVerificationMethod)[] | undefined;
-  authentication?: (string | DidVerificationMethod)[] | undefined;
-  keyAgreement?: (string | DidVerificationMethod)[] | undefined;
-  capabilityDelegation?: (string | DidVerificationMethod)[] | undefined;
-  capabilityInvocation?: (string | DidVerificationMethod)[] | undefined;
+  authentication?: (string | DidVerificationMethod)[] = ['#initialKey'];
+  assertionMethod?: (string | DidVerificationMethod)[] = ['#initialKey'];
+  capabilityInvocation?: (string | DidVerificationMethod)[] = ['#initialKey'];
+  capabilityDelegation?: (string | DidVerificationMethod)[] = ['#initialKey'];
   service: BeaconService[];
 
-  constructor(id: string, verificationMethod: DidVerificationMethod[], service: BeaconService[]) {
+  constructor({ id, verificationMethod, service }: Btc1DidDocument) {
+    const ERROR_TYPE = 'BTC1_DID_DOCUMENT_CONSTRUCTOR_ERROR';
+    // Validate the id
+    if (!Btc1DidDocument.isValidId(id)) {
+      throw new DidDocumentError('Invalid "id"', ERROR_TYPE, { id });
+    }
+    // Set the id and controller
     this.id = id;
+    this.controller = id;
+
+    // Validate the verification method
+    if (!Btc1DidDocument.isValidVerificationMethods(verificationMethod)) {
+      throw new DidDocumentError('Invalid "verificationMethod"', ERROR_TYPE, { verificationMethod });
+    }
+    // Set the verification method
     this.verificationMethod = verificationMethod;
+
+    // Validate the service
+    if (!Btc1DidDocument.isValidServices(service)) {
+      throw new DidDocumentError('Invalid "service"', ERROR_TYPE, { service });
+    }
+    // Set the service
     this.service = service;
+
+    // Validate the DID Document
+    Btc1DidDocument.validate(this);
   }
 
-  public static validate(didDocument: any): { valid: boolean, errors?: string[] } {
-    const errors: string[] = [];
-
-    // 1. @context must be present and include "https://www.w3.org/ns/did/v1"
-    if (!didDocument['@context']) {
-      errors.push('Missing "@context" field');
-    } else if (
-      Array.isArray(didDocument['@context']) &&
-            !didDocument['@context'].includes('https://www.w3.org/ns/did/v1')
-    ) {
-      errors.push('The "@context" must include "https://www.w3.org/ns/did/v1"');
-    } else if (typeof didDocument['@context'] === 'string' && didDocument['@context'] !== 'https://www.w3.org/ns/did/v1') {
-      errors.push('The "@context" must be "https://www.w3.org/ns/did/v1"');
+  /**
+   * Validates a Btc1DidDocument by breaking it into modular validation methods.
+   * @public
+   * @static
+   * @param {Btc1DidDocument} didDocument The DID document to validate.
+   * @returns {boolean} True if the DID document is valid.
+   * @throws {DidDocumentError} If any validation check fails.
+   */
+  public static isValid(didDocument: Btc1DidDocument): boolean {
+    if (!this.isValidContext(didDocument?.['@context'])) {
+      throw new DidDocumentError('Invalid "@context"', 'DID_DOCUMENT_CONTEXT_ERROR', didDocument);
     }
-
-    // 2. id must be a valid DID
-    if (!didDocument.id || typeof didDocument.id !== 'string' || !didDocument.id.startsWith('did:')) {
-      errors.push('Invalid "id" field: It must be a string starting with "did:"');
+    if (!this.isValidId(didDocument?.id)) {
+      throw new DidDocumentError('Invalid "id"', 'DID_DOCUMENT_ID', didDocument);
     }
-
-    // 3. Verification Methods must be valid
-    if (didDocument.verificationMethod) {
-      if (!Array.isArray(didDocument.verificationMethod)) {
-        errors.push('"verificationMethod" must be an array.');
-      } else {
-        for (const method of didDocument.verificationMethod) {
-          if (!method.id || !method.type || !method.controller) {
-            errors.push(`Invalid verification method: ${JSON.stringify(method)}.`);
-          }
-        }
-      }
+    if (!this.isValidVerificationMethods(didDocument?.verificationMethod)) {
+      throw new DidDocumentError('Invalid "verificationMethod"', 'DID_DOCUMENT_VERIFICATION_METHOD_ERROR', didDocument);
     }
-
-    // 4. Services must be valid
-    if (didDocument.service) {
-      if (!Array.isArray(didDocument.service)) {
-        errors.push('"service" must be an array.');
-      } else {
-        for (const service of didDocument.service) {
-          if (!service.id || !service.type || !service.serviceEndpoint) {
-            errors.push(`Invalid service definition: ${JSON.stringify(service)}.`);
-          }
-        }
-      }
+    if (!this.isValidServices(didDocument?.service)) {
+      throw new DidDocumentError('Invalid "service"', 'DID_DOCUMENT_SERVICE_ERROR', didDocument);
     }
+    if (!this.isValidVerificationRelationships(didDocument)) {
+      throw new DidDocumentError('Invalid verification relationships', 'DID_DOCUMENT_ERROR', didDocument);
+    }
+    return true;
+  }
 
-    // 5. Ensure key references are valid in authentication, assertionMethod, keyAgreement, etc.
-    const keySections = [
+  /**
+   * Validates that "@context" exists and includes correct values.
+   * @private
+   */
+  private static isValidContext(context: Btc1DidDocument['@context']): boolean {
+    if(!context) return false;
+    if(!Array.isArray(context) && typeof context !== 'string') return false;
+    if(Array.isArray(context) && !context.every(ctx => typeof ctx === 'string' && BTC1_DID_DOCUMENT_CONTEXT.includes(ctx))) return false;
+    return true;
+  }
+
+  /**
+   * Validates that the DID Document has a valid id.
+   * @private
+   */
+  private static isValidId(id: DidBtc1Identifier): boolean {
+    try {
+      Btc1Utils.parse(id);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Validates that verification methods exist and are correctly formatted.
+   * @private
+   */
+  private static isValidVerificationMethods(verificationMethod: DidVerificationMethod[]): boolean {
+    return Array.isArray(verificationMethod) && verificationMethod.every(Btc1Utils.isDidVerificationMethod);
+  }
+
+  /**
+   * Validates that the DID Document has valid services.
+   * @private
+   */
+  private static isValidServices(service: DidService[]): boolean {
+    return Array.isArray(service) && service.every(BeaconUtils.isBeaconService);
+  }
+
+  /**
+   * Validates verification relationships (authentication, assertionMethod, capabilityInvocation, capabilityDelegation).
+   * @private
+   */
+  private static isValidVerificationRelationships(didDocument: Btc1DidDocument): boolean {
+    const verificationRelationships: (keyof Btc1DidDocument)[] = [
       'authentication',
       'assertionMethod',
-      'keyAgreement',
       'capabilityInvocation',
       'capabilityDelegation'
     ];
 
-    for (const section of keySections) {
-      if (didDocument[section]) {
-        if (!Array.isArray(didDocument[section])) {
-          errors.push(`"${section}" must be an array.`);
-        } else {
-          for (const entry of didDocument[section]) {
-            if (typeof entry !== 'string' && typeof entry !== 'object') {
-              errors.push(`Invalid entry in "${section}": ${JSON.stringify(entry)}.`);
-            }
-          }
-        }
-      }
-    }
-
-    return { valid: true };
+    return verificationRelationships.every((key) =>
+      didDocument[key] &&
+      Array.isArray(didDocument[key]) &&
+      didDocument[key].every(
+        entry => typeof entry === 'string' || Btc1Utils.isDidVerificationMethod(entry)
+      ));
   }
+
+  /**
+   * Validate the DID Document
+   * @public
+   * @static
+   * @returns {Btc1DidDocument} Validated DID Document.
+   * @throws {DidDocumentError} If the DID Document is invalid.
+   */
+  public static validate(didDocument: Btc1DidDocument): Btc1DidDocument {
+    // Validate the DID Document
+    Btc1DidDocument.isValid(didDocument);
+
+    // Return the DID Document
+    return didDocument;
+  }
+
 }

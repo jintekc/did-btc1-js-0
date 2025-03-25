@@ -1,48 +1,173 @@
-// import { POLAR_ALICE_CLIENT_CONFIG } from '../../src';
-import BitcoinClient from '../../src/bitcoin/client';
-import { POLAR_BOB_CLIENT_CONFIG } from '../../src/constants/bitcoin';
+import BitcoinRpc from '../../src/bitcoin/rpc-client.js';
+import { Btc1Read, DEFAULT_RPC_CLIENT_CONFIG } from '../../src/index.js';
 
-// const alice = BitcoinClient.connect(POLAR_ALICE_CLIENT_CONFIG);
-const bob = BitcoinClient.connect(POLAR_BOB_CLIENT_CONFIG);
-
-
-// const aliceTxIds = [
-//   '1fc1f663d692e35d8c2ad48785306717b0b210ea1d4df92a0ab7e50316fbffbf',
-//   ',b19b14dbd155430fc4ccd3162678ac1c109f1de1636eb2200b405d242c1a35d9',
-//   '1,b11151e37b04f4575d3ee0eaa7b474270eedc5e1f31607f274344df6c331b13',
-//   'c0,b5fe9e77ef1e5aa14b8181b63fc12b6a43d65085f28db9b7b38733a70febf8',
-//   '7e2,a28d123fc6d2569f8682348666becd0eb13577c4dd337568afa5c8f0d2c2a',
-//   '9d10,b4e9fa528d8785dd7da4372b8ff0219616ea72d720bf633ba8c44d4ba6b7',
-//   '08bd8,f11275e2a04c2e4496e30be2789538f3ef0cc66248214150ed81fd1b9a8',
-//   '6b24ce,8013922b091d8eb908e7b8b29478364f4ef6fceb2610a664bad72b90c9',
-//   '6d0b367,1498c5dbda19cabfd0f6e9f28b274ba0db35e7d592fec45fb99ab8e69',
-//   'bfda1a06,29218544c67a1b8f423887d014c89ae8c0772697bde15337e09500de',
-// ];
-const bobTxIds = [
-  '1fc1f663d692e35d8c2ad48785306717b0b210ea1d4df92a0ab7e50316fbffbf',
-  'b19b14dbd155430fc4ccd3162678ac1c109f1de1636eb2200b405d242c1a35d9',
-  '1b11151e37b04f4575d3ee0eaa7b474270eedc5e1f31607f274344df6c331b13',
-  'c0b5fe9e77ef1e5aa14b8181b63fc12b6a43d65085f28db9b7b38733a70febf8',
-  '7e2a28d123fc6d2569f8682348666becd0eb13577c4dd337568afa5c8f0d2c2a',
-  '9d10b4e9fa528d8785dd7da4372b8ff0219616ea72d720bf633ba8c44d4ba6b7',
-  '08bd8f11275e2a04c2e4496e30be2789538f3ef0cc66248214150ed81fd1b9a8',
-  '6b24ce8013922b091d8eb908e7b8b29478364f4ef6fceb2610a664bad72b90c9',
-  '6d0b3671498c5dbda19cabfd0f6e9f28b274ba0db35e7d592fec45fb99ab8e69',
-  'bfda1a0629218544c67a1b8f423887d014c89ae8c0772697bde15337e09500de'
+const rpc = BitcoinRpc.connect(DEFAULT_RPC_CLIENT_CONFIG);
+const beacons = [
+  [
+    {
+      'id'              : '#initial_p2pkh',
+      'type'            : 'SingletonBeacon',
+      'serviceEndpoint' : 'bitcoin:muRxiMKmqP5HeA4njajdmuL7tQfrKjcNgb'
+    },
+    {
+      'id'              : '#initial_p2wpkh',
+      'type'            : 'SingletonBeacon',
+      'serviceEndpoint' : 'bitcoin:bcrt1qnzsq0ejh4jkuqdslqn7vxdu589pxe45gkyfmhx'
+    },
+    {
+      'id'              : '#initial_p2tr',
+      'type'            : 'SingletonBeacon',
+      'serviceEndpoint' : 'bitcoin:bcrt1pez6hwgel8rn7hykyzkxl4xxtna6clsvev5pgwquqn3ulqkkz7v7skh4md6'
+    },
+    {
+      'id'              : '#linked-domain',
+      'type'            : 'LinkedDomains',
+      'serviceEndpoint' : 'https://contact-me.com'
+    }
+  ]
 ];
 
-for (const txid of bobTxIds) {
-  const tx = await bob.getRawTransaction(txid, 1);
-  for (const vout of tx.vout){
-    console.log(`vout #${vout.n}`, vout);
-    console.log('vout.scriptPubKey', vout.scriptPubKey);
+const initialDocument = {
+  'id'       : 'did:btc1:regtest:k1qvadgpl5qfuz6emq7c8sqw28z0r0gzvyra3je3pp2cuk83uqnnyvckvw8cf',
+  '@context' : [
+    'https://www.w3.org/ns/did/v1',
+    'https://did-btc1/TBD/context'
+  ],
+  'verificationMethod' : [
+    {
+      'id'                 : '#initialKey',
+      'type'               : 'Multikey',
+      'controller'         : 'did:btc1:regtest:k1qvadgpl5qfuz6emq7c8sqw28z0r0gzvyra3je3pp2cuk83uqnnyvckvw8cf',
+      'publicKeyMultibase' : 'z66Ppr1hk7fkH6Corq9M62V4uT31tv4j4AZwCxrCUKC5Vofy'
+    }
+  ],
+  'authentication' : [
+    '#initialKey'
+  ],
+  'assertionMethod' : [
+    '#initialKey'
+  ],
+  'capabilityInvocation' : [
+    '#initialKey'
+  ],
+  'capabilityDelegation' : [
+    '#initialKey'
+  ],
+  'service' : [
+    {
+      'id'              : '#initial_p2pkh',
+      'type'            : 'SingletonBeacon',
+      'serviceEndpoint' : 'bitcoin:muRxiMKmqP5HeA4njajdmuL7tQfrKjcNgb'
+    },
+    {
+      'id'              : '#initial_p2wpkh',
+      'type'            : 'SingletonBeacon',
+      'serviceEndpoint' : 'bitcoin:bcrt1qnzsq0ejh4jkuqdslqn7vxdu589pxe45gkyfmhx'
+    },
+    {
+      'id'              : '#initial_p2tr',
+      'type'            : 'SingletonBeacon',
+      'serviceEndpoint' : 'bitcoin:bcrt1pez6hwgel8rn7hykyzkxl4xxtna6clsvev5pgwquqn3ulqkkz7v7skh4md6'
+    }
+  ]
+};
+const contemporaryDidDocument = {
+  'id'       : 'did:btc1:regtest:k1qvadgpl5qfuz6emq7c8sqw28z0r0gzvyra3je3pp2cuk83uqnnyvckvw8cf',
+  '@context' : [
+    'https://www.w3.org/ns/did/v1',
+    'https://did-btc1/TBD/context'
+  ],
+  'verificationMethod' : [
+    {
+      'id'                 : '#initialKey',
+      'type'               : 'Multikey',
+      'controller'         : 'did:btc1:regtest:k1qvadgpl5qfuz6emq7c8sqw28z0r0gzvyra3je3pp2cuk83uqnnyvckvw8cf',
+      'publicKeyMultibase' : 'z66Ppr1hk7fkH6Corq9M62V4uT31tv4j4AZwCxrCUKC5Vofy'
+    }
+  ],
+  'authentication' : [
+    '#initialKey'
+  ],
+  'assertionMethod' : [
+    '#initialKey'
+  ],
+  'capabilityInvocation' : [
+    '#initialKey'
+  ],
+  'capabilityDelegation' : [
+    '#initialKey'
+  ],
+  'service' : [
+    {
+      'id'              : '#initial_p2pkh',
+      'type'            : 'SingletonBeacon',
+      'serviceEndpoint' : 'bitcoin:muRxiMKmqP5HeA4njajdmuL7tQfrKjcNgb'
+    },
+    {
+      'id'              : '#initial_p2wpkh',
+      'type'            : 'SingletonBeacon',
+      'serviceEndpoint' : 'bitcoin:bcrt1qnzsq0ejh4jkuqdslqn7vxdu589pxe45gkyfmhx'
+    },
+    {
+      'id'              : '#initial_p2tr',
+      'type'            : 'SingletonBeacon',
+      'serviceEndpoint' : 'bitcoin:bcrt1pez6hwgel8rn7hykyzkxl4xxtna6clsvev5pgwquqn3ulqkkz7v7skh4md6'
+    },
+    {
+      'id'              : '#linked-domain',
+      'type'            : 'LinkedDomains',
+      'serviceEndpoint' : 'https://contact-me.com'
+    }
+  ]
+};
+const sidecarData = {
+  'did'             : 'did:btc1:regtest:k1qvadgpl5qfuz6emq7c8sqw28z0r0gzvyra3je3pp2cuk83uqnnyvckvw8cf',
+  'signalsMetadata' : {
+    'f23ff93716c1190b384769cb45eea3efedc9b762b3a65b32547faba311ab5bfa' : {
+      'updatePayload' : {
+        '@context' : [
+          'https://w3id.org/security/v2',
+          'https://w3id.org/zcap/v1',
+          'https://w3id.org/json-ld-patch/v1'
+        ],
+        'patch' : [
+          {
+            'op'    : 'add',
+            'path'  : '/service/3',
+            'value' : {
+              'id'              : '#linked-domain',
+              'type'            : 'LinkedDomains',
+              'serviceEndpoint' : 'https://contact-me.com'
+            }
+          }
+        ],
+        'sourceHash'      : '9EUnJwoNB1DZF4yUmb8iFsBjXkUkSg9Hjq2P1NS96AX7',
+        'targetHash'      : 'BZ4n8wiDWFRBV4Zu6aDV4WFsRPn3Jmu2Nb4xW9ebW8fj',
+        'targetVersionId' : 2,
+        'proof'           : {
+          'type'               : 'DataIntegrityProof',
+          'cryptosuite'        : 'schnorr-secp256k1-jcs-2025',
+          'verificationMethod' : 'did:btc1:regtest:k1qvadgpl5qfuz6emq7c8sqw28z0r0gzvyra3je3pp2cuk83uqnnyvckvw8cf#initialKey',
+          'proofPurpose'       : 'capabilityInvocation',
+          'capability'         : 'urn:zcap:root:did%3Abtc1%3Aregtest%3Ak1qvadgpl5qfuz6emq7c8sqw28z0r0gzvyra3je3pp2cuk83uqnnyvckvw8cf',
+          'capabilityAction'   : 'Write',
+          '@context'           : [
+            'https://w3id.org/security/v2',
+            'https://w3id.org/zcap/v1',
+            'https://w3id.org/json-ld-patch/v1'
+          ],
+          'proofValue' : 'z5xYgTCPgBW7ZAYywGkhznBXKKtjMX4cudM3Zc29GdHWe1QvV4hLmzuL2vYcb3gzc5ZyAm1KezfbYXHU6TuDaChCm'
+        }
+      }
+    }
   }
+};
 
-  for (const vin of tx.vin){
-    console.log('vin', vin);
-    console.log('vin.scriptSig', vin.scriptSig);
-    console.log('vin.vout', vin.vout);
-    const vout = tx.vout[vin.vout];
-    console.log('vout', vout);
+const response = await Btc1Read.targetDocument({
+  initialDocument,
+  options : {
+    sidecarData,
+    versionTime : 1742394188
   }
-}
+});
+console.log('response:', response);

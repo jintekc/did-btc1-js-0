@@ -12,18 +12,6 @@
     "skipLibCheck": true,
     "declarationDir": "dist/types",
     "outDir": "dist/esm",
-    "baseUrl": ".",
-    "paths": {
-      "@did-btc1/cryptosuite": [
-        "./packages/cryptosuite/src"
-      ],
-      "@did-btc1/key-pair": [
-        "./packages/key-pair/src"
-      ],
-      "@did-btc1/method": [
-        "./packages/method/src"
-      ],
-    }
   },
   "exclude": [
     "eslint.config.cjs",

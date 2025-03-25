@@ -1,14 +1,18 @@
+import { canonicalization } from '@did-btc1/cryptosuite';
 import type { DidService } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { base58btc } from 'multiformats/bases/base58';
-import Bitcoind from '../../bitcoin/rpc-client.js';
-import { DidBtc1Error } from '../../utils/error.js';
+import { InvokePayloadParams, SignalMetdata } from '../../types/crud.js';
+import { DidBtc1Error } from '../../utils/errors.js';
 import { GeneralUtils } from '../../utils/general.js';
-import JsonPatch from '../../utils/json-patch.js';
-import { Btc1DidDocument } from '../did-document.js';
-import { Btc1RootCapability, ConstructPayloadParams, UpdatePayload } from '../interface.js';
-import { BroadcastPayloadParams, InvokePayloadParams } from '../types.js';
-import { SignedRawTx } from '../../bitcoin/types.js';
+import JsonPatch, { PatchOperation } from '../../utils/json-patch.js';
+import { BeaconFactory } from '../beacons/factory.js';
+import { BeaconService } from '../beacons/interface.js';
+import { BTC1_DID_UPDATE_PAYLOAD_CONTEXT, W3C_ZCAP_V1 } from '../constants.js';
+import { Btc1DidDocument, Btc1VerificationMethod } from '../did-document.js';
+import { Btc1RootCapability, DidUpdatePayload } from './interface.js';
+
+const { canonicalhash } = canonicalization;
 
 /**
  * Implements did-btc1 spec section {@link https://dcdpr.github.io/did-btc1/#update | 4.3 Update} of the CRUD sections
@@ -20,61 +24,76 @@ import { SignedRawTx } from '../../bitcoin/types.js';
 export class Btc1Update {
   /**
    *
-   * Constructs an UpdatePayload object from a given sourceDocument, sourceVersionId, and documentPatch.
-   * {@link https://dcdpr.github.io/did-btc1/#construct-did-update-payload | 4.3.1 Construct DID Update Payload}
+   * {@link https://dcdpr.github.io/did-btc1/#construct-did-update-payload | 4.3.1 Construct DID Update Payload}.
    *
+   * The Construct DID Update Payload algorithm applies the documentPatch to the sourceDocument and verifies the
+   * resulting targetDocument is a conformant DID document. It takes in a btc1Identifier, sourceDocument,
+   * sourceVersionId, and documentPatch objects. It returns an unsigned DID Update Payload.
+   *
+   * @public
    * @static
-   * @param {ConstructPayloadParams} params Required params for calling the constructPayload method
+   * @async
+   * @param {ConstructPayloadParams} params See  {@link ConstructPayloadParams} for more details.
    * @param {string} params.identifier The did-btc1 identifier to derive the root capability from.
    * @param {Btc1DidDocument} params.sourceDocument The source document to be updated.
    * @param {string} params.sourceVersionId The versionId of the source document.
    * @param {DidDocumentPatch} params.documentPatch The JSON patch to be applied to the source document.
-   * @returns {Promise<UpdatePayload>} The constructed UpdatePayload object.
+   * @returns {Promise<DidUpdatePayload>} The constructed DidUpdatePayload object.
    * @throws {DidError} with {@link DidErrorCode.InvalidDid} if sourceDocument.id does not match identifier.
    */
-  public static async constructPayload({
+  public static async construct({
     identifier,
     sourceDocument,
     sourceVersionId,
-    documentPatch,
-  }: ConstructPayloadParams): Promise<UpdatePayload> {
+    patch,
+  }: {
+    identifier: string;
+    sourceDocument: Btc1DidDocument;
+    sourceVersionId: string;
+    patch: PatchOperation[];
+  }): Promise<DidUpdatePayload> {
     // Validate the sourceDocument id matches the identifier
     if (sourceDocument.id !== identifier) {
       throw new DidError(DidErrorCode.InvalidDid, 'Source document id does not match identifier');
     }
-    const sourceDocHash = await GeneralUtils.sha256Canonicalize(sourceDocument);
+
+    // Canonical sha256 hash the sourceDocument
+    const sourceDocHash = await canonicalhash(sourceDocument);
+
     // Set updatePayload object
-    const updatePayload: UpdatePayload = {
-      '@context' : [
-        'https://w3id.org/zcap/v1',
-        'https://w3id.org/security/data-integrity/v2',
-        'https://w3id.org/json-ld-patch/v1',
-        'https://github.com/dcdpr/did-btc1'
-      ],
-      patch           : documentPatch,
+    const updatePayload: DidUpdatePayload = {
+      '@context'      : BTC1_DID_UPDATE_PAYLOAD_CONTEXT,
+      patch           : patch,
       targetHash      : '',
-      targetVersionId : `${Number(sourceVersionId) + 1}`,
+      targetVersionId : Number(sourceVersionId) + 1,
       sourceHash      : base58btc.encode(sourceDocHash),
     };
+
     // Apply patch to source document
-    const targetDocument = JsonPatch.apply(sourceDocument, documentPatch);
+    const updatedDocument = JsonPatch.apply(sourceDocument, patch);
+
     // Validate the targetDocument conforms to DID document spec
-    const { valid, errors } = Btc1DidDocument.validate(targetDocument);
-    // If targetDocument is invalid, throw an error
-    if (!valid && errors?.length) {
-      throw new DidError(DidErrorCode.InvalidDidDocument, `Invalid target document: ${errors.join(', ')}')}`);
-    }
-    const targetDocHash = await GeneralUtils.sha256Canonicalize(targetDocument);
-    // Set the targetHash in the UpdatePayload
+    const targetDocument = Btc1DidDocument.validate(updatedDocument);
+
+    // Canonical sha256 hash the targetDocument
+    const targetDocHash = await canonicalhash(targetDocument);
+
+    // Set the targetHash in the DidUpdatePayload
     updatePayload.targetHash = base58btc.encode(targetDocHash);
+
+    // Return the updatePayload
     return updatePayload;
   }
 
   /**
+   * TODO: Update method per the spec
    *
-   * Function retrieves privateKeyBytes for verificationMethod and adds capability invocation, Data Integrity proof
-   * following the Authorization Capabilities (ZCAP-LD) and VC Data Integrity specifications.
-   * {@link https://dcdpr.github.io/did-btc1/#invoke-did-update-payload | 4.3.1 Construct DID Update Payload}
+   * {@link https://dcdpr.github.io/did-btc1/#invoke-did-update-payload | 4.3.2 Invoke DID Update Payload}.
+   *
+   * The Invoke DID Update Payload algorightm retrieves the privateKeyBytes for the verificationMethod and adds a
+   * capability invocation in the form of a Data Integrity proof following the Authorization Capabilities (ZCAP-LD) and
+   * VC Data Integrity specifications. It takes in a btc1Identifier, an unsigned didUpdatePayload, and a
+   * verificationMethod. It returns the invoked DID Update Payload.
    *
    * @static
    * @param {InvokePayloadParams} params Required params for calling the invokePayload method
@@ -85,7 +104,7 @@ export class Btc1Update {
    * @returns {ProofOptions} Object containing the proof options
    * @throws {DidBtc1Error} if the privateKeyBytes are invalid
    */
-  static invokePayload({
+  public static invoke({
     identifier,
     verificationMethod,
     options: {
@@ -121,16 +140,30 @@ export class Btc1Update {
   }
 
   /**
+   * Implements {@link https://dcdpr.github.io/did-btc1/#derive-root-capability-from-didbtc1-identifier | 4.3.3.1 Derive Root Capability}.
+   *
+   * The Derive Root Capability algorithm deterministically generates a ZCAP-LD root capability from a given did:btc1
+   * identifier. Each root capability is unique to the identifier. This root capability is defined and understood by the
+   * did:btc1 specification as the root capability to authorize updates to the specific did:btc1 identifiers DID
+   * document. It takes in a did:btc1 identifier and returns a rootCapability object. It returns the root capability.
+   *
+   * @public
    * @static
-   * @name deriveRootCapability
-   * @description Derive a root capability from a given did-btc1 identifier
    * @param {string} identifier The did-btc1 identifier to derive the root capability from
    * @returns {Btc1RootCapability} The root capability object
-   * @see {@link https://dcdpr.github.io/did-btc1/#root-didbtc1-update-capabilities}
+   * @example Root capability for updating the DID document for did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u
+   * ```
+   * {
+   *  "@context": "https://w3id.org/zcap/v1",
+   *  "id": "urn:zcap:root:did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u",
+   *  "controller": "did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u",
+   *  "invocationTarget": "did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u"
+   * }
+   * ```
    */
-  static deriveRootCapability(identifier: string): Btc1RootCapability {
+  public static deriveRootCapability(identifier: string): Btc1RootCapability {
     return {
-      '@context'       : 'https://w3id.org/zcap/v1',
+      '@context'       : W3C_ZCAP_V1,
       id               : `urn:zcap:root:${encodeURIComponent(identifier)}`,
       controller       : identifier,
       invocationTarget : identifier,
@@ -138,8 +171,16 @@ export class Btc1Update {
   }
 
   /**
+   * Implements {@link https://dcdpr.github.io/did-btc1/#announce-did-update | 4.3.4 Announce DID Update}.
+   *
+   * The Announce DID Update algorithm retrieves beaconServices from the sourceDocument and calls the Broadcast DID
+   * Update algorithm corresponding to the type of the Beacon. It takes in a btc1Identifier, sourceDocument, an array of
+   * beaconIds, and a didUpdateInvocation. It returns an array of signalsMetadata, containing the necessary
+   * data to validate the Beacon Signal against the didUpdateInvocation.
+   *
+   * @public
    * @static
-   * @description Retrieves beaconServices from sourceDocument and Broadcasts DID Update Payload for each beacon
+   * @async
    * @param {AnnounceUpdatePayloadParams} params Required params for calling the announcePayload method
    * @param {} params.sourceDocument The did-btc1 did document to derive the root capability from
    * @param {} params.beaconIds The didUpdatePayload object to be signed
@@ -147,9 +188,13 @@ export class Btc1Update {
    * @returns {} Array of signalMetadata objects with necessary data to validate Beacon Signal against Did Update
    * @throws {DidError} if the beaconService type is invalid
    */
-  static announcePayload({ sourceDocument, beaconIds, didUpdateInvocation }: any): any {
-    const beaconServices = [];
-    const signalMetadata = [];
+  public static async announce({ sourceDocument, beaconIds, didUpdateInvocation }: {
+    sourceDocument: Btc1DidDocument;
+    beaconIds: string[];
+    didUpdateInvocation: Btc1VerificationMethod;
+  }): Promise<SignalMetdata[]> {
+    const beaconServices: BeaconService[] = [];
+    const signalsMetadata = [];
     // Find the beacon services in the sourceDocument
     for (const beaconId of beaconIds) {
       const beaconService = sourceDocument.service.find((s: DidService) => s.id === beaconId);
@@ -160,71 +205,12 @@ export class Btc1Update {
     }
     // Broadcast the didUpdatePayload to each beaconService
     for (const beaconService of beaconServices) {
-      if (beaconService.type === 'SingletonBeacon') {
-        signalMetadata.push(
-          this.broadcastUpdateAttestation({
-            beaconService,
-            didUpdateInvocation,
-            options : { bitcoind: Bitcoind.connect() }
-          })
-        );
-      } else if (beaconService.type === 'SMTAggregatorBeacon') {
-        // TODO: implement CIDAggregatorBeacon broadcast did update payload fn
-        // TODO: classes for each beacon type that can also do the signing and broadcasting
-        // TODO:
-        throw new Error('SMTAggregatorBeacon not yet implemented');
-      } else if (beaconService.type === 'CIDAggregatorBeacon') {
-        // TODO: implement CIDAggregatorBeacon broadcast did update payload fn
-        throw new Error('CIDAggregatorBeacon not yet implemented');
-      } else {
-        throw new DidError(DidErrorCode.InvalidDidDocument, `Invalid beacon type: ${beaconService.type}`);
-      }
+      const beacon = BeaconFactory.create(beaconService);
+      const signal = await beacon.broadcastSignal(beaconService, didUpdateInvocation);
+      signalsMetadata.push(signal);
     }
-    // Return the signalMetadata
-    return signalMetadata;
-  }
 
-  /**
-   * TODO: Needs rewriting in spec
-   * @static @async @method
-   * @name broadcastUpdateAttestation
-   * @description Constructs bitcoin trasaction to broadcast didUpdatePayload to a SingletonBeacon service
-   * @param {BroadcastPayloadParams} params Required parameters for broadcasting a did update attestation
-   * @param {BeaconService} params.beaconService The beacon service to broadcast the did update attestation for
-   * @param {DidVerificationMethod} params.didUpdateInvocation The verificationMethod object to be used for signing
-   * @returns {SignedRawTx} Successful output of a bitcoin transaction
-   * @throws {DidError} if an error occurs while broadcasting the did update attestation
-   * @throws {DidErrorCode.InvalidDidDocument} if the bitcoin address is invalid or not funded
-   */
-  static async broadcastUpdateAttestation({
-    beaconService,
-    didUpdateInvocation,
-    options
-  }: BroadcastPayloadParams): Promise<SignedRawTx> {
-    // Connect to the default bitcoind node
-    const bitcoind: Bitcoind = options.bitcoind ?? Bitcoind.connect();
-    // Decode the beaconService serviceEndpoint
-    console.log('didUpdateInvocation', didUpdateInvocation);
-    const addressUri = beaconService.serviceEndpoint;
-    // Decode the addressUri to a bitcoin address
-    const bitcoinAddress = base58btc.decode(addressUri);
-    // Validate the bitcoin address
-    if (!bitcoinAddress) {
-      throw new DidError(DidErrorCode.InvalidDidDocument, `Invalid bitcoin address: ${addressUri}`);
-    }
-    // TODO: check if bitcoinAddress is funded; if not, fund it
-    // Construct a raw transaction
-    const hexstring = await bitcoind.createRawTransaction({
-      inputs     : [{ txid: '', vout: 0 }],
-      outputs    : { address: addressUri, data: '' },
-      locktime   : 0,
-      replacable : false
-    });
-    // Sign the raw transaction
-    const signedRawTx = await bitcoind.signRawTransaction({ hexstring });
-    // Broadcast the signed raw transaction
-    await bitcoind.sendRawTransaction(signedRawTx.hex, true);
-    // Return the signed raw transaction
-    return signedRawTx;
+    // Return the signalsMetadata
+    return signalsMetadata;
   }
 }

@@ -6,7 +6,7 @@ import { KeyValueStore, MemoryStore } from '@web5/common';
 import { KeyIdentifier } from '@web5/crypto';
 import { randomBytes } from 'crypto';
 import { Btc1KeyManagerOptions, KeyManagerParams, MULTIBASE_URI_PREFIX } from '../../index.js';
-import { Btc1KeyManagerError } from '../../utils/error.js';
+import { Btc1KeyManagerError } from '../../utils/errors.js';
 import { KeyManager } from './interface.js';
 
 /**

@@ -22,7 +22,7 @@ import { HashBytes, SignatureBytes } from '../../types/shared.js';
 import { CryptosuiteError } from '../../utils/error.js';
 import { Multikey } from '../multikey/index.js';
 import { ICryptosuite } from './interface.js';
-import { Canonicalize } from './canonicalize.js';
+import { Canonicalization } from './canonicalization.js';
 
 /**
  * TODO: Test RDFC and figure out what the contexts should be
@@ -45,7 +45,7 @@ export class Cryptosuite implements ICryptosuite {
   public multikey: Multikey;
 
   /** @type {string} The algorithm used for canonicalization */
-  public algorithm: string;
+  public algorithm: 'RDFC-1.0' | 'JCS';
 
   /**
    * Creates an instance of Cryptosuite.
@@ -62,9 +62,7 @@ export class Cryptosuite implements ICryptosuite {
   public async canonicalize(object: CanonicalizableObject): Promise<string> {
     const algorithm = this.algorithm;
     // If the cryptosuite includes 'rdfc', use RDFC canonicalization else use JCS
-    return algorithm === 'RDFC-1.0'
-      ? Canonicalize.rdfc(object, algorithm)
-      : Canonicalize.jcs(object);
+    return new Canonicalization(algorithm).canonicalize(object);
   }
 
   /** @see ICryptosuite.createProof */

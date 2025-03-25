@@ -7,7 +7,6 @@ import { Jwk, LocalKeyManager } from '@web5/crypto';
 import { DidDocument } from '@web5/dids';
 import { initEccLib, networks, payments } from 'bitcoinjs-lib';
 
-
 import * as ecc from 'tiny-secp256k1';
 initEccLib(ecc);
 

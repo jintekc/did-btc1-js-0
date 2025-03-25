@@ -1,0 +1,1 @@
+export type BeaconType = 'SingletonBeacon' | 'CIDAggregateBeacon' | 'SMTAggregateBeacon';

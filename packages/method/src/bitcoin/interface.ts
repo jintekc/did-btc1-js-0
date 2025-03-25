@@ -17,7 +17,8 @@ import {
   MiningInfo,
   PeerInfo,
   ScriptDecoded,
-  ValidateAddressResult
+  ValidateAddressResult,
+  GetBlockParams
 } from './types.js';
 
 /**
@@ -110,7 +111,7 @@ export interface IBitcoinRpc {
     getBlockHash(height: number): Promise<string>;
 
     /** Gets detailed information about a specific block. */
-    getBlock(blockhash: string, verbosity: VerbosityLevel): Promise<BlockResponse>;
+    getBlock({ blockhash, height, verbosity }: GetBlockParams): Promise<BlockResponse | undefined>
 
     /** Retrieves general blockchain state info. */
     getBlockchainInfo(): Promise<ChainInfo>;

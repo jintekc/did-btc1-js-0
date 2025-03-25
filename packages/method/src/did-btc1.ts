@@ -1,4 +1,4 @@
-import type { DidResolutionResult, DidVerificationMethod } from '@web5/dids';
+import type { DidResolutionResult, DidVerificationMethod, DidCreateOptions as IDidCreateOptions } from '@web5/dids';
 import {
   Did,
   DidError,
@@ -6,28 +6,42 @@ import {
   DidMethod,
   EMPTY_DID_RESOLUTION_RESULT
 } from '@web5/dids';
-import { initEccLib, networks } from 'bitcoinjs-lib';
+import { initEccLib } from 'bitcoinjs-lib';
 import * as tinysecp from 'tiny-secp256k1';
-import { getNetwork } from './bitcoin/network.js';
-import { Btc1Create } from './btc1/crud/create.js';
-import { Btc1DidDocument } from './btc1/did-document.js';
-import { DidCreateParams, DidCreateResponse, DidResolutionOptions, DidUpdateParams } from './btc1/interface.js';
+import { Btc1Create, DidCreateResponse } from './btc1/crud/create.js';
 import { Btc1Read } from './btc1/crud/read.js';
 import { Btc1Update } from './btc1/crud/update.js';
+import { Btc1DidDocument } from './btc1/did-document.js';
+import { Btc1KeyManager } from './btc1/key-manager/index.js';
+import { Btc1Networks, DidBtc1IdTypes } from './types/crud.js';
 import { Btc1Utils } from './btc1/utils.js';
-import { DidBtc1Error } from './utils/error.js';
-import { Btc1Networks, DidBtc1IdTypes } from './btc1/types.js';
+import { DidBtc1Error } from './utils/errors.js';
+import { W3C_DID_RESOLUTION_V1 } from './btc1/constants.js';
+import { DidResolutionOptions, DidUpdateParams, IntermediateDocument } from './btc1/crud/interface.js';
+import { PublicKeyBytes } from '@did-btc1/key-pair';
 
-export type GetSigningMethodParams = {
-  didDocument: Btc1DidDocument;
-  methodId?: string;
-}
-
-/** initEccLib */
+/** Initialize tiny secp256k1 */
 initEccLib(tinysecp);
 
+export type IdType = 'key' | 'external';
+export interface DidCreateOptions extends IDidCreateOptions<Btc1KeyManager> {
+  /** DID BTC1 Version Number */
+  version?: string;
+  /** Bitcoin Network */
+  network?: string;
+}
+export type DidCreateParams =
+  | { idType: 'key'; pubKeyBytes: PublicKeyBytes; options?: DidCreateOptions }
+  | { idType: 'external'; intermediateDocument: IntermediateDocument; options?: DidCreateOptions };
+
 /**
- * Implements {@link https://dcdpr.github.io/did-btc1 | did:btc1 DID Method Specification}
+ * Implements {@link https://dcdpr.github.io/did-btc1 | did:btc1 DID Method Specification}.
+ *
+ * did:btc1 is a censorship resistant DID Method using the Bitcoin blockchain as a Verifiable Data Registry to announce
+ * changes to the DID document. It improves on prior work by allowing: zero-cost off-chain DID creation; aggregated
+ * updates for scalable on-chain update costs; long-term identifiers that can support frequent updates; private
+ * communication of the DID document; private DID resolution; and non-repudiation appropriate for serious contracts.
+ *
  * @export
  * @class DidBtc1
  * @type {DidBtc1}
@@ -37,86 +51,111 @@ export class DidBtc1 implements DidMethod {
   /** @type {string} Name of the DID method, as defined in the DID BTC1 specification */
   public static methodName: string = 'btc1';
 
-  /** @type {networks.Network} networks.Network object */
-  public static network: networks.Network = networks.bitcoin;
-
   /**
-   * Create a new `did:btc1` identifier from a set of parameters. Implements {@link IDidBtc1.create}
+   * Entry point for section {@link https://dcdpr.github.io/did-btc1/#create | 4.1 Create}.
+   * See {@link Btc1Create} for implementation details.
+   *
+   * A did:btc1 identifier and associated DID document can either be created deterministically from a cryptographic
+   * seed, or it can be created from an arbitrary genesis intermediate DID document representation. In both cases,
+   * DID creation can be undertaken in an offline manner, i.e., the DID controller does not need to interact with the
+   * Bitcoin network to create their DID.
+   *
    * @public
    * @static
    * @async
-   * @param {DidCreateParams} params Required parameters for the create operation
-   * @param {PublicKeyBytes} params.publicKey Public key byte array used to create a btc1 "key" identifier
-   * @param {IntermediateDocument} params.intermediateDocument DID Document used to create a btc1 "external" identifier
-   * @param {DidCreateParamsOptions} params.options Optional parameters for the create operation
-   * @param {string} params.options.idType Type of identifier to create (key or external)
-   * @param {string} params.options.version Version number of the btc1 method (1, 2, 3, etc.)
-   * @param {string} params.options.network Bitcoin network name (mainnet, testnet, signet, regtest)
-   * @returns {Promise<CreateResponse>} Promise resolving to a CreateResponse object
-   * @throws {DidBtc1Error} if any of the param checks fail
+   *
+   * @param {DidCreateParams} params See {@link DidCreateParams} for details.
+   * @param {IdType} params.idType Type of identifier to create (key or external).
+   * @param {PublicKeyBytes} params.pubKeyBytes Public key byte array used to create a btc1 "key" identifier.
+   * @param {IntermediateDocument} params.intermediateDocument DID Document used to create a btc1 "external" identifier.
+   * @param {DidCreateOptions} params.options See {@link DidCreateOptions} for create options.
+   * @param {string} params.options.version Version number of the btc1 method.
+   * @param {string} params.options.network Bitcoin network name (mainnet, testnet, signet, regtest).
+   * @returns {Promise<CreateResponse>} Promise resolving to a CreateResponse object.
+   * @throws {DidBtc1Error} if any of the checks fail
    */
-  public static async create({
-    publicKey,
-    intermediateDocument,
-    options = {}
-  }: DidCreateParams): Promise<DidCreateResponse> {
-    // Set the default version and network
-    options.version ??= '1';
-    options.network ??= 'mainnet';
+  public static async create(params: DidCreateParams): Promise<DidCreateResponse> {
+    const type = 'BTC1_CREATE_ERROR';
+    // Deconstruct the idType and options from the params
+    const { idType, options = {} } = params;
 
-    // Options Check 1: Validate that one of pubKeyBytes or intermediateDocument is not null
-    if (!publicKey && !intermediateDocument) {
-      throw new DidBtc1Error('Invalid param-option: publicKey or intermediateDocument required');
-    }
-
-    // Set default idType based on data passed
-    options.idType ??= publicKey ? 'key' : 'external';
-
-    // Deconstruct optional options
-    const { idType, version, network } = options;
-
-    // Options Check 2: Validate that the idType is set to either key or external
+    // Validate that the idType is set to either key or external
     if (!(idType in DidBtc1IdTypes)) {
-      throw new DidBtc1Error('Invalid param-option: idType required, must be key or external');
+      throw new DidBtc1Error(`Invalid idType: expected "key" or "external"`, { type, data: idType });
     }
 
-    // Options Check 3: Validate pubKeybytes exists if idType = key
-    if (!publicKey && idType === 'key') {
-      throw new DidBtc1Error('Invalid param-option: publicKey required if idType is key');
-    }
+    // Deconstruct options and set the default values
+    const { version = '1', network = 'mainnet' } = options;
 
-    if(publicKey && publicKey?.length !== 33) {
-      throw new DidBtc1Error('Invalid param-option: publicKey must be secp256k1 compressed public key (33 bytes)');
-    }
-
-    // Options Check 4: Validate intermediateDocument exists if idType = external
-    if (!intermediateDocument && idType === 'external') {
-      throw new DidBtc1Error('Invalid param-option: intermediateDocument required if idType is external');
-    }
-
-    // Options Check 5: Validate network in Btc1Networks if not null
+    // Validate network in Btc1Networks
     if (!(network in Btc1Networks)) {
-      throw new DidBtc1Error('Invalid param-option: network required, must be mainnet, testnet, signet or regtest');
+      throw new DidBtc1Error('Invalid network: must be one of valid bitcoin network', { type, data: network });
     }
 
-    // Options Check 6: Validate version as positive number if not null
-    if (isNaN(Number(version))) {
-      throw new DidBtc1Error('Invalid param-option: version required, must be positive number');
+    // Validate version as number > 0
+    const versionNumber = Number(version);
+    if (isNaN(versionNumber) || versionNumber <= 0) {
+      throw new DidBtc1Error('Invalid version: must be be convertable to a number > 0', { type, data: version });
     }
 
-    this.network = getNetwork(options.network);
-    publicKey = publicKey!;
-    intermediateDocument = intermediateDocument!;
+    // If idType is key, call Btc1Create.deterministic
+    if(idType === 'key') {
+      // Deconstruct the pubKeyBytes from the params
+      const { pubKeyBytes } = params;
 
-    // If idType is key, call Btc1Create.deterministic; else call Btc1Create.external
-    return idType === 'key'
-      ? Btc1Create.deterministic({ version, network, publicKey })
-      : await Btc1Create.external({ network, version, intermediateDocument });
+      // Validate pubKeybytes exists if idType = key
+      if (!pubKeyBytes) {
+        throw new DidBtc1Error('Invalid pubKeyBytes: cannot be null', { type, data: { pubKeyBytes, idType } });
+      }
+
+      // Validate pubKeyBytes is 32 or 33 bytes
+      if(pubKeyBytes && ![32, 33].includes(pubKeyBytes.length)) {
+        throw new DidBtc1Error(
+          'Invalid pubKeyBytes: must be 32 byte x-only or 33 byte compressed',
+          { type, data: { pubKeyBytes, idType } }
+        );
+      }
+
+      // Convert 32 byte public key to 33 byte with 0x02 parity
+      const publicKey = pubKeyBytes.length === 32
+        ? new Uint8Array([0x02, ...pubKeyBytes])
+        : pubKeyBytes;
+
+      // Return call to Btc1Create.deterministic
+      return Btc1Create.deterministic({ version, network, publicKey });
+    }
+
+    // If idType is external, call Btc1Create.external
+    if(idType === 'external') {
+      // Deconstruct the intermediateDocument from the params
+      const { intermediateDocument } = params;
+
+      // Validate intermediateDocument exists if idType = external
+      if (!intermediateDocument) {
+        const opts = { type, data: { intermediateDocument, idType } };
+        throw new DidBtc1Error('Invalid intermediateDocument: cannot be null', opts);
+      }
+
+      // Return call to Btc1Create.external
+      return await Btc1Create.external({ network, version, intermediateDocument });
+    }
+
+
+    // Throw error if idType is not key or external
+    throw new DidBtc1Error('Invalid idType: expected "key" or "external"', { type, data: idType });
   }
 
   /**
-   * Entry point for section {@link https://dcdpr.github.io/did-btc1/#read | 4.2 Read} of the did:btc1 specification.
-   * Resolves a did:btc1 identifier to its corresponding DID document
+   * TODO #1: Finish implementing per spec
+   * Entry point for section {@link https://dcdpr.github.io/did-btc1/#read | 4.2 Read}.
+   * See {@link Btc1Read} for implementation details.
+   *
+   * The read operation is executed by a resolver after a resolution request identifying a specific did:btc1 identifier
+   * is received from a client at Resolution Time. The request MAY contain a resolutionOptions object containing
+   * additional information to be used in resolution. The resolver then attempts to resolve the DID document of the
+   * identifier at a specific Target Time. The Target Time is either provided in resolutionOptions or is set to the
+   * Resolution Time of the request.
+   *
    * @public
    * @static
    * @async
@@ -135,31 +174,22 @@ export class DidBtc1 implements DidMethod {
     try {
       // Parse the identifier into its components
       const components = Btc1Utils.parse(identifier);
-      const { hrp } = components;
-
-      if(!['k', 'x'].includes(hrp)) {
-        throw new DidError(DidErrorCode.InvalidDid, 'Invalid DID hrp');
-      }
-
-      //  Make sure options.sidecarData is not null if hrp === x
-      if (hrp === 'x' && !options.sidecarData) {
-        throw new DidError(DidErrorCode.InvalidDid, 'External resolution required for non-deterministic DIDs');
-      }
 
       // Resolve the DID Document based on the hrp
-      const initialDocument = hrp === 'k'
-        ? Btc1Read.deterministic({ identifier, components })
-        : await Btc1Read.external({ identifier, components, options });
+      const initialDocument = await Btc1Read.initialDocument({ identifier, components, options });
 
       // Set the default resolution result
       const didResolutionResult: DidResolutionResult = {
-        '@context'            : 'https://w3id.org/did-resolution/v1',
+        '@context'            : W3C_DID_RESOLUTION_V1,
         didResolutionMetadata : {},
         didDocumentMetadata   : {},
         didDocument           : {} as Btc1DidDocument
       };
 
+      // Add the parsed identifier components to the resolution options
+      options.components = components;
       didResolutionResult.didDocument = await Btc1Read.targetDocument({ initialDocument, options });
+
       // Return the resolved DID Document
       return didResolutionResult;
     } catch (error: any) {
@@ -179,8 +209,16 @@ export class DidBtc1 implements DidMethod {
   }
 
   /**
-   * Entry point for section {@link https://dcdpr.github.io/did-btc1/#read | 4.3 Update} of the did:btc1 specification.
-   * Update a `did: btc1` DID Document using a JSON patch and announces the update using beacon signals.
+   * TODO #2: Finish implementing per spec
+   * Entry point for section {@link https://dcdpr.github.io/did-btc1/#update | 4.3 Update}.
+   * See {@link Btc1Update} for implementation details.
+   *
+   * An update to a did:btc1 document is an invoked capability using the ZCAP-LD data format, signed by a
+   * verificationMethod that has the authority to make the update as specified in the previous DID document. Capability
+   * invocations for updates MUST be authorized using Data Integrity following the schnorr-secp256k1-jcs-2025
+   * cryptosuite with a proofPurpose of capabilityInvocation.
+   *
+   * @public
    * @static
    * @async
    * @param {DidUpdateParams} params Required parameters for the update operation
@@ -192,70 +230,80 @@ export class DidBtc1 implements DidMethod {
    * @param {string[]} params.beaconIds The beacon IDs to announce the update
    * @param {ProofOptions} params.options Optional parameters for the update operation
    * @returns {Promise<void>} Promise resolving to void
-   * @throws {DidError} with {@link DidErrorCode.InvalidDidDocument} if the publicKeyMultibase is malformed or the
-   * verificationMethod type is not Multikey
+   * @throws {DidError} if the verificationMethod type is not `Multikey` or the publicKeyMultibase header is not `z66P`
    */
-  static async update({
+  public static async update({
     identifier,
     sourceDocument,
     sourceVersionId,
-    documentPatch,
+    patch,
     verificationMethodId,
     beaconIds,
     options
-  }: DidUpdateParams): Promise<void> {
+  }: DidUpdateParams): Promise<any> {
     // Construct an unsigned update payload
-    const updatePayload = await Btc1Update.constructPayload({
+    const updatePayload = await Btc1Update.construct({
       identifier,
-      documentPatch,
+      patch,
       sourceDocument,
       sourceVersionId,
     });
-    const didDocument = sourceDocument;
+
     // Get the sourceDocument verificationMethods and filter for the verificationMethodId passed
-    const verificationMethod = Btc1Utils.getVerificationMethods({ didDocument }).filter(
-      vm => vm.id === verificationMethodId
-    )?.[0];
+    const vms = Btc1Utils.getVerificationMethods({ didDocument: sourceDocument });
+    const vm = vms.filter(vm => vm.id === verificationMethodId)?.[0];
+
     // Validate the verificationMethod type is Multikey
-    if (verificationMethod.type !== 'Multikey') {
+    if (vm.type !== 'Multikey') {
       throw new DidError(DidErrorCode.InvalidDidDocument, 'Verification method must be type Multikey');
     }
+
     // Validate the first 4 chars as z66P of the verificationMethod publicKeyMultibase
-    if (verificationMethod.publicKeyMultibase?.slice(0, 4) !== 'z66P') {
+    if (vm.publicKeyMultibase?.slice(0, 4) !== 'z66P') {
       throw new DidError(DidErrorCode.InvalidDidDocument, 'Malformed verification method publicKeyMultibase');
     }
-    const didUpdateInvocation = Btc1Update.invokePayload({ identifier, updatePayload, verificationMethod, options });
-    return Btc1Update.announcePayload({ sourceDocument, beaconIds, didUpdateInvocation });
+    // Invoke the update payload and announce the update
+    const didUpdateInvocation = Btc1Update.invoke({ identifier, updatePayload, verificationMethod: vm, options });
+    // TODO: finish once announcePayload complete
+    return await Btc1Update.announce({ sourceDocument, beaconIds, didUpdateInvocation });
   }
 
   /**
+   * Given the W3C DID Document of a `did:btc1` identifier, return the signing verification method that will be used
+   * for signing messages and credentials. If given, the `methodId` parameter is used to select the
+   * verification method. If not given, the Identity Key's verification method with an ID fragment
+   * of '#initialKey' is used.
+   *
+   * @public
    * @static
    * @async
-   Given the W3C DID Document of a `did:btc1` identifier, return the signing verification method that will be used
-   for signing messages and credentials. If given, the `methodId` parameter is used to select the
-   verification method. If not given, the Identity Key's verification method with an ID fragment
-   of '#initialKey' is used. signing method used
-
-   * @param {GetSigningMethodParams} params The parameters for the `getSigningMethod` operation
-   * @param {DidDocument} params.didDocument DID Document to get the verification method from
-   * @param {string} params.methodId Optional ID of the verification method to use for signing
-   * @returns {DidVerificationMethod} Promise resolving to the verification method used for signing
-   * @throws {DidError} with {@link DidErrorCode.InternalError} if an error occurs during getSigningMethod
-   * or with {@link DidErrorCode.MethodNotSupported} if signing method could not be determined
+   * @param {{ didDocument: Btc1DidDocument; methodId?: string; }} params Parameters for the `getSigningMethod` method.
+   * @param {DidDocument} params.didDocument DID Document to get the verification method from.
+   * @param {string} params.methodId Optional ID of the verification method to use for signing.
+   * @returns {DidVerificationMethod} Promise resolving to the verification method used for signing.
+   * @throws {DidError} if the parsed did method does not match `btc1` or signing method could not be determined.
    */
-  static async getSigningMethod({ didDocument, methodId }: GetSigningMethodParams): Promise<DidVerificationMethod> {
+  public static async getSigningMethod({ didDocument, methodId }: {
+    didDocument: Btc1DidDocument;
+    methodId?: string;
+  }): Promise<DidVerificationMethod> {
+    // Set the default methodId to the first assertionMethod if not given
     methodId ??= '#initialKey';
+
     // Verify the DID method is supported.
     const parsedDid = Did.parse(didDocument.id);
     if (parsedDid && parsedDid.method !== this.methodName) {
       throw new DidError(DidErrorCode.MethodNotSupported, `Method not supported: ${parsedDid.method} `);
     }
+
     // Attempt to find a verification method that matches the given method ID, or if not given,
     // find the first verification method intended for signing claims.
     const verificationMethod = didDocument.verificationMethod?.find(
       (vm: DidVerificationMethod) => Btc1Utils.extractDidFragment(vm.id) === (Btc1Utils.extractDidFragment(methodId)
         ?? Btc1Utils.extractDidFragment(didDocument.assertionMethod?.[0]))
     );
+
+    // If no verification method is found, throw an error
     if (!(verificationMethod && verificationMethod.publicKeyMultibase)) {
       throw new DidError(
         DidErrorCode.InternalError,

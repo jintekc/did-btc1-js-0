@@ -1,11 +1,9 @@
 import { strings } from '@helia/strings';
 import { createHelia } from 'helia';
-import { CID } from 'multiformats/cid';
-import * as Digest from 'multiformats/hashes/digest';
 import { sha256 } from '@noble/hashes/sha256';
 import { canonicalize } from '@web5/crypto';
 import { bech32 } from '@scure/base';
-import DidBtc1Utils from '../src/did-btc1-utils.js';
+import { Btc1Utils } from '../../src/index.js';
 
 const parsable = (content: string) => {
   try {
@@ -15,6 +13,7 @@ const parsable = (content: string) => {
     return false;
   }
 };
+
 const did = 'did:btc1:x1rfkaxzfh23nrh33llxysztuhssguysnkywexde4wghszrvqc570q7gtfea';
 const didDocument = {
   '@context' : [
