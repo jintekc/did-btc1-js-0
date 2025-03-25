@@ -1,6 +1,6 @@
-import { KeyPair, KeyPairJSON, PrivateKey, PublicKey } from '@did-btc1/key-pair';
+import { KeyPairJSON, MessageBytes, PrivateKeyBytes, PublicKeyBytes, SignatureBytes } from '@did-btc1/common';
+import { KeyPair, PrivateKey, PublicKey } from '@did-btc1/key-pair';
 import { DidVerificationMethod } from '@web5/dids';
-import { MessageBytes, PrivateKeyBytes, PublicKeyBytes, SignatureBytes } from '../../types/shared.js';
 import { Multikey } from './index.js';
 
 export type MultikeyJSON = {

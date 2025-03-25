@@ -1,6 +1,16 @@
 import { PrivateKey } from './private-key.js';
 import { PublicKey } from './public-key.js';
-import { Hex, KeyPairJSON, PrefixBytes, PrivateKeyBytes, PrivateKeyJSON, PrivateKeyPoint, PrivateKeySecret, PublicKeyBytes, PublicKeyJSON, PublicKeyMultibaseBytes } from './types.js';
+import { Hex,
+  KeyPairJSON,
+  PrefixBytes,
+  PrivateKeyBytes,
+  PrivateKeyJSON,
+  PrivateKeyPoint,
+  PrivateKeySecret,
+  PublicKeyBytes,
+  PublicKeyJSON,
+  PublicKeyMultibaseBytes
+} from '@did-btc1/common';
 
 /**
  * Interface for the PrivateKey class.

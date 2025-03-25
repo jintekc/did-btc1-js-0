@@ -1,10 +1,17 @@
 import { getRandomValues } from 'crypto';
 import * as tinysecp from 'tiny-secp256k1';
-import { CURVE } from './constants.js';
-import { PrivateKeyError } from './error.js';
 import { IPrivateKey } from './interface.js';
 import { PublicKey } from './public-key.js';
-import { Hex, PrivateKeyBytes, PrivateKeyJSON, PrivateKeySecret, PrivateKeySeed, PublicKeyBytes } from './types.js';
+import {
+  PrivateKeyBytes,
+  PrivateKeySecret,
+  PrivateKeySeed,
+  PrivateKeyError,
+  CURVE,
+  Hex,
+  PrivateKeyJSON,
+  PublicKeyBytes
+} from '@did-btc1/common';
 
 /**
  * Encapsulates a secp256k1 private key

@@ -1,6 +1,5 @@
-import { AddProofParams, Proof, SecureDocument, VerificationResult, VerifyProofParams } from '../../types/di-proof.js';
-import { ProofError } from '../../utils/error.js';
-import ObjectUtils from '../../utils/object-utils.js';
+import { ProofError, ObjectUtils } from '@did-btc1/common';
+import { AddProofParams, Proof, SecureDocument, VerificationResult } from '../../types/di-proof.js';
 import { Cryptosuite } from '../cryptosuite/index.js';
 import { IDataIntegrityProof } from './interface.js';
 

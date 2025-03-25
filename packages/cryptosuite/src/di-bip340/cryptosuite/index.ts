@@ -18,11 +18,9 @@ import {
   SecureDocument,
   VerificationResult
 } from '../../types/di-proof.js';
-import { HashBytes, SignatureBytes } from '../../types/shared.js';
-import { CryptosuiteError } from '../../utils/error.js';
 import { Multikey } from '../multikey/index.js';
 import { ICryptosuite } from './interface.js';
-import { Canonicalization } from './canonicalization.js';
+import { Canonicalization, CryptosuiteError, HashBytes, SignatureBytes } from '@did-btc1/common';
 
 /**
  * TODO: Test RDFC and figure out what the contexts should be
