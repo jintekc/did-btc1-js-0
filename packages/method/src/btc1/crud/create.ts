@@ -1,5 +1,3 @@
-import { canonicalization } from '@did-btc1/cryptosuite';
-import { PublicKey, PublicKeyBytes } from '@did-btc1/key-pair';
 import { bech32 } from '@scure/base';
 import type { DidService, DidVerificationMethod } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
@@ -10,6 +8,8 @@ import { ID_PLACEHOLDER_VALUE } from '../constants.js';
 import { Btc1DidDocument } from '../did-document.js';
 import { IntermediateDocument, IntermediateVerificationMethod } from './interface.js';
 import { DocumentBytes } from '../../types/crud.js';
+import { canonicalization, PublicKeyBytes } from '@did-btc1/common';
+import { PublicKey } from '@did-btc1/key-pair';
 
 const { canonicalhash } = canonicalization;
 

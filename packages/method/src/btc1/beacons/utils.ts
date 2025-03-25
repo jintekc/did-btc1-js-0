@@ -1,11 +1,10 @@
 import { DidDocument, DidService } from '@web5/dids';
 import { networks, payments } from 'bitcoinjs-lib';
 import { Maybe } from '../../exts.js';
-import { DidBtc1Error } from '../../utils/errors.js';
 import { Btc1Utils } from '../utils.js';
 import { BeaconFactory } from './factory.js';
 import { BeaconService, BeaconServiceAddress } from './interface.js';
-import { PublicKeyBytes } from '@did-btc1/key-pair';
+import { PublicKeyBytes, DidBtc1Error } from '@did-btc1/common';
 
 /**
  * Required parameters for generating Beacon Services.
