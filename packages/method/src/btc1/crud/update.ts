@@ -1,9 +1,7 @@
-import { canonicalization } from '@did-btc1/cryptosuite';
 import type { DidService } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { base58btc } from 'multiformats/bases/base58';
 import { InvokePayloadParams, SignalMetdata } from '../../types/crud.js';
-import { DidBtc1Error } from '../../utils/errors.js';
 import { GeneralUtils } from '../../utils/general.js';
 import JsonPatch, { PatchOperation } from '../../utils/json-patch.js';
 import { BeaconFactory } from '../beacons/factory.js';
@@ -11,6 +9,7 @@ import { BeaconService } from '../beacons/interface.js';
 import { BTC1_DID_UPDATE_PAYLOAD_CONTEXT, W3C_ZCAP_V1 } from '../constants.js';
 import { Btc1DidDocument, Btc1VerificationMethod } from '../did-document.js';
 import { Btc1RootCapability, DidUpdatePayload } from './interface.js';
+import { canonicalization, DidBtc1Error } from '@did-btc1/common';
 
 const { canonicalhash } = canonicalization;
 

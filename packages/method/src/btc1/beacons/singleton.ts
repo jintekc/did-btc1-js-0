@@ -1,13 +1,14 @@
-import { canonicalization } from '@did-btc1/cryptosuite';
 import { base58btc } from 'multiformats/bases/base58';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
 import { RawTransactionV2, SignedRawTx } from '../../bitcoin/types.js';
-import { SingletonBeaconError } from '../../utils/errors.js';
 import { DidUpdatePayload } from '../crud/interface.js';
 import { SingletonSidecar } from '../../types/crud.js';
 import { Btc1VerificationMethod } from '../did-document.js';
 import { Beacon } from './beacon.js';
 import { BeaconService, BeaconSignal } from './interface.js';
+import { canonicalization, SingletonBeaconError } from '@did-btc1/common';
+
+const { process } = canonicalization;
 
 /**
  * Implements {@link https://dcdpr.github.io/did-btc1/#singleton-beacon | 5.1 Singleton Beacon}.
@@ -81,7 +82,7 @@ export class SingletonBeacon extends Beacon {
 
     // Check if the hashBytes are in the sidecarData
     if (sidecarData) {
-      const updateHashBytes = await canonicalization.process(didUpdatePayload);
+      const updateHashBytes = await process(didUpdatePayload);
       console.log('updateHashBytes', updateHashBytes);
 
       const updateHash = Buffer.from(updateHashBytes).toString('hex');

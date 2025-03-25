@@ -15,10 +15,9 @@ import { Btc1DidDocument } from './btc1/did-document.js';
 import { Btc1KeyManager } from './btc1/key-manager/index.js';
 import { Btc1Networks, DidBtc1IdTypes } from './types/crud.js';
 import { Btc1Utils } from './btc1/utils.js';
-import { DidBtc1Error } from './utils/errors.js';
 import { W3C_DID_RESOLUTION_V1 } from './btc1/constants.js';
 import { DidResolutionOptions, DidUpdateParams, IntermediateDocument } from './btc1/crud/interface.js';
-import { PublicKeyBytes } from '@did-btc1/key-pair';
+import { DidBtc1Error, PublicKeyBytes } from '@did-btc1/common';
 
 /** Initialize tiny secp256k1 */
 initEccLib(tinysecp);

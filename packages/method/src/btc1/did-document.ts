@@ -1,10 +1,10 @@
 import { DidService, DidVerificationMethod, DidDocument as IDidDocument } from '@web5/dids';
-import { DidDocumentError } from '../utils/errors.js';
 import { BeaconService } from './beacons/interface.js';
 import { BeaconUtils } from './beacons/utils.js';
 import { BTC1_DID_DOCUMENT_CONTEXT } from './constants.js';
 import { DidBtc1Identifier } from './crud/create.js';
 import { Btc1Utils } from './utils.js';
+import { DidDocumentError } from '@did-btc1/common';
 
 /**
  * DID BTC1 Verification Method extends the DidVerificationMethod class adding helper methods and properties

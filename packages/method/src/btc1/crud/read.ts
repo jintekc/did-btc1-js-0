@@ -1,4 +1,4 @@
-import { Bytes, canonicalization, Cryptosuite, DataIntegrityProof, Multikey } from '@did-btc1/cryptosuite';
+import { Cryptosuite, DataIntegrityProof, Multikey } from '@did-btc1/cryptosuite';
 import { KeyPair, PublicKey } from '@did-btc1/key-pair';
 import { strings } from '@helia/strings';
 import { bytesToHex } from '@noble/hashes/utils';
@@ -11,7 +11,6 @@ import { DEFAULT_BLOCK_CONFIRMATIONS } from '../../bitcoin/constants.js';
 import { getNetwork } from '../../bitcoin/network.js';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
 import { BlockV2, BlockV3, RawTransactionV2 } from '../../bitcoin/types.js';
-import { Btc1ReadError } from '../../utils/errors.js';
 import JsonPatch from '../../utils/json-patch.js';
 import { BeaconFactory } from '../beacons/factory.js';
 import { BeaconServiceAddress, BeaconSignal, Signal } from '../beacons/interface.js';
@@ -22,6 +21,7 @@ import { DidComponents } from '../interface.js';
 import { Btc1Utils } from '../utils.js';
 import { DidResolutionOptions, DidUpdatePayload } from './interface.js';
 import { CIDAggregateSidecar, SidecarData, TargetDocumentParams, UnixTimestamp } from '../../types/crud.js';
+import { Btc1ReadError, Bytes, canonicalization } from '@did-btc1/common';
 
 const { process, canonicalize } = canonicalization;
 

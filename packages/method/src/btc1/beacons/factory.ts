@@ -1,9 +1,9 @@
-import { DidBtc1Error } from '../../utils/errors.js';
 import { CIDAggregateBeacon } from './cid-aggregate.js';
 import { Beacon } from './beacon.js';
 import { BeaconService } from './interface.js';
 import { SingletonBeacon } from './singleton.js';
 import { SMTAggregateBeacon } from './smt-aggregate.js';
+import { DidBtc1Error } from '@did-btc1/common';
 
 /**
  * Factory for Beacon creation

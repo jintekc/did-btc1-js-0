@@ -1,4 +1,4 @@
-import { BIP340_MULTIKEY_PREFIX, PublicKeyBytes } from '@did-btc1/key-pair';
+import { PublicKeyBytes, BIP340_MULTIKEY_PREFIX, HdWallet } from '@did-btc1/common';
 import { sha256 } from '@noble/hashes/sha256';
 import { CURVE, getPublicKey, utils } from '@noble/secp256k1';
 import { HDKey } from '@scure/bip32';

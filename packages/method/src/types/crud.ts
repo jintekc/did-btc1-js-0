@@ -1,10 +1,9 @@
-import { PrivateKeyBytes, ProofBytes } from '@did-btc1/cryptosuite';
 import { BlockV3 } from '../bitcoin/types.js';
 import { Btc1DidDocument, Btc1VerificationMethod } from '../btc1/did-document.js';
 import { DidResolutionOptions, DidUpdatePayload } from '../btc1/crud/interface.js';
 import { BeaconService } from '../btc1/beacons/interface.js';
 import { DidBtc1Identifier } from '../btc1/crud/create.js';
-import { PublicKeyBytes } from '@did-btc1/key-pair';
+import { PrivateKeyBytes, PublicKeyBytes, ProofBytes } from '@did-btc1/common';
 
 export type DidPlaceholder = 'did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 
