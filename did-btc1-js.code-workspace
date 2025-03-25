@@ -9,6 +9,10 @@
       "path": "packages/cryptosuite"
     },
     {
+      "name": "common",
+      "path": "packages/common"
+    },
+    {
       "name": "key-pair",
       "path": "packages/key-pair"
     },
