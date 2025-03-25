@@ -1,4 +1,4 @@
-export default class ObjectUtils extends Object {
+export class ObjectUtils extends Object {
   /**
    * Recursively checks deep equality of all keys, values, nested objects and arrays of
    * JSON objects using strict equality checks. Handles arrays as objects with numeric keys.
