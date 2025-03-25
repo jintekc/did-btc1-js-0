@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { PrivateKeyError } from '../src/error.js';
 import { PrivateKey } from '../src/private-key.js';
 import { PublicKey } from '../src/public-key.js';
+import { PrivateKeyError } from '@did-btc1/common';
 
 describe('PrivateKey instantiated', () => {
   const bytes = new Uint8Array([

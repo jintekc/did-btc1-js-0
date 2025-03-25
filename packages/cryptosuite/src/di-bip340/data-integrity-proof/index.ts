@@ -41,6 +41,7 @@ export class DataIntegrityProof implements IDataIntegrityProof {
     // Deconstruct the domain from the proof object and check:
     // if the options domain is defined, ensure it matches the proof domain
     // TODO: Adjust the domain check to match the spec (domain as a list of urls)
+    console.info('TODO: Adjust the domain check to match the spec (domain as a list of urls)');
     const { domain } = proof;
     if (options.domain && options.domain !== domain) {
       throw new ProofError('Domain mismatch between options and domain passed', 'PROOF_GENERATION_ERROR');

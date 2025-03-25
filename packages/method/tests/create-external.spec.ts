@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { DidBtc1 } from '../src/did-btc1.js';
 import { idTypes, networks, versions } from './test-data.js';
 import { IntermediateDocument } from '../src/btc1/crud/interface.js';
-import { canonicalization } from '@did-btc1/cryptosuite';
+import { canonicalization } from '@did-btc1/common';
 
 // Set the canonicalization algorithm to JCS (JSON Canonicalization Scheme)
 canonicalization.setAlgorithm('JCS');

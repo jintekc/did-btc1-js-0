@@ -48,7 +48,7 @@ export class Canonicalization {
    */
   public async canonicalize(object: JSONObject): Promise<string> {
     return this.algorithm.includes('JCS')
-      ? Canonicalization.jcs(object)
+      ? this.jcs(object)
       : await rdf.canonize([object], { algorithm: 'RDFC-1.0' });
   }
 
@@ -104,7 +104,7 @@ export class Canonicalization {
    * @param {JSONObject} object The object to canonicalize.
    * @returns {string} The stringified version of the input object with its keys sorted alphabetically per RFC 8785.
    */
-  public static jcs(object: JSONObject): string {
+  public jcs(object: JSONObject): string {
     if (typeof object === 'number' && isNaN(object)) {
       throw new Error('NaN is not allowed');
     }

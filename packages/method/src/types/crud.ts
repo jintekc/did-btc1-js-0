@@ -1,9 +1,9 @@
+import { PrivateKeyBytes, ProofBytes, PublicKeyBytes } from '@did-btc1/common';
 import { BlockV3 } from '../bitcoin/types.js';
-import { Btc1DidDocument, Btc1VerificationMethod } from '../btc1/did-document.js';
-import { DidResolutionOptions, DidUpdatePayload } from '../btc1/crud/interface.js';
-import { BeaconService } from '../btc1/beacons/interface.js';
 import { DidBtc1Identifier } from '../btc1/crud/create.js';
-import { PrivateKeyBytes, PublicKeyBytes, ProofBytes } from '@did-btc1/common';
+import { Btc1DidDocument, Btc1VerificationMethod } from '../btc1/utils/did-document.js';
+import { DidUpdatePayload } from '../interfaces/crud.js';
+import { BeaconService } from '../interfaces/ibeacon.js';
 
 export type DidPlaceholder = 'did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 
@@ -40,12 +40,18 @@ export interface Btc1SidecarData {
   did: DidBtc1Identifier;
 };
 
+export interface SignalsMetadata {
+  [key: string]: {
+    updatePayload: DidUpdatePayload;
+    proofs: any;
+  }
+  // TODO: Determine and define proofs type
+  //  A Sparse Merkle Tree proof that the provided updatePayload value is the value at the leaf
+  //  indexed by the did:btc1 being resolved. TODO: What exactly this structure is needs to be defined.
+
+};
 export interface SingletonSidecar extends Btc1SidecarData {
-  signalsMetadata: {
-    [key: string | symbol | number]: {
-      updatePayload: DidUpdatePayload;
-    }
-  };
+  signalsMetadata: SignalsMetadata;
 }
 export interface CIDAggregateSidecar extends Btc1SidecarData {
   initialDocument: Btc1DidDocument;
@@ -57,10 +63,6 @@ export interface SMTAggregateSidecar extends Btc1SidecarData {
 }
 export type SidecarData = SingletonSidecar | CIDAggregateSidecar | SMTAggregateSidecar;
 export type UnixTimestamp = number;
-export type TargetDocumentParams = {
-  initialDocument: Btc1DidDocument;
-  options: DidResolutionOptions;
-};
 export enum DidBtc1IdTypes {
     key = 'key',
     external = 'external'

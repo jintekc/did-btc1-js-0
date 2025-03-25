@@ -2,12 +2,7 @@ import { expect } from 'chai';
 import { DidBtc1 } from '../src/did-btc1.js';
 import { idTypes, networks, versions } from './test-data.js';
 import { KeyPair } from '@did-btc1/key-pair';
-import { canonicalization } from '@did-btc1/cryptosuite';
-
-// Set the canonicalization algorithm to JCS (JSON Canonicalization Scheme)
-canonicalization.setAlgorithm('JCS');
-
-const idType = idTypes.key as 'key';
+import { canonicalization } from '@did-btc1/common';
 
 /**
  * DidBtc1 Create Key Test Cases
@@ -17,9 +12,10 @@ const idType = idTypes.key as 'key';
  * idType=key, publicKey, version
  * idType=key, publicKey, network
  * idType=key, publicKey, version, network
- *
  */
 describe('DidBtc1 Create Deterministic', () => {
+  canonicalization.setAlgorithm('JCS');
+  const idType = idTypes.key as 'key';
   const privateKey = new Uint8Array([
     189,  38, 143, 201, 181, 132,  46, 71,
     232,  89, 206, 136, 196, 208, 94, 153,
