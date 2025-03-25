@@ -1,6 +1,6 @@
+import { HashBytes, SignatureBytes } from '@did-btc1/common';
 import { Multikey } from '../di-bip340/multikey/index.js';
 import { DataIntegrityProofType, InsecureDocument, ProofOptions, SecureDocument } from './di-proof.js';
-import { HashBytes, SignatureBytes } from './shared.js';
 
 export type ProofOptionsParam = { options: ProofOptions }
 export type InsecureDocumentParams = ProofOptionsParam & {

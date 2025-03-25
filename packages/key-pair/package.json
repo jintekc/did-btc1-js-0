@@ -85,6 +85,7 @@
     "version:new": "[ -z \"$NEW_VERSION\" ] && echo 'ERROR: NEW_VERSION is not set' && exit 1 || (git checkout -b $NEW_VERSION && git tag $NEW_VERSION && pnpm version:no-git $NEW_VERSION)"
   },
   "dependencies": {
+    "@did-btc1/common": "workspace:*",
     "@noble/hashes": "^1.7.1",
     "multiformats": "^13.3.2",
     "tiny-secp256k1": "^2.2.3"
