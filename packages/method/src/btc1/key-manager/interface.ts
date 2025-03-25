@@ -1,5 +1,6 @@
-import { HashBytes, MultikeyJSON } from '@did-btc1/cryptosuite';
-import { Hex, KeyPair, PublicKey, SignatureBytes } from '@did-btc1/key-pair';
+import { HashBytes, Hex, SignatureBytes } from '@did-btc1/common';
+import { MultikeyJSON } from '@did-btc1/cryptosuite';
+import { KeyPair, PublicKey } from '@did-btc1/key-pair';
 import { KeyValueStore } from '@web5/common';
 
 export type Btc1KeyManagerOptions = {

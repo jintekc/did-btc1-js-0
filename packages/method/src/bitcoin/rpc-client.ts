@@ -1,6 +1,5 @@
 import { default as RpcClient } from 'bitcoin-core';
 import '../exts.js';
-import { BitcoinRpcError } from '../utils/errors.js';
 import { DEFAULT_RPC_CLIENT_CONFIG } from './constants.js';
 import { IBitcoinRpc } from './interface.js';
 import {
@@ -63,6 +62,7 @@ import {
   VerbosityLevel,
   WalletTransaction
 } from './types.js';
+import { BitcoinRpcError } from '@did-btc1/common';
 
 /**
  * Encapsulates a {@link RpcClient | Client} object from {@link https://www.npmjs.com/package/bitcoin-core | `bitcoin-core`}.

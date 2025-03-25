@@ -306,6 +306,9 @@ importers:
 
   packages/method:
     dependencies:
+      '@did-btc1/common':
+        specifier: workspace:*
+        version: link:../common
       '@did-btc1/cryptosuite':
         specifier: workspace:*
         version: link:../cryptosuite
