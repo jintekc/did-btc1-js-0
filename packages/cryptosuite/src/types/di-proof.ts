@@ -1,5 +1,5 @@
+import { Btc1Identifier } from '@did-btc1/common';
 import { CryptosuiteType } from './cryptosuite.js';
-import { Btc1Identifier } from './shared.js';
 
 /** Types */
 export type DataIntegrityProofType = 'DataIntegrityProof';

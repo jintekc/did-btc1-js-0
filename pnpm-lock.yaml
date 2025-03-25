@@ -127,6 +127,9 @@ importers:
 
   packages/cryptosuite:
     dependencies:
+      '@did-btc1/common':
+        specifier: workspace:*
+        version: link:../common
       '@did-btc1/key-pair':
         specifier: workspace:*
         version: link:../key-pair
@@ -224,6 +227,9 @@ importers:
 
   packages/key-pair:
     dependencies:
+      '@did-btc1/common':
+        specifier: workspace:*
+        version: link:../common
       '@noble/hashes':
         specifier: ^1.7.1
         version: 1.7.1
@@ -1999,6 +2005,7 @@ packages:
 
   '@sphereon/kmp-mdoc-core@0.2.0-SNAPSHOT.26':
     resolution: {integrity: sha512-QXJ6R8ENiZV2rPMbn06cw5JKwqUYN1kzVRbYfONqE1PEXx1noQ4md7uxr2zSczi0ubKkNcbyYDNtIMTZIhGzmQ==}
+    bundledDependencies: []
 
   '@sphereon/ssi-types@0.32.0':
     resolution: {integrity: sha512-v5yC/bj1nvHE30cYMMqmjz2KHPpXj3OL8ZwnZQTiAMISS4DOVTjpYt0qZgb4eA1Lsdw2smd1bNYyVsOEJ02PAw==}

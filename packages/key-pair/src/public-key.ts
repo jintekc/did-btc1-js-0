@@ -1,10 +1,19 @@
 import { sha256 } from '@noble/hashes/sha256';
 import { base58btc } from 'multiformats/bases/base58';
-import { BIP340_MULTIKEY_PREFIX, BIP340_MULTIKEY_PREFIX_HASH, CURVE } from './constants.js';
-import { PublicKeyError } from './error.js';
 import { IPublicKey } from './interface.js';
 import { PrivateKey } from './private-key.js';
-import { Hex, PrefixBytes, PrivateKeyBytes, PublicKeyBytes, PublicKeyJSON, PublicKeyMultibaseBytes } from './types.js';
+import {
+  PublicKeyBytes,
+  PublicKeyError,
+  PrefixBytes,
+  PublicKeyMultibaseBytes,
+  BIP340_MULTIKEY_PREFIX_HASH,
+  BIP340_MULTIKEY_PREFIX,
+  Hex,
+  PublicKeyJSON,
+  PrivateKeyBytes,
+  CURVE
+} from '@did-btc1/common';
 
 /**
  * Encapsulates a secp256k1 public key.

@@ -1,9 +1,8 @@
+import { Hex, MultikeyError, SignatureBytes } from '@did-btc1/common';
 import { KeyPair, PrivateKey, PublicKey } from '@did-btc1/key-pair';
 import { schnorr } from '@noble/curves/secp256k1';
 import { DidVerificationMethod } from '@web5/dids';
 import { randomBytes } from 'crypto';
-import { Hex, SignatureBytes } from '../../types/shared.js';
-import { MultikeyError } from '../../utils/error.js';
 import { FromPrivateKey, FromPublicKey, IMultikey, MultikeyJSON, MultikeyParams } from './interface.js';
 
 /**

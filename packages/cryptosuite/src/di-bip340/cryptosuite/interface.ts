@@ -1,3 +1,4 @@
+import { HashHex, SignatureBytes } from '@did-btc1/common';
 import {
   CanonicalizableObject,
   GenerateHashParams,
@@ -14,7 +15,6 @@ import {
   SecureDocument,
   VerificationResult
 } from '../../types/di-proof.js';
-import { HashHex, SignatureBytes } from '../../types/shared.js';
 import { Multikey } from '../multikey/index.js';
 
 /**

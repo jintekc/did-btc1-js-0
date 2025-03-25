@@ -1,5 +1,4 @@
-import { Hex, KeyBytes, KeyPairJSON, PrivateKeyBytes, PublicKeyBytes } from './types.js';
-import { KeyPairError } from './error.js';
+import { Hex, KeyBytes, KeyPairError, KeyPairJSON, PrivateKeyBytes, PublicKeyBytes } from '@did-btc1/common';
 import { IKeyPair } from './interface.js';
 import { PrivateKey, PrivateKeyUtils } from './private-key.js';
 import { PublicKey } from './public-key.js';
