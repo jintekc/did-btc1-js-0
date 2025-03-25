@@ -27,7 +27,7 @@
         "build:esm": "rimraf dist/esm dist/types && pnpm tsc -p tsconfig.json",
         "build:cjs": "rimraf dist/cjs && tsc -p tsconfig.cjs.json && echo '{\"type\": \"commonjs\"}' > ./dist/cjs/package.json",
         "build:tests": "pnpm build && pnpm tsc -p tests/tsconfig.json",
-        "release": "pnpm build && pnpm pack && mv *.tgz ../../release/cryptosuite",
+        "release": "pnpm build && pnpm pack && mv *.tgz ../../release/method",
         "lint": "eslint . --max-warnings 0",
         "lint:fix": "eslint . --fix",
         "test": "pnpm build && pnpm build:tests && pnpm c8 --omit-relative mocha",
