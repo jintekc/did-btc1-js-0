@@ -1,6 +1,6 @@
 {
   "name": "did-btc1-js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Monorepo for did:btc1 js/ts implementation and supporting packages.",
   "type": "module",
   "workspaces": [
@@ -24,6 +24,7 @@
     "lint:fix": "pnpm --recursive --stream lint:fix",
     "publish:all": "pnpm --recursive --stream publish",
     "test": "pnpm --recursive --stream test",
+    "build:test": "pnpm --recursive --stream build:test",
     "test:node": "pnpm --recursive --stream test:node",
     "release": "pnpm --recursive --stream release",
     "build:tests": "pnpm --recursive --stream build:tests",

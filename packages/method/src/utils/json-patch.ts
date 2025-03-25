@@ -1,4 +1,4 @@
-import { Btc1DidDocument } from '../btc1/did-document.js';
+import { Btc1DidDocument } from '../btc1/utils/did-document.js';
 
 export interface PatchOperation {
   op: string; // 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'

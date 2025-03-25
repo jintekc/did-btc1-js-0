@@ -185,7 +185,7 @@ export class Cryptosuite implements ICryptosuite {
 
     // TODO: check valid XMLSchema DateTime
     if(options.created) {
-      console.log('TODO: check valid XMLSchema DateTime');
+      console.info('TODO: check valid XMLSchema DateTime');
     }
 
     // Return the RDFC canonicalized proof configuration

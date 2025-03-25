@@ -1,8 +1,8 @@
 import { DidVerificationMethod, DidResolutionOptions as IDidResolutionOptions } from '@web5/dids';
-import BitcoinRpc from '../../bitcoin/rpc-client.js';
-import { PatchOperation } from '../../utils/json-patch.js';
-import { Btc1DidDocument } from '../did-document.js';
-import { DidPlaceholder, RecoveryOptions, SidecarData, UnixTimestamp } from '../../types/crud.js';
+import BitcoinRpc from '../bitcoin/rpc-client.js';
+import { PatchOperation } from '../utils/json-patch.js';
+import { Btc1DidDocument } from '../btc1/utils/did-document.js';
+import { DidPlaceholder, RecoveryOptions, SidecarData, UnixTimestamp } from '../types/crud.js';
 
 export interface IntermediateVerificationMethod extends DidVerificationMethod {
     id: string;
@@ -14,19 +14,22 @@ export interface IntermediateDocument extends Btc1DidDocument {
     id:  DidPlaceholder;
     verificationMethod: IntermediateVerificationMethod[];
 }
+
+/**
+ * @param {?number} params.options.versionId The versionId for resolving the DID Document
+ * @param {?UnixTimestamp} params.options.versionTime The versionTime for resolving the DID Document
+ * @param {?BitcoinRpc} params.options.rpc BitcoinRpc client connection
+ * @param {?SidecarData} params.options.sidecarData The sidecar data for resolving the DID Document
+ */
 export interface DidResolutionOptions extends IDidResolutionOptions {
-  /** Version Id */
   versionId?: number
-  /** Unix timstamp of the block height to find */
   versionTime?: UnixTimestamp;
-  /** Bitcoind gRPC client config */
   rpc?: BitcoinRpc;
-  /** Sidecar data for resolution */
   sidecarData?: SidecarData;
 }
 export interface Btc1RootCapability {
     '@context': string;
-    id: `urn:zcap:root${string}`;
+    id: string;
     controller: string;
     invocationTarget: string;
 }
@@ -47,7 +50,7 @@ export interface DidUpdatePayload {
     sourceHash: string;
     targetHash: string;
     targetVersionId: number;
-    proof?: ProofOptions;
+    proof: ProofOptions;
 }
 export interface ReadBlockchainParams {
   contemporaryDidDocument: Btc1DidDocument;
@@ -60,10 +63,10 @@ export interface ReadBlockchainParams {
   options?: DidResolutionOptions;
 }
 export interface ProofOptions {
-  type: string;
-  cryptosuite: string;
-  verificationMethod: string;
-  proofPurpose: string;
-  capability: string;
-  capabilityAction: string;
+  type?: string;
+  cryptosuite?: string;
+  verificationMethod?: string;
+  proofPurpose?: string;
+  capability?: string;
+  capabilityAction?: string;
 }

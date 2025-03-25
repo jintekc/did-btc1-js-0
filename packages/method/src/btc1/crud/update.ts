@@ -1,15 +1,16 @@
+import { canonicalization, DidBtc1Error } from '@did-btc1/common';
 import type { DidService } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { base58btc } from 'multiformats/bases/base58';
+import { Btc1Appendix } from '../../index.js';
+import { DidUpdatePayload } from '../../interfaces/crud.js';
+import { BeaconService } from '../../interfaces/ibeacon.js';
 import { InvokePayloadParams, SignalMetdata } from '../../types/crud.js';
 import { GeneralUtils } from '../../utils/general.js';
 import JsonPatch, { PatchOperation } from '../../utils/json-patch.js';
 import { BeaconFactory } from '../beacons/factory.js';
-import { BeaconService } from '../beacons/interface.js';
-import { BTC1_DID_UPDATE_PAYLOAD_CONTEXT, W3C_ZCAP_V1 } from '../constants.js';
-import { Btc1DidDocument, Btc1VerificationMethod } from '../did-document.js';
-import { Btc1RootCapability, DidUpdatePayload } from './interface.js';
-import { canonicalization, DidBtc1Error } from '@did-btc1/common';
+import { BTC1_DID_UPDATE_PAYLOAD_CONTEXT } from '../utils/constants.js';
+import { Btc1DidDocument, Btc1VerificationMethod } from '../utils/did-document.js';
 
 const { canonicalhash } = canonicalization;
 
@@ -66,6 +67,7 @@ export class Btc1Update {
       targetHash      : '',
       targetVersionId : Number(sourceVersionId) + 1,
       sourceHash      : base58btc.encode(sourceDocHash),
+      proof           : {}
     };
 
     // Apply patch to source document
@@ -124,7 +126,7 @@ export class Btc1Update {
       throw new DidBtc1Error('Invalid privateKeyBytes');
     }
     // Derive the root capability from the identifier
-    const rootCapability = this.deriveRootCapability(identifier);
+    const rootCapability = Btc1Appendix.deriveRootCapability(identifier);
     // Construct the proof options
     const proofOptions = {
       type               : 'DataIntegrityProof',
@@ -136,37 +138,6 @@ export class Btc1Update {
     };
     console.log('proofOptions:', proofOptions);
     return proofOptions;
-  }
-
-  /**
-   * Implements {@link https://dcdpr.github.io/did-btc1/#derive-root-capability-from-didbtc1-identifier | 4.3.3.1 Derive Root Capability}.
-   *
-   * The Derive Root Capability algorithm deterministically generates a ZCAP-LD root capability from a given did:btc1
-   * identifier. Each root capability is unique to the identifier. This root capability is defined and understood by the
-   * did:btc1 specification as the root capability to authorize updates to the specific did:btc1 identifiers DID
-   * document. It takes in a did:btc1 identifier and returns a rootCapability object. It returns the root capability.
-   *
-   * @public
-   * @static
-   * @param {string} identifier The did-btc1 identifier to derive the root capability from
-   * @returns {Btc1RootCapability} The root capability object
-   * @example Root capability for updating the DID document for did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u
-   * ```
-   * {
-   *  "@context": "https://w3id.org/zcap/v1",
-   *  "id": "urn:zcap:root:did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u",
-   *  "controller": "did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u",
-   *  "invocationTarget": "did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u"
-   * }
-   * ```
-   */
-  public static deriveRootCapability(identifier: string): Btc1RootCapability {
-    return {
-      '@context'       : W3C_ZCAP_V1,
-      id               : `urn:zcap:root:${encodeURIComponent(identifier)}`,
-      controller       : identifier,
-      invocationTarget : identifier,
-    };
   }
 
   /**

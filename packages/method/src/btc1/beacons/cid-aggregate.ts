@@ -1,13 +1,13 @@
 import { RawTransactionV2, SignedRawTx } from '../../bitcoin/types.js';
-import { DidUpdatePayload } from '../crud/interface.js';
-import { SidecarData } from '../../types/crud.js';
-import { Beacon } from './beacon.js';
-import { BeaconService, BeaconSignal } from './interface.js';
-import { Btc1VerificationMethod } from '../did-document.js';
+import { CIDAggregateSidecar, SidecarData, SignalsMetadata } from '../../types/crud.js';
+import { Beacon } from '../../interfaces/beacon.js';
+import { BeaconService, BeaconSignal } from '../../interfaces/ibeacon.js';
+import { Btc1VerificationMethod } from '../utils/did-document.js';
+import { DidUpdatePayload } from '../../interfaces/crud.js';
 
 export class CIDAggregateBeacon extends Beacon {
-  constructor(params: BeaconService) {
-    super({ ...params, type: 'CIDAggregateBeacon' });
+  constructor(service: BeaconService, sidecar?: SidecarData) {
+    super({ ...service, type: 'CIDAggregateBeacon' }, sidecar as CIDAggregateSidecar);
   }
 
   get service(): BeaconService {
@@ -20,8 +20,8 @@ export class CIDAggregateBeacon extends Beacon {
   generateSignal(didUpdatePayload: string): BeaconSignal {
     throw new Error('Method not implemented.' + didUpdatePayload);
   }
-  processSignal(tx: RawTransactionV2, sidecarData?: SidecarData): Promise<DidUpdatePayload | undefined> {
-    throw new Error('Method not implemented.' + tx + sidecarData);
+  processSignal(signal: RawTransactionV2, signalsMetadata: SignalsMetadata): Promise<DidUpdatePayload | undefined> {
+    throw new Error('Method not implemented.' + signal + signalsMetadata);
   }
   broadcastSignal(beaconService: BeaconService, didUpdateInvocation: Btc1VerificationMethod): Promise<SignedRawTx> {
     throw new Error('Method not implemented.' + beaconService + didUpdateInvocation);

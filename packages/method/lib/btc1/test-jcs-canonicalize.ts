@@ -2,7 +2,7 @@ import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 import canonicalize from 'canonicalize';
 import { canonicalize as jcs } from '@web5/crypto';
-import { Canonicalization } from '@did-btc1/cryptosuite';
+import { canonicalization } from '@did-btc1/common';
 
 const updatePayload = {
   '@context' : [
@@ -41,7 +41,7 @@ const updatePayload = {
 };
 const canonicalizePayload = canonicalize(updatePayload);
 const canonicalizeWeb5 = jcs(updatePayload);
-const canonicalizeCryptosuite = Canonicalization.jcs(updatePayload);
+const canonicalizeCryptosuite = canonicalization.jcs(updatePayload);
 console.log('pkg: canonicalize', canonicalizePayload);
 console.log('pkg: @web5/crypto', canonicalizeWeb5);
 console.log('pkg: packages/cryptosuite', canonicalizeCryptosuite);

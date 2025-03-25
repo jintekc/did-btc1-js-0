@@ -11,12 +11,12 @@ import * as tinysecp from 'tiny-secp256k1';
 import { Btc1Create, DidCreateResponse } from './btc1/crud/create.js';
 import { Btc1Read } from './btc1/crud/read.js';
 import { Btc1Update } from './btc1/crud/update.js';
-import { Btc1DidDocument } from './btc1/did-document.js';
+import { Btc1DidDocument } from './btc1/utils/did-document.js';
 import { Btc1KeyManager } from './btc1/key-manager/index.js';
 import { Btc1Networks, DidBtc1IdTypes } from './types/crud.js';
-import { Btc1Utils } from './btc1/utils.js';
-import { W3C_DID_RESOLUTION_V1 } from './btc1/constants.js';
-import { DidResolutionOptions, DidUpdateParams, IntermediateDocument } from './btc1/crud/interface.js';
+import { Btc1Appendix } from './btc1/utils/btc1-appendix.js';
+import { W3C_DID_RESOLUTION_V1 } from './btc1/utils/constants.js';
+import { DidResolutionOptions, DidUpdateParams, IntermediateDocument } from './btc1/crud/crud.js';
 import { DidBtc1Error, PublicKeyBytes } from '@did-btc1/common';
 
 /** Initialize tiny secp256k1 */
@@ -172,7 +172,7 @@ export class DidBtc1 implements DidMethod {
   public static async resolve(identifier: string, options: DidResolutionOptions = {}): Promise<DidResolutionResult> {
     try {
       // Parse the identifier into its components
-      const components = Btc1Utils.parse(identifier);
+      const components = Btc1Appendix.parse(identifier);
 
       // Resolve the DID Document based on the hrp
       const initialDocument = await Btc1Read.initialDocument({ identifier, components, options });
@@ -249,7 +249,7 @@ export class DidBtc1 implements DidMethod {
     });
 
     // Get the sourceDocument verificationMethods and filter for the verificationMethodId passed
-    const vms = Btc1Utils.getVerificationMethods({ didDocument: sourceDocument });
+    const vms = Btc1Appendix.getVerificationMethods({ didDocument: sourceDocument });
     const vm = vms.filter(vm => vm.id === verificationMethodId)?.[0];
 
     // Validate the verificationMethod type is Multikey
@@ -298,8 +298,8 @@ export class DidBtc1 implements DidMethod {
     // Attempt to find a verification method that matches the given method ID, or if not given,
     // find the first verification method intended for signing claims.
     const verificationMethod = didDocument.verificationMethod?.find(
-      (vm: DidVerificationMethod) => Btc1Utils.extractDidFragment(vm.id) === (Btc1Utils.extractDidFragment(methodId)
-        ?? Btc1Utils.extractDidFragment(didDocument.assertionMethod?.[0]))
+      (vm: DidVerificationMethod) => Btc1Appendix.extractDidFragment(vm.id) === (Btc1Appendix.extractDidFragment(methodId)
+        ?? Btc1Appendix.extractDidFragment(didDocument.assertionMethod?.[0]))
     );
 
     // If no verification method is found, throw an error

@@ -3,7 +3,7 @@ import { createHelia } from 'helia';
 import { sha256 } from '@noble/hashes/sha256';
 import { canonicalize } from '@web5/crypto';
 import { bech32 } from '@scure/base';
-import { Btc1Utils } from '../../src/index.js';
+import { Btc1Appendix } from '../../src/index.js';
 
 const parsable = (content: string) => {
   try {
@@ -59,7 +59,7 @@ console.log('genesisBytes', genesisBytes);
 const hexDigest = Buffer.from(genesisBytes).toString('hex');
 console.log('hexDigest', hexDigest);
 
-const identifierComponents = Btc1Utils.parse(did);
+const identifierComponents = Btc1Appendix.parse(did);
 console.log('identifierComponents', identifierComponents);
 
 const hashBytes = identifierComponents.genesisBytes;

@@ -1,10 +1,10 @@
 import { DidDocument, DidService } from '@web5/dids';
 import { networks, payments } from 'bitcoinjs-lib';
 import { Maybe } from '../../exts.js';
-import { Btc1Utils } from '../utils.js';
-import { BeaconFactory } from './factory.js';
-import { BeaconService, BeaconServiceAddress } from './interface.js';
+import { BeaconFactory } from '../beacons/factory.js';
+import { BeaconService, BeaconServiceAddress } from '../../interfaces/ibeacon.js';
 import { PublicKeyBytes, DidBtc1Error } from '@did-btc1/common';
+import { Btc1Appendix } from './btc1-appendix.js';
 
 /**
  * Required parameters for generating Beacon Services.
@@ -60,7 +60,7 @@ export class BeaconUtils {
    */
   public static isBeaconService(obj: Maybe<BeaconService>): boolean {
     // Return false if the given obj is not a valid DidService.
-    if(!Btc1Utils.isDidService(obj)) return false;
+    if(!Btc1Appendix.isDidService(obj)) return false;
 
     // Return false if the type is not a valid beacon service type.
     if(!['SingletonBeacon', 'CIDAggregateBeacon', 'SMTAggregateBeacon'].includes(obj.type)) return false;
@@ -85,7 +85,7 @@ export class BeaconUtils {
    */
   public static getBeaconServices({ didDocument }: { didDocument: DidDocument }): BeaconService[] {
     // Filter out any invalid did service objects.
-    const didServices: DidService[] = didDocument.service?.filter(Btc1Utils.isDidService) ?? [];
+    const didServices: DidService[] = didDocument.service?.filter(Btc1Appendix.isDidService) ?? [];
     // Filter for valid beacon service objects.
     return (didServices.filter(this.isBeaconService) ?? []) as BeaconService[];
   }

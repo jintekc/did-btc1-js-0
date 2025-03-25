@@ -1,17 +1,15 @@
+import { canonicalization, PublicKeyBytes } from '@did-btc1/common';
+import { PublicKey } from '@did-btc1/key-pair';
 import { bech32 } from '@scure/base';
 import type { DidService, DidVerificationMethod } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { getNetwork } from '../../bitcoin/network.js';
 import { DidBtc1 } from '../../did-btc1.js';
-import { BeaconUtils } from '../beacons/utils.js';
-import { ID_PLACEHOLDER_VALUE } from '../constants.js';
-import { Btc1DidDocument } from '../did-document.js';
-import { IntermediateDocument, IntermediateVerificationMethod } from './interface.js';
+import { IntermediateDocument, IntermediateVerificationMethod } from '../../interfaces/crud.js';
 import { DocumentBytes } from '../../types/crud.js';
-import { canonicalization, PublicKeyBytes } from '@did-btc1/common';
-import { PublicKey } from '@did-btc1/key-pair';
-
-const { canonicalhash } = canonicalization;
+import { BeaconUtils } from '../utils/beacon-utils.js';
+import { ID_PLACEHOLDER_VALUE } from '../utils/constants.js';
+import { Btc1DidDocument } from '../utils/did-document.js';
 
 export type NetworkVersionParams = {
   version?: string | undefined;
@@ -39,7 +37,7 @@ export interface CreateDidBtc1IdentifierParams {
 
 export type DidBtc1Identifier = string;
 /**
- * Implements section {@link https://dcdpr.github.io/did-btc1/#create | 4.1 Create}
+ * Implements section {@link https://dcdpr.github.io/did-btc1/#create | 4.1 Create}.
  *
  * A did:btc1 identifier and associated DID document can either be created deterministically from a cryptographic seed,
  * or it can be created from an arbitrary genesis intermediate DID document representation. In both cases, DID creation
@@ -166,13 +164,10 @@ export class Btc1Create {
     );
 
     // Sha256 hash the canonicalized byte array of the intermediateDocument
-    const genesisBytes = await canonicalhash(intermediateDocument);
-
-    // Set idType to external
-    const idType = 'external';
+    const genesisBytes = await canonicalization.canonicalhash(intermediateDocument);
 
     // Set did to result of createIdentifier
-    const did = this.didBtc1Identifier({ idType, genesisBytes, version, network });
+    const did = this.didBtc1Identifier({ idType: 'external', genesisBytes, version, network });
 
     // Create copy of intermediateDocument initialDocument as DidDocument
     const initialDocument = intermediateDocument as Btc1DidDocument;
