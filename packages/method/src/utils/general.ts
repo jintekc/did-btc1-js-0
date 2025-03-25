@@ -1,4 +1,3 @@
-import { Canonicalize } from '@did-btc1/cryptosuite';
 import { BIP340_MULTIKEY_PREFIX } from '@did-btc1/key-pair';
 import { sha256 } from '@noble/hashes/sha256';
 import { CURVE, getPublicKey, utils } from '@noble/secp256k1';
@@ -6,8 +5,7 @@ import { HDKey } from '@scure/bip32';
 import { generateMnemonic, mnemonicToSeed } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { base58btc } from 'multiformats/bases/base58';
-import { PublicKeyBytes } from '../btc1/types.js';
-import { JSONObject } from '../exts.js';
+import { PublicKeyBytes } from '../btc1/crud/types.js';
 import { HdWallet } from '../types/shared.js';
 
 /**
@@ -212,18 +210,5 @@ export class GeneralUtils {
     }
     // Return the child key
     return childKey;
-  }
-
-  /**
-   * Generates a sh256 hash of the a canonicalized object
-   * @static
-   * @param {JSONObject} data The data to hash
-   * @returns {Uint8Array} The sha256 hash bytes of a canonicalized JSON object
-   */
-  static async sha256Canonicalize(data: JSONObject, algorithm: string = 'RDFC-1.0'): Promise<Uint8Array> {
-    const canonical = algorithm.includes('RDFC')
-      ? await Canonicalize.rdfc(data, algorithm)
-      : Canonicalize.jcs(data);
-    return sha256(Buffer.from(canonical));
   }
 }

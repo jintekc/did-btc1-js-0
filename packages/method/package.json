@@ -90,6 +90,7 @@
         "bech32": "^2.0.0",
         "bitcoin-core": "^5.0.0",
         "bitcoinjs-lib": "7.0.0-rc.0",
+        "canonicalize": "^2.1.0",
         "commander": "^13.1.0",
         "helia": "^5.2.1",
         "json-canonicalize": "^1.0.6",

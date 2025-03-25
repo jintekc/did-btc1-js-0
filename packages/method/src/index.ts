@@ -17,7 +17,7 @@ export * from './btc1/key-manager/interface.js';
 export * from './btc1/constants.js';
 export * from './btc1/did-document.js';
 export * from './btc1/interface.js';
-export * from './btc1/types.js';
+export * from './btc1/crud/types.js';
 export * from './btc1/utils.js';
 
 export * from './types/shared.js';

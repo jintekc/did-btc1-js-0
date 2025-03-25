@@ -7,17 +7,13 @@ import {
   DidVerificationMethod,
   DidVerificationRelationship
 } from '@web5/dids';
-import { payments } from 'bitcoinjs-lib';
-import { BeaconServiceParams, DidComponents, GenerateBitcoinAddrs } from './interface.js';
 import { DidBtc1 } from '../did-btc1.js';
-import { Maybe } from '../exts.js';
-import { DidBtc1Error } from '../utils/error.js';
-import { Btc1Networks } from './types.js';
-import { BeaconService, BeaconServicesParams, BeaconServiceAddress } from './beacons/interface.js';
+import { Btc1Networks } from './crud/types.js';
+import { DidComponents } from './interface.js';
 
 /**
- * Utility functions for the DID BTC1 method
- * {@link https://dcdpr.github.io/did-btc1/ | DID BTC1}
+ * Utility functions for the {@link https://dcdpr.github.io/did-btc1/ | DID BTC1} method
+ *
  * @export
  * @class Btc1Utils
  * @type {Btc1Utils}
@@ -172,18 +168,6 @@ export class Btc1Utils {
     return true;
   }
 
-
-  /**
-   * Validates that the given object is a Beacon Service
-   * @public
-   * @static
-   * @param {BeaconService} obj The object to validate
-   * @returns {boolean} A boolean indicating whether the object is a Beacon Service
-   */
-  public static isBeaconService(obj: Maybe<BeaconService>): boolean {
-    return obj.type === 'SingletonBeacon' || obj.type === 'CIDAggregateBeacon' || obj.type === 'SMTAggregateBeacon';
-  }
-
   /**
    * Extracts the verification methods from a given DID Document
    * @public
@@ -205,118 +189,5 @@ export class Btc1Utils {
       );
     });
     return verificationMethods;
-  }
-
-  /**
-   * Extracts the services from a given DID Document
-   * @public
-   * @static
-   * @param {DidDocument} didDocument The DID Document to extract the services from
-   * @returns {DidService[]} An array of DidService objects
-   * @throws {TypeError} if the didDocument is not provided
-   */
-  public static getDidBeaconServices({ didDocument }: { didDocument: DidDocument }): BeaconService[] {
-    // Validate that the didDocument is provided.
-    if (!didDocument) throw new TypeError(`Required parameter missing: 'didDocument'`);
-    // Filter out any invalid did service objects.
-    const didServices: DidService[] = didDocument.service?.filter(Btc1Utils.isDidService) ?? [];
-    // Filter for valid beacon service objects.
-    return (didServices.filter(Btc1Utils.isBeaconService) ?? []) as BeaconService[];
-  }
-
-  /**
-   * Generate a set of Beacon Services for a given public key.
-   * @public
-   * @static
-   * @param {BeaconServicesParams} params Required parameters for generating Beacon Services.
-   * @param {Uint8Array} params.pubkey Public key bytes used to generate the beacon object serviceEndpoint.
-   * @param {Network} params.network Bitcoin network interface from bitcoinlib-js.
-   * @returns {Array<Array<string>>} 2D Array of bitcoin addresses (p2pkh, p2wpkh, p2tr).
-   * @throws {DidBtc1Error} if the bitcoin address is invalid.
-   */
-  static generateBitcoinAddrs({ pubkey, network }: GenerateBitcoinAddrs): Array<Array<string>> {
-    try {
-      const p2pkh = payments.p2pkh({ pubkey, network }).address;
-      const p2wpkh = payments.p2wpkh({ pubkey, network }).address;
-      const p2tr = payments.p2tr({ network, internalPubkey: pubkey.slice(1, 33) }).address;
-      if (!p2pkh || !p2wpkh || !p2tr) {
-        throw new DidBtc1Error('Failed to generate bitcoin addresses');
-      }
-      return [
-        ['#initialP2PKH', p2pkh],
-        ['#initialP2WPKH', p2wpkh],
-        ['#initialP2TR', p2tr]
-      ];
-    } catch (error) {
-      console.error(error);
-      process.exit(1);
-    }
-  }
-
-  /**
-   * Generate beacon services.
-   * @public
-   * @static
-   * @param {BeaconServicesParams} params Required parameters for generating Beacon Services.
-   * @param {Network} params.network The Bitcoin network to use (mainnet or testnet).
-   * @param {Uint8Array} params.publicKey Byte array representation of a public key used to generate a new btc1 key-id-type.
-   * @param {string} params.beaconType Optional beacon type to use (default: SingletonBeacon).
-   * @returns {DidService[]} Array of DidService objects.
-   */
-  public static generateBeaconServices({ network, publicKey, beaconType }: BeaconServicesParams): Array<BeaconService> {
-    beaconType ??= 'SingletonBeacon';
-    return this.generateBitcoinAddrs({ network, pubkey: publicKey })
-      .map(([serviceId, bitcoinAddress]) =>
-        this.generateBeaconService({
-          serviceId,
-          bitcoinAddress,
-          beaconType
-        })
-      );
-  }
-
-  /**
-   * Generate a beacon service.
-   * @public
-   * @public
-   * @static
-   * @name generateBeaconService
-   * @param {BeaconServicesParams} params Required parameters for generating a single Beacon Service.
-   * @param {string} params.serviceId The type of service being created (#initialP2PKH, #initialP2WPKH, #initialP2TR).
-   * @param {string} params.beaconType The tyoe of beacon service being created (SingletonBeacon, SMTAggregatorBeacon).
-   * @param {BitcoinAddress} params.bitcoinAddress The bitcoin address to use for the service endpoint.
-   * @returns {DidService} One DidService object.
-   */
-  public static generateBeaconService({
-    serviceId,
-    beaconType,
-    bitcoinAddress,
-    casType
-  }: BeaconServiceParams): BeaconService {
-    const beaconService = {
-      id              : serviceId,
-      type            : beaconType,
-      serviceEndpoint : `bitcoin:${bitcoinAddress}`
-    };
-    return !casType ? beaconService : { ...beaconService, casType };
-  }
-
-
-  /**
-   * Convert beacon service endpoints from BIP-21 URIs to addresses.
-   * @public
-   * @static
-   * @param {Array<BeaconService>} beacons The list of beacon services.
-   * @returns {Map<string, BeaconServiceAddress>} A map of address => beaconService.
-   */
-  public static getBeaconAddressMap(beacons: Array<BeaconService>): Map<string, BeaconServiceAddress> {
-    return new Map<string, BeaconServiceAddress>(
-      beacons.map(
-        (beacon) => {
-          const address = beacon.serviceEndpoint.replace('bitcoin:', '');
-          return ([address, { ...beacon, address }]);
-        }
-      )
-    );
   }
 }

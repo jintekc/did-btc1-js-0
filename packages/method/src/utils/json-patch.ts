@@ -1,26 +1,17 @@
 import { Btc1DidDocument } from '../btc1/did-document.js';
 
 export interface PatchOperation {
-  op: 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test';
+  op: string; // 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'
   path: string;
   value?: any; // Required for add, replace, test
   from?: string; // Required for move, copy
 }
 
-export interface DidDocumentPatch {
-  '@context': [
-      'https://w3id.org/zcap/v1',
-      'https://w3id.org/security/data-integrity/v2',
-      'https://w3id.org/json-ld-patch/v1'
-  ];
-  patch: PatchOperation[];
-}
-
 export default class JsonPatch {
-  public static apply(sourceDocument: Btc1DidDocument, documentPatch: DidDocumentPatch): Btc1DidDocument {
+  public static apply(sourceDocument: Btc1DidDocument, operations: PatchOperation[]): Btc1DidDocument {
     const patchedDocument = JSON.parse(JSON.stringify(sourceDocument));
 
-    for (const operation of documentPatch.patch) {
+    for (const operation of operations) {
       const { op, path, value, from } = operation;
 
       const segments = path.split('/').slice(1);

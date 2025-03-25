@@ -1,14 +1,16 @@
 import type { DidService } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { base58btc } from 'multiformats/bases/base58';
-import Bitcoind from '../../bitcoin/rpc-client.js';
+import BitcoinRpc from '../../bitcoin/rpc-client.js';
 import { DidBtc1Error } from '../../utils/error.js';
 import { GeneralUtils } from '../../utils/general.js';
-import JsonPatch from '../../utils/json-patch.js';
+import JsonPatch, { PatchOperation } from '../../utils/json-patch.js';
 import { Btc1DidDocument } from '../did-document.js';
-import { Btc1RootCapability, ConstructPayloadParams, UpdatePayload } from '../interface.js';
-import { BroadcastPayloadParams, InvokePayloadParams } from '../types.js';
+import { Btc1RootCapability, DidUpdatePayload } from './interface.js';
+import { BroadcastPayloadParams, InvokePayloadParams } from './types.js';
 import { SignedRawTx } from '../../bitcoin/types.js';
+import { BTC1_DID_UPDATE_PAYLOAD_CONTEXT, W3C_ZCAP_V1 } from '../constants.js';
+import { canonicalization } from '@did-btc1/cryptosuite';
 
 /**
  * Implements did-btc1 spec section {@link https://dcdpr.github.io/did-btc1/#update | 4.3 Update} of the CRUD sections
@@ -20,7 +22,7 @@ import { SignedRawTx } from '../../bitcoin/types.js';
 export class Btc1Update {
   /**
    *
-   * Constructs an UpdatePayload object from a given sourceDocument, sourceVersionId, and documentPatch.
+   * Constructs a DidUpdatePayload object from a given sourceDocument, sourceVersionId, and documentPatch.
    * {@link https://dcdpr.github.io/did-btc1/#construct-did-update-payload | 4.3.1 Construct DID Update Payload}
    *
    * @static
@@ -29,44 +31,46 @@ export class Btc1Update {
    * @param {Btc1DidDocument} params.sourceDocument The source document to be updated.
    * @param {string} params.sourceVersionId The versionId of the source document.
    * @param {DidDocumentPatch} params.documentPatch The JSON patch to be applied to the source document.
-   * @returns {Promise<UpdatePayload>} The constructed UpdatePayload object.
+   * @returns {Promise<DidUpdatePayload>} The constructed DidUpdatePayload object.
    * @throws {DidError} with {@link DidErrorCode.InvalidDid} if sourceDocument.id does not match identifier.
    */
   public static async constructPayload({
     identifier,
     sourceDocument,
     sourceVersionId,
-    documentPatch,
-  }: ConstructPayloadParams): Promise<UpdatePayload> {
+    patch,
+  }: {
+    identifier: string;
+    sourceDocument: Btc1DidDocument;
+    sourceVersionId: string;
+    patch: PatchOperation[];
+  }): Promise<DidUpdatePayload> {
     // Validate the sourceDocument id matches the identifier
     if (sourceDocument.id !== identifier) {
       throw new DidError(DidErrorCode.InvalidDid, 'Source document id does not match identifier');
     }
-    const sourceDocHash = await GeneralUtils.sha256Canonicalize(sourceDocument);
+    const sourceDocHash = await canonicalization.hash(sourceDocument);
     // Set updatePayload object
-    const updatePayload: UpdatePayload = {
-      '@context' : [
-        'https://w3id.org/zcap/v1',
-        'https://w3id.org/security/data-integrity/v2',
-        'https://w3id.org/json-ld-patch/v1',
-        'https://github.com/dcdpr/did-btc1'
-      ],
-      patch           : documentPatch,
+    const updatePayload: DidUpdatePayload = {
+      '@context'      : BTC1_DID_UPDATE_PAYLOAD_CONTEXT,
+      patch           : patch,
       targetHash      : '',
-      targetVersionId : `${Number(sourceVersionId) + 1}`,
+      targetVersionId : Number(sourceVersionId) + 1,
       sourceHash      : base58btc.encode(sourceDocHash),
     };
     // Apply patch to source document
-    const targetDocument = JsonPatch.apply(sourceDocument, documentPatch);
+    const updatedDocument = JsonPatch.apply(sourceDocument, patch);
+
     // Validate the targetDocument conforms to DID document spec
-    const { valid, errors } = Btc1DidDocument.validate(targetDocument);
-    // If targetDocument is invalid, throw an error
-    if (!valid && errors?.length) {
-      throw new DidError(DidErrorCode.InvalidDidDocument, `Invalid target document: ${errors.join(', ')}')}`);
-    }
-    const targetDocHash = await GeneralUtils.sha256Canonicalize(targetDocument);
-    // Set the targetHash in the UpdatePayload
+    const targetDocument = Btc1DidDocument.validate(updatedDocument);
+
+    // Sha256Canonicalize the targetDocument
+    const targetDocHash = await canonicalization.hash(targetDocument);
+
+    // Set the targetHash in the DidUpdatePayload
     updatePayload.targetHash = base58btc.encode(targetDocHash);
+
+    // Return the updatePayload
     return updatePayload;
   }
 
@@ -130,7 +134,7 @@ export class Btc1Update {
    */
   static deriveRootCapability(identifier: string): Btc1RootCapability {
     return {
-      '@context'       : 'https://w3id.org/zcap/v1',
+      '@context'       : W3C_ZCAP_V1,
       id               : `urn:zcap:root:${encodeURIComponent(identifier)}`,
       controller       : identifier,
       invocationTarget : identifier,
@@ -165,7 +169,7 @@ export class Btc1Update {
           this.broadcastUpdateAttestation({
             beaconService,
             didUpdateInvocation,
-            options : { bitcoind: Bitcoind.connect() }
+            options : { bitcoind: BitcoinRpc.connect() }
           })
         );
       } else if (beaconService.type === 'SMTAggregatorBeacon') {
@@ -202,10 +206,10 @@ export class Btc1Update {
     options
   }: BroadcastPayloadParams): Promise<SignedRawTx> {
     // Connect to the default bitcoind node
-    const bitcoind: Bitcoind = options.bitcoind ?? Bitcoind.connect();
+    const bitcoind: BitcoinRpc = options.bitcoind ?? BitcoinRpc.connect();
     // Decode the beaconService serviceEndpoint
     console.log('didUpdateInvocation', didUpdateInvocation);
-    const addressUri = beaconService.serviceEndpoint;
+    const addressUri = beaconService.serviceEndpoint as string;
     // Decode the addressUri to a bitcoin address
     const bitcoinAddress = base58btc.decode(addressUri);
     // Validate the bitcoin address

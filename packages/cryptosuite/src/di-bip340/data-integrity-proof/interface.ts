@@ -28,11 +28,11 @@ export interface IDataIntegrityProof {
   /**
    * Verify a proof.
    * @param {VerifyProofParams} params Parameters for verifying a proof.
-   * @param {VerifyProofParams} params.mediaType The media type of the document.
-   * @param {VerifyProofParams} params.document The document to verify.
-   * @param {VerifyProofParams} params.expectedPurpose The expected purpose of the proof.
-   * @param {VerifyProofParams} params.expectedDomain The expected domain of the proof.
-   * @param {VerifyProofParams} params.expectedChallenge The expected challenge of the proof.
+   * @param {string} params.mediaType The media type of the document.
+   * @param {string} params.document The document to verify.
+   * @param {string} params.expectedPurpose The expected purpose of the proof.
+   * @param {string[]} params.expectedDomain The expected domain of the proof.
+   * @param {string} params.expectedChallenge The expected challenge of the proof.
    * @returns {VerificationResult} The result of verifying the proof.
    */
   verifyProof({

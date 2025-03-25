@@ -1,12 +1,19 @@
+export type ErrorOptions = {
+  type?: string;
+  name?: string;
+  data?: any;
+}
+
 export class DidBtc1Error extends Error {
   name: string = 'DidBtc1Error';
   type: string = 'DidBtc1Error';
+  data?: Record<string, any>;
 
-  constructor(message: string, type?: string, name?: string, public data?: Record<string, any>) {
+  constructor(message: string, options: ErrorOptions = {}) {
     super(message);
-    this.type = type ?? this.type;
-    this.name = name ?? this.name;
-    this.data = data;
+    this.type = options.type ?? this.type;
+    this.name = options.name ?? this.name;
+    this.data = options.data;
 
     // Ensures that instanceof works properly, the correct prototype chain when using inheritance,
     // and that V8 stack traces (like Chrome, Edge, and Node.js) are more readable and relevant.
@@ -20,14 +27,26 @@ export class DidBtc1Error extends Error {
   }
 }
 
+export class Btc1ReadError extends DidBtc1Error {
+  constructor(message: string, type: string = 'Btc1ReadError', data?: Record<string, any>) {
+    super(message, { type, name: 'Btc1ReadError', data });
+  }
+}
+
 export class Btc1KeyManagerError extends DidBtc1Error {
-  constructor(message: string, type?: string, public data?: Record<string, any>) {
-    super(message, type ?? 'Btc1KeyManagerError', 'Btc1KeyManagerError', data);
+  constructor(message: string, type: string = 'Btc1KeyManagerError', data?: Record<string, any>) {
+    super(message, { type, name: 'Btc1KeyManagerError', data });
   }
 }
 
 export class BitcoinRpcError extends DidBtc1Error {
-  constructor(message: string, type?: string, public data?: Record<string, any>) {
-    super(message, type ?? 'BitcoinRpcError', 'BitcoinRpcError', data);
+  constructor(message: string, type: string = 'BitcoinRpcError', data?: Record<string, any>) {
+    super(message, { type, name: 'BitcoinRpcError', data });
+  }
+}
+
+export class DidDocumentError extends DidBtc1Error {
+  constructor(message: string, type: string = 'DidDocumentError', data?: Record<string, any>) {
+    super(message, { type, name: 'DidDocumentError', data });
   }
 }

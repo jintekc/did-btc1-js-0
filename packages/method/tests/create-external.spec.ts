@@ -1,9 +1,13 @@
 import { expect } from 'chai';
 import { DidBtc1 } from '../src/did-btc1.js';
 import { idTypes, networks, versions } from './test-data.js';
-import { IntermediateDocument } from '../src/index.js';
+import { IntermediateDocument } from '../src/btc1/crud/interface.js';
+import { canonicalization } from '@did-btc1/cryptosuite';
 
-const idType = idTypes.external;
+// Set the canonicalization algorithm to JCS (JSON Canonicalization Scheme)
+canonicalization.setAlgorithm('JCS');
+
+const idType = idTypes.external as 'external';
 
 /**
  * DidBtc1 Create External Test Cases
@@ -55,7 +59,7 @@ describe('DidBtc1 Create External', () => {
 
   it('should create external identifier and DID document',
     async () => {
-      const response = await DidBtc1.create({ intermediateDocument, options: { idType } });
+      const response = await DidBtc1.create({ idType, intermediateDocument });
       expect(response).to.exist;
 
       expect(response.did).to.exist.and.to.be.a('string');
@@ -70,12 +74,7 @@ describe('DidBtc1 Create External', () => {
     async () => {
       const responses = await Promise.all(
         versions.map(async (version: string) =>
-          await DidBtc1.create(
-            {
-              intermediateDocument,
-              options : { idType, version },
-            }
-          )
+          await DidBtc1.create({ idType, intermediateDocument, options: { version }})
         )
       );
       expect(responses.length).to.equal(5);
@@ -86,12 +85,7 @@ describe('DidBtc1 Create External', () => {
     async () => {
       const results = await Promise.all(
         networks.map(async (network: string) =>
-          await DidBtc1.create(
-            {
-              intermediateDocument,
-              options : { network, idType },
-            }
-          )
+          await DidBtc1.create({ idType, intermediateDocument, options: { network } })
         )
       );
       expect(results.length).to.equal(4);
@@ -104,12 +98,7 @@ describe('DidBtc1 Create External', () => {
         versions
           .flatMap((version: string) => networks.map((network: string) => [version, network]))
           .map(async ([version, network]: string[]) =>
-            await DidBtc1.create(
-              {
-                intermediateDocument,
-                options : { version, network, idType },
-              }
-            )
+            await DidBtc1.create({ idType, intermediateDocument, options: { version, network }})
           )
       );
       expect(results.length).to.equal(20);

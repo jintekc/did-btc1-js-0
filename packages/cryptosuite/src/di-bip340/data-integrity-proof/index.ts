@@ -65,7 +65,13 @@ export class DataIntegrityProof implements IDataIntegrityProof {
     expectedPurpose,
     expectedDomain,
     expectedChallenge
-  }: VerifyProofParams): Promise<VerificationResult> {
+  }: {
+    mediaType?: string;
+    document: string;
+    expectedPurpose: string;
+    expectedDomain?: string[];
+    expectedChallenge?: string;
+  }): Promise<VerificationResult> {
     // Parse the document
     const secure = JSON.parse(document) as SecureDocument;
 

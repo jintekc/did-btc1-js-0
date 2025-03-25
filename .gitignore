@@ -165,3 +165,4 @@ temp
 .hermit
 
 release/
+*.zip

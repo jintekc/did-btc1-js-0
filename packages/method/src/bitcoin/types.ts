@@ -1,6 +1,6 @@
 import { Hex } from '@did-btc1/cryptosuite';
 import BitcoinRpc from '../bitcoin/rpc-client.js';
-import { UnixTimestamp } from '../btc1/types.js';
+import { UnixTimestamp } from '../btc1/crud/types.js';
 
 export interface ReturnFormatOptions {
     extension?: 'json' | 'bin' | 'hex';
@@ -407,11 +407,6 @@ export type BlockResponse = BlockV0 | BlockV1 | BlockV2 | BlockV3;
 
 /** Transaction and RawTransaction */
 export type Transaction = {
-    is_active_chain: boolean;
-    blockhash: string;
-    confirmations: number;
-    blocktime: number;
-    time: number;
     hex: string;
     txid: string;
     hash: string;
@@ -437,10 +432,10 @@ export interface TxInExt extends TxIn {
         generated: boolean;
         height: number;
         value: number;
-        scriptPubKey: {
+        scriptPubKey?: {
             asm: string;
             desc: string;
-            hex: number;
+            hex: string;
             address?: string;
             type: string;
         }
@@ -455,6 +450,7 @@ export type TxOut = {
         reqSigs: number;
         type: scriptPubkeyType;
         address?: string;
+        desc: string;
     };
 };
 export type RawTransactionV0 = string;
@@ -1019,3 +1015,9 @@ export interface TargetBlockHeight {
 }
 
 export type BlockHeight = number;
+
+export interface GetBlockParams {
+    blockhash?: string;
+    height?: number;
+    verbosity?: VerbosityLevel
+}
