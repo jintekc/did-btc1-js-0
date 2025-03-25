@@ -1,0 +1,14 @@
+export type TwoDigits = `${number}${number}`;
+export type ThreeDigits = `${number}${number}${number}`;
+export type Year = `${1 | 2}${ThreeDigits}`;
+export type Month = TwoDigits;
+export type Day = TwoDigits;
+export type Hours = TwoDigits;
+export type Minutes = TwoDigits;
+export type Seconds = TwoDigits;
+export type UtcTimestamp = `${Year}-${Month}-${Day}T${Hours}:${Minutes}:${Seconds}`;
+export type TzOffset = `${Hours}:${Minutes}`;
+export type DateTimestamp = `${UtcTimestamp}Z` | `${UtcTimestamp}-${TzOffset}`;
+export type CanonicalizableObject = Record<string, any>;
+export type CanonicalizationAlgorithm = 'JCS' | 'RDFC-1.0';
+export type UnixTimestamp = number;

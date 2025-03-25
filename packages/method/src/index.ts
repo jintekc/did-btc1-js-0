@@ -1,4 +1,3 @@
-import './exts.js';
 
 export * from './bitcoin/constants.js';
 export * from './bitcoin/interface.js';
@@ -30,12 +29,10 @@ export * from './btc1/utils.js';
 
 export * from './types/beacons.js';
 export * from './types/crud.js';
-export * from './types/shared.js';
 
-export * from './utils/errors.js';
 export * from './utils/general.js';
 export * from './utils/json-patch.js';
 
 export * from './did-btc1.js';
 
-export * from './exts.js';
+

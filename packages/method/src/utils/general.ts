@@ -5,7 +5,6 @@ import { HDKey } from '@scure/bip32';
 import { generateMnemonic, mnemonicToSeed } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { base58btc } from 'multiformats/bases/base58';
-import { HdWallet } from '../types/shared.js';
 
 /**
  * Static class of general utility functions for the did-btc1 spec implementation
