@@ -18,7 +18,7 @@ export enum DidBtc1IdTypes {
     key = 'key',
     external = 'external'
 };
-export enum Btc1Networks {
+export enum BitcoinNetworks {
     mainnet = 'mainnet',
     testnet = 'testnet',
     signet = 'signet',
@@ -26,6 +26,5 @@ export enum Btc1Networks {
 };
 export type KeyIdentifier = string;
 export type BeaconUri = string;
-export type Btc1Network = 'mainnet' | 'testnet' | 'signet' | 'regtest';
+export type BitcoinNetworkNames = 'mainnet' | 'testnet' | 'signet' | 'regtest';
 export type DidPlaceholder = 'did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
-

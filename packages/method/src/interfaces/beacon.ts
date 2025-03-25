@@ -1,9 +1,9 @@
 import { DidServiceEndpoint } from '@web5/dids';
-import { RawTransactionV2, SignedRawTx } from '../../bitcoin/types.js';
-import { DidUpdatePayload } from '../crud/interface.js';
-import { SidecarData } from '../../types/crud.js';
-import { Btc1VerificationMethod } from '../did-document.js';
-import { BeaconService, BeaconSignal, IBeacon } from './interface.js';
+import { RawTransactionV2, SignedRawTx } from '../bitcoin/types.js';
+import { CIDAggregateSidecar, SidecarData, SignalsMetadata, SingletonSidecar, SMTAggregateSidecar } from '../types/crud.js';
+import { Btc1VerificationMethod } from '../btc1/utils/did-document.js';
+import { BeaconService, BeaconSignal, IBeacon } from './ibeacon.js';
+import { DidUpdatePayload } from './crud.js';
 
 /**
  *
@@ -44,11 +44,13 @@ export abstract class Beacon implements IBeacon {
   public id: string;
   public type: string;
   public serviceEndpoint: DidServiceEndpoint;
+  public sidecar?: SingletonSidecar | CIDAggregateSidecar | SMTAggregateSidecar;
 
-  constructor({ id, type, serviceEndpoint }: BeaconService) {
+  constructor({ id, type, serviceEndpoint }: BeaconService, sidecar?: SidecarData) {
     this.id = id;
     this.type = type;
     this.serviceEndpoint = serviceEndpoint;
+    this.sidecar = sidecar;
   }
 
   /**
@@ -64,7 +66,7 @@ export abstract class Beacon implements IBeacon {
   /**
    * Processes a Beacon Signal (implemented by subclasses)
    */
-  abstract processSignal(tx: RawTransactionV2, sidecarData?: SidecarData): Promise<DidUpdatePayload | undefined>
+  abstract processSignal(signal: RawTransactionV2, signalsMetadata: SignalsMetadata): Promise<DidUpdatePayload | undefined>
 
   /**
    * Broadcasts a Beacon Signal (implemented by subclasses)

@@ -1,5 +1,6 @@
 import { bech32 } from '@scure/base';
 import {
+  Did,
   DidDocument,
   DidError,
   DidErrorCode,
@@ -7,18 +8,27 @@ import {
   DidVerificationMethod,
   DidVerificationRelationship
 } from '@web5/dids';
-import { DidBtc1 } from '../did-btc1.js';
-import { Btc1Networks } from '../types/crud.js';
-import { DidComponents } from './interface.js';
+import { DidBtc1 } from '../../did-btc1.js';
+import { Btc1Networks } from '../../types/crud.js';
+import { W3C_ZCAP_V1 } from './constants.js';
+import { Btc1RootCapability } from '../../interfaces/crud.js';
+
+export interface DidComponents extends Did {
+    hrp: string;
+    genesisBytes: Uint8Array;
+    version: string;
+    network: string;
+    idBech32: string;
+};
 
 /**
- * Utility functions for the {@link https://dcdpr.github.io/did-btc1/ | DID BTC1} method
+ * Implements {@link https://dcdpr.github.io/did-btc1/#appendix | 9. Appendix} methods.
  *
  * @export
- * @class Btc1Utils
- * @type {Btc1Utils}
+ * @class Btc1Appendix
+ * @type {Btc1Appendix}
  */
-export class Btc1Utils {
+export class Btc1Appendix {
   /**
    * Parses a `did:btc1` identifier into its components
    * @public
@@ -180,14 +190,152 @@ export class Btc1Utils {
     if (!didDocument) throw new TypeError(`Required parameter missing: 'didDocument'`);
     const verificationMethods: DidVerificationMethod[] = [];
     // Check the 'verificationMethod' array.
-    verificationMethods.push(...didDocument.verificationMethod?.filter(Btc1Utils.isDidVerificationMethod) ?? []);
+    verificationMethods.push(...didDocument.verificationMethod?.filter(Btc1Appendix.isDidVerificationMethod) ?? []);
     // Check verification relationship properties for embedded verification methods.
     Object.keys(DidVerificationRelationship).forEach((relationship) => {
       verificationMethods.push(
         ...(didDocument[relationship as keyof DidDocument] as (DidVerificationMethod)[])
-          ?.filter(Btc1Utils.isDidVerificationMethod) ?? []
+          ?.filter(Btc1Appendix.isDidVerificationMethod) ?? []
       );
     });
     return verificationMethods;
+  }
+
+
+  /**
+   * Implements {@link https://dcdpr.github.io/did-btc1/#derive-root-capability-from-didbtc1-identifier | 9.4.1 Derive Root Capability from did:btc1 Identifier}.
+   *
+   * The Derive Root Capability algorithm deterministically generates a ZCAP-LD root capability from a given did:btc1
+   * identifier. Each root capability is unique to the identifier. This root capability is defined and understood by the
+   * did:btc1 specification as the root capability to authorize updates to the specific did:btc1 identifiers DID
+   * document. It takes in a did:btc1 identifier and returns a rootCapability object. It returns the root capability.
+   *
+   * @public
+   * @static
+   * @param {string} identifier The did-btc1 identifier to derive the root capability from
+   * @returns {Btc1RootCapability} The root capability object
+   * @example Root capability for updating the DID document for
+   * did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u
+   * ```
+   * {
+   *  "@context": "https://w3id.org/zcap/v1",
+   *  "id": "urn:zcap:root:did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u",
+   *  "controller": "did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u",
+   *  "invocationTarget": "did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u"
+   * }
+   * ```
+   */
+  public static deriveRootCapability(identifier: string): Btc1RootCapability {
+    // 1. Define rootCapability as an empty object.
+    const rootCapability = {} as Btc1RootCapability;
+
+    // 2. Set rootCapability.@context to ‘https://w3id.org/zcap/v1’.
+    rootCapability['@context'] = W3C_ZCAP_V1;
+
+    // 3. Set encodedIdentifier to result of calling algorithm encodeURIComponent(identifier).
+    const encodedIdentifier = encodeURIComponent(identifier);
+
+    // 4. Set rootCapability.id to urn:zcap:root:${encodedIdentifier}.
+    rootCapability.id = `urn:zcap:root:${encodedIdentifier}`;
+
+    // 5. Set rootCapability.controller to identifier.
+    rootCapability.controller = identifier;
+
+    // 6. Set rootCapability.invocationTarget to identifier.
+    rootCapability.invocationTarget = identifier;
+
+    // 7. Return rootCapability.
+    return rootCapability;
+  }
+
+
+  /**
+   * Implements {@link https://dcdpr.github.io/did-btc1/#dereference-root-capability-identifier | 9.4.2 Dereference Root Capability Identifier}.
+   *
+   * This algorithm takes in capabilityId, a root capability identifier, and dereferences it to rootCapability, the root
+   * capability object.
+   *
+   * @public
+   * @static
+   * @param {string} capabilityId The root capability identifier to dereference.
+   * @returns {Btc1RootCapability} The root capability object.
+   * @example a didUpdatePayload with an invoked ZCAP-LD capability containing a patch defining how the DID document
+   * for did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u SHOULD be mutated.
+   * ```
+   * {
+   *  "@context": [
+   *   "https://w3id.org/zcap/v1",
+   *   "https://w3id.org/security/data-integrity/v2",
+   *   "https://w3id.org/json-ld-patch/v1"
+   *  ],
+   *  "patch": [
+   *   {
+   *    "op": "add",
+   *    "path": "/service/4",
+   *    "value": {
+   *       "id": "#linked-domain",
+   *       "type": "LinkedDomains",
+   *       "serviceEndpoint": "https://contact-me.com"
+   *      }
+   *    }
+   *  ],
+   *  "proof": {
+   *    "type": "DataIntegrityProof",
+   *    "cryptosuite": "schnorr-secp256k1-jcs-2025",
+   *    "verificationMethod": "did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u#initialKey",
+   *    "invocationTarget": "did:btc1:k1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u",
+   *    "capability": "urn:zcap:root:did%3Abtc1%3Ak1q0rnnwf657vuu8trztlczvlmphjgc6q598h79cm6sp7c4fgqh0fkc0vzd9u",
+   *    "capabilityAction": "Write",
+   *    "proofPurpose": "assertionMethod",
+   *    "proofValue": "z381yXYmxU8NudZ4HXY56DfMN6zfD8syvWcRXzT9xD9uYoQToo8QsXD7ahM3gXTzuay5WJbqTswt2BKaGWYn2hHhVFKJLXaDz"
+   *   }
+   * }
+   */
+  public static derefernceRootCapabilityIdentifier(capabilityId: string): Btc1RootCapability {
+    // 1. Set rootCapability to an empty object.
+    const rootCapability = {} as Btc1RootCapability;
+
+    // 2. Set components to the result of capabilityId.split(":").
+    const [urn, zcap, root, did] = capabilityId.split(':') ?? [];
+
+    // 3. Validate components:
+    //    1. Assert length of components is 4.
+    if ([urn, zcap, root, did].length !== 4) {
+      throw new DidError(DidErrorCode.InvalidDid, `Invalid capabilityId: ${capabilityId}`);
+    }
+
+    //    2. components[0] == urn.
+    if (!urn || urn !== 'urn') {
+      throw new DidError(DidErrorCode.InvalidDid, `Invalid capabilityId: ${capabilityId}`);
+    }
+
+    //    3. components[1] == zcap.
+    if (!zcap || zcap !== 'zcap') {
+      throw new DidError(DidErrorCode.InvalidDid, `Invalid capabilityId: ${capabilityId}`);
+    }
+
+    //    4. components[2] == root.
+    if (!root || root !== 'root') {
+      throw new DidError(DidErrorCode.InvalidDid, `Invalid capabilityId: ${capabilityId}`);
+    }
+
+    // 4. Set uriEncodedId to components[3].
+    const uriEncodedId = did;
+
+    // 5. Set btc1Identifier the result of decodeURIComponent(uriEncodedId).
+    const btc1Identifier = decodeURIComponent(uriEncodedId);
+
+    // 6. Set rootCapability.id to capabilityId.
+    rootCapability.id = capabilityId;
+
+    // 7. Set rootCapability.controller to btc1Identifier.
+    rootCapability.controller = btc1Identifier;
+
+    // 8. Set rootCapability.invocationTarget to btc1Identifier.
+    rootCapability.invocationTarget = btc1Identifier;
+
+    // 9. Return rootCapability.
+    return rootCapability;
+
   }
 }

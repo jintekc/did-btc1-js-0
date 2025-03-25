@@ -1,12 +1,12 @@
+import { canonicalization, SingletonBeaconError } from '@did-btc1/common';
 import { base58btc } from 'multiformats/bases/base58';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
 import { RawTransactionV2, SignedRawTx } from '../../bitcoin/types.js';
-import { DidUpdatePayload } from '../crud/interface.js';
-import { SingletonSidecar } from '../../types/crud.js';
-import { Btc1VerificationMethod } from '../did-document.js';
-import { Beacon } from './beacon.js';
-import { BeaconService, BeaconSignal } from './interface.js';
-import { canonicalization, SingletonBeaconError } from '@did-btc1/common';
+import { Beacon } from '../../interfaces/beacon.js';
+import { DidUpdatePayload } from '../../interfaces/crud.js';
+import { BeaconService, BeaconSignal } from '../../interfaces/ibeacon.js';
+import { SidecarData, SignalsMetadata, SingletonSidecar } from '../../types/crud.js';
+import { Btc1VerificationMethod } from '../utils/did-document.js';
 
 const { process } = canonicalization;
 
@@ -25,8 +25,8 @@ const { process } = canonicalization;
  * @extends {Beacon}
  */
 export class SingletonBeacon extends Beacon {
-  constructor(params: BeaconService) {
-    super({ ...params, type: 'SingletonBeacon' });
+  constructor(service: BeaconService, sidecar?: SidecarData) {
+    super({ ...service, type: 'SingletonBeacon' }, sidecar as SingletonSidecar);
   }
 
   get service(): BeaconService {
@@ -56,9 +56,9 @@ export class SingletonBeacon extends Beacon {
    * @returns {DidUpdatePayload} The DID Update payload announced by the Beacon Signal.
    * @throws {DidError} if the signalTx is invalid or the signalSidecarData is invalid.
    */
-  public async processSignal(tx: RawTransactionV2, sidecarData?: SingletonSidecar): Promise<DidUpdatePayload | undefined> {
+  public async processSignal(signal: RawTransactionV2, signalsMetadata?: SignalsMetadata): Promise<DidUpdatePayload | undefined> {
     // Get the first output of the transaction
-    const txOut = tx.vout[0];
+    const txOut = signal.vout[0];
     console.log('txOut', txOut);
 
     // Check if the first output is an OP_RETURN script
@@ -71,17 +71,17 @@ export class SingletonBeacon extends Beacon {
     console.log('UPDATE_PAYLOAD_HASH', UPDATE_PAYLOAD_HASH);
 
     // Extract the 32 bytes after the OP_RETURN
-    const signalsMetadataMap = new Map(Object.entries(sidecarData!.signalsMetadata));
+    const signalsMetadataMap = new Map(Object.entries(signalsMetadata!));
     console.log('signalsMetadataMap', signalsMetadataMap);
 
-    const didUpdatePayload = signalsMetadataMap.get(tx.txid)?.updatePayload;
+    const didUpdatePayload = signalsMetadataMap.get(signal.txid)?.updatePayload;
     console.log('didUpdatePayload', didUpdatePayload);
     if(!didUpdatePayload) {
       throw new Error('InvalidSidecarData: Update payload not found in signal metadata.');
     }
 
     // Check if the hashBytes are in the sidecarData
-    if (sidecarData) {
+    if (signalsMetadata) {
       const updateHashBytes = await process(didUpdatePayload);
       console.log('updateHashBytes', updateHashBytes);
 

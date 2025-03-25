@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { PublicKeyError } from '../src/error.js';
 import { PublicKey } from '../src/public-key.js';
+import { PublicKeyError } from '@did-btc1/common';
 
 describe('PublicKey instantiated', () => {
   const bytes = new Uint8Array([

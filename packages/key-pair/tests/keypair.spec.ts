@@ -1,8 +1,8 @@
 import { expect } from 'chai';
-import { KeyPairError } from '../src/error.js';
 import { KeyPair } from '../src/key-pair.js';
 import { PrivateKey } from '../src/private-key.js';
 import { PublicKey } from '../src/public-key.js';
+import { KeyPairError } from '@did-btc1/common';
 
 describe('KeyPair instantiated', () => {
   const bytes = {

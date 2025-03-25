@@ -1,9 +1,9 @@
 import { DidService, DidVerificationMethod, DidDocument as IDidDocument } from '@web5/dids';
-import { BeaconService } from './beacons/interface.js';
-import { BeaconUtils } from './beacons/utils.js';
+import { BeaconService } from '../../interfaces/ibeacon.js';
+import { BeaconUtils } from './beacon-utils.js';
 import { BTC1_DID_DOCUMENT_CONTEXT } from './constants.js';
-import { DidBtc1Identifier } from './crud/create.js';
-import { Btc1Utils } from './utils.js';
+import { DidBtc1Identifier } from '../crud/create.js';
+import { Btc1Appendix } from './btc1-appendix.js';
 import { DidDocumentError } from '@did-btc1/common';
 
 /**
@@ -130,7 +130,7 @@ export class Btc1DidDocument implements IBtc1DidDocument {
    */
   private static isValidId(id: DidBtc1Identifier): boolean {
     try {
-      Btc1Utils.parse(id);
+      Btc1Appendix.parse(id);
       return true;
     } catch {
       return false;
@@ -142,7 +142,7 @@ export class Btc1DidDocument implements IBtc1DidDocument {
    * @private
    */
   private static isValidVerificationMethods(verificationMethod: DidVerificationMethod[]): boolean {
-    return Array.isArray(verificationMethod) && verificationMethod.every(Btc1Utils.isDidVerificationMethod);
+    return Array.isArray(verificationMethod) && verificationMethod.every(Btc1Appendix.isDidVerificationMethod);
   }
 
   /**
@@ -169,7 +169,7 @@ export class Btc1DidDocument implements IBtc1DidDocument {
       didDocument[key] &&
       Array.isArray(didDocument[key]) &&
       didDocument[key].every(
-        entry => typeof entry === 'string' || Btc1Utils.isDidVerificationMethod(entry)
+        entry => typeof entry === 'string' || Btc1Appendix.isDidVerificationMethod(entry)
       ));
   }
 
