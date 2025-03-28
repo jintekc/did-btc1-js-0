@@ -1,11 +1,11 @@
 {
   "name": "did-btc1-js",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Monorepo for did:btc1 js/ts implementation and supporting packages.",
   "type": "module",
   "workspaces": [
-    "packages/cryptosuite",
     "packages/common",
+    "packages/cryptosuite",
     "packages/key-pair",
     "packages/method"
   ],
@@ -20,21 +20,23 @@
     "reinstall": "pnpm --recursive --stream reinstall",
     "cleanup": "pnpm npkill -d $(pwd)/packages -t dist && pnpm npkill -d $(pwd) -t node_modules",
     "build": "pnpm --recursive --stream build",
+    "build:test": "pnpm --recursive --stream build:test",
+    "build:tests": "pnpm --recursive --stream build:tests",
+    "build:docs": "pnpm --recursive --stream build:docs",
+    "build:all": "pnpm --recursive --stream build:all",
+    "test": "pnpm --recursive --stream test",
     "lint": "pnpm --recursive --stream lint",
     "lint:fix": "pnpm --recursive --stream lint:fix",
-    "publish:all": "pnpm --recursive --stream publish",
-    "test": "pnpm --recursive --stream test",
-    "build:test": "pnpm --recursive --stream build:test",
-    "test:node": "pnpm --recursive --stream test:node",
-    "release": "pnpm --recursive --stream release",
-    "build:tests": "pnpm --recursive --stream build:tests",
     "version": "pnpm --recursive --stream version",
     "version:no-git": "pnpm --recursive --stream version:no-git",
+    "release": "pnpm --recursive --stream release",
+    "prepublish": "pnpm --recursive --stream prepublish",
+    "publish:all": "pnpm --recursive --stream publish",
+    "doc:build": "typedoc --options typedoc.json",
     "cryptosuite": "pnpm --filter cryptosuite",
     "common": "pnpm --filter common",
     "key-pair": "pnpm --filter key-pair",
-    "method": "pnpm --filter method",
-    "prepublish": "pnpm --recursive --stream prepublish"
+    "method": "pnpm --filter method"
   },
   "keywords": [
     "did",
@@ -68,7 +70,9 @@
     "audit-ci": "^7.1.0",
     "eslint-plugin-mocha": "^10.5.0",
     "globals": "^15.15.0",
-    "npkill": "^0.12.2"
+    "npkill": "^0.12.2",
+    "typedoc": "^0.28.1",
+    "typedoc-plugin-markdown": "^4.6.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

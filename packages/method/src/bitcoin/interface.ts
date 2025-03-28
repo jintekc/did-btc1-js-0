@@ -1,7 +1,6 @@
 import {
   AddMultiSigAddressParams,
   BatchOption,
-  VerbosityLevel,
   BumpFeeOption,
   BumpFeeResult,
   ChainInfo,
@@ -19,7 +18,7 @@ import {
   ScriptDecoded,
   ValidateAddressResult,
   GetBlockParams
-} from './types.js';
+} from '../types/bitcoin.js';
 
 /**
  * Interface for the Bitcoin Core RPC client.

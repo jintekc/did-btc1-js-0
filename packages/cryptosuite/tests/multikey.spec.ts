@@ -5,12 +5,10 @@ import { MultikeyError, ObjectUtils, KeyPairError } from '@did-btc1/common';
 
 /**
  * Multikey Test Cases
- *
  * 1. id, controller only → should throw
  * 2. id, controller, privateKey → should succeed
  * 3. id, controller, publicKey → should succeed
  * 4. id, controller, privateKey, publicKey → should succeed
- *
  */
 describe('Multikey instantiated', () => {
   // Crypto Constants

@@ -4,10 +4,14 @@ import rdf from 'rdf-canonize';
 import { HashBytes } from '../types/crypto.js';
 import { CanonicalizationAlgorithm } from '../types/general.js';
 import { JSONObject } from '../exts.js';
+import { CanonicalizationError } from './errors.js';
 
 /**
  * Class for canonicalizing objects using JCS (RFC 8785) or RDFC (RDF Canonicalization 1.0).
  * It also provides hashing (SHA-256) and hex conversion.
+ *
+ * @class Canonicalization
+ * @type {Canonicalization}
  */
 export class Canonicalization {
   private algorithm: CanonicalizationAlgorithm;
@@ -18,7 +22,8 @@ export class Canonicalization {
 
   /**
    * Sets the canonicalization algorithm dynamically.
-   * @param algorithm Either 'JCS' or 'RDFC'.
+   * @param {'JCS' | 'RDFC-1.0'} algorithm Either 'JCS' or 'RDFC'.
+   * @returns {void}
    */
   public setAlgorithm(algorithm: 'JCS' | 'RDFC-1.0'): void {
     this.algorithm = algorithm;
@@ -74,8 +79,6 @@ export class Canonicalization {
   /**
    * Step 1-2: Canonicalize → Hash.
    * Canonicalizes an object, hashes it and returns it as hash bytes.
-   * @public
-   * @async
    * @param {JSONObject} object The object to process.
    * @returns {Promise<HashBytes>} The final SHA-256 hash bytes.
    */
@@ -87,9 +90,8 @@ export class Canonicalization {
   /**
    * Step 2-3: Hash → Hex.
    * Hashes a canonicalized string using SHA-256 and returns it as hex string.
-   * @public
    * @param {string} canonicalized
-   * @returns {string}
+   * @returns {string} The SHA-256 hash as a hex string.
    */
   public hashhex(canonicalized: string): string {
     return this.hex(this.hash(canonicalized));
@@ -100,17 +102,17 @@ export class Canonicalization {
    * which describes JSON Canonicalization Scheme (JCS). This function sorts the keys of the
    * object and its nested objects alphabetically and then returns a stringified version of it.
    * This method handles nested objects, array values, and null values appropriately.
-   *
    * @param {JSONObject} object The object to canonicalize.
    * @returns {string} The stringified version of the input object with its keys sorted alphabetically per RFC 8785.
+   * @throws {Error} If the object contains NaN or Infinity values.
    */
   public jcs(object: JSONObject): string {
     if (typeof object === 'number' && isNaN(object)) {
-      throw new Error('NaN is not allowed');
+      throw new CanonicalizationError('NaN is not allowed', 'JCS_ERROR');
     }
 
     if (typeof object === 'number' && !isFinite(object)) {
-      throw new Error('Infinity is not allowed');
+      throw new CanonicalizationError('Infinity is not allowed', 'JCS_ERROR');
     }
 
     if (object === null || typeof object !== 'object') {

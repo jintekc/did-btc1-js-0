@@ -1,5 +1,5 @@
 packages:
-  - packages/cryptosuite
   - packages/common
+  - packages/cryptosuite
   - packages/key-pair
   - packages/method

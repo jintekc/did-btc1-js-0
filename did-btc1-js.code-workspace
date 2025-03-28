@@ -5,12 +5,12 @@
       "path": "."
     },
     {
-      "name": "cryptosuite",
-      "path": "packages/cryptosuite"
-    },
-    {
       "name": "common",
       "path": "packages/common"
+    },
+    {
+      "name": "cryptosuite",
+      "path": "packages/cryptosuite"
     },
     {
       "name": "key-pair",

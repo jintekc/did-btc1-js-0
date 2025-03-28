@@ -48,7 +48,6 @@ export interface KeyManager {
 
     /**
      * Returns the sha256 hash of the input data.
-     * @public
      * @param {Uint8Array} data The data to hash.
      * @returns {HashBytes} The sha256 hash of the input data.
      */
@@ -64,7 +63,6 @@ export interface KeyManager {
 
     /**
      * Computes the URI of a key pair.
-     * @public
      * @param {KeyPair} keyPair The key pair to compute the URI for.
      * @returns {KeyIdentifier} The URI of the key pair.
      */
@@ -72,7 +70,6 @@ export interface KeyManager {
 
     /**
      * Gets the public key of a key pair.
-     * @public
      * @param {KeyIdentifier} keyUri The URI of the key to get the public key for.
      * @returns {Promise<PublicKey>} The public key of the key pair.
      */
@@ -80,7 +77,6 @@ export interface KeyManager {
 
     /**
      * Imports a key pair into the key store.
-     * @public
      * @param {KeyPair} keyPair The key pair to import.
      * @param {Btc1KeyManagerOptions} options The options for importing the key pair.
      * @param {boolean} options.active Whether to set the imported key as active.
@@ -90,19 +86,18 @@ export interface KeyManager {
 
     /**
      * Signs a message with a key pair.
-     * @public
-     * @param {KeyIdentifier} keyUri The URI of the key to use for signing.
+     * @param {Hex} data The data to sign.
+     * @param {?KeyIdentifier} keyUri The URI of the key to sign the data with.
      * @returns {Promise<SignatureBytes>} The signature of the input data.
      */
-    sign(keyUri: KeyIdentifier, data: Hex): Promise<SignatureBytes>;
+    sign(data: Hex, keyUri?: KeyIdentifier): Promise<SignatureBytes>;
 
     /**
      * Verifies if a signature was produced by a key pair.
-     * @public
-     * @param {KeyIdentifier} keyUri The URI of the key to use for verification.
      * @param {SignatureBytes} signature The signature to verify.
      * @param {Hex} data The data that was signed.
+     * @param {?KeyIdentifier} keyUri The URI of the key to use for verification.
      * @returns {Promise<boolean>} A promise that resolves if the signature is valid, and rejects otherwise.
      */
-    verify(keyUri: KeyIdentifier, signature: SignatureBytes, data: Hex): Promise<boolean>;
+    verify(signature: SignatureBytes, data: Hex, keyUri?: KeyIdentifier): Promise<boolean>;
 }

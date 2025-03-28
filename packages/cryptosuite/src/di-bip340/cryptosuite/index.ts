@@ -25,30 +25,43 @@ import { Canonicalization, CryptosuiteError, HashBytes, SignatureBytes } from '@
 /**
  * TODO: Test RDFC and figure out what the contexts should be
  * Implements
- * {@link https://dcdpr.github.io/data-integrity-schnorr-secp256k1/#schnorr-secp256k1-rdfc-2025 | 3.2 schnorr-secp256k1-rdfc-2025}
- * {@link https://dcdpr.github.io/data-integrity-schnorr-secp256k1/#schnorr-secp256k1-jcs-2025 | 3.3 schnorr-secp256k1-jcs-2025}
- *
- * @export
+ * {@link https://dcdpr.github.io/data-integrity-schnorr-secp256k1/#instantiate-cryptosuite | 3.1 Instantiate Cryptosuite}
  * @class Cryptosuite
  * @type {Cryptosuite}
  */
 export class Cryptosuite implements ICryptosuite {
-  /** @type {DataIntegrityProofType} The type of proof produced by the Cryptosuite */
+  /**
+   * The type of the proof
+   * @type {DataIntegrityProofType} The type of proof produced by the Cryptosuite
+   */
   public type: DataIntegrityProofType = 'DataIntegrityProof';
 
-  /** @type {string} The name of the cryptosuite */
+  /**
+   * The name of the cryptosuite
+   * @public
+   * @type {string} The name of the cryptosuite
+   */
   public cryptosuite: CryptosuiteType;
 
-  /** @type {Multikey} The multikey used to sign and verify proofs */
+  /**
+   * The multikey used to sign and verify proofs
+   * @public
+   * @type {Multikey} The multikey used to sign and verify proofs
+   */
   public multikey: Multikey;
 
-  /** @type {string} The algorithm used for canonicalization */
+  /**
+   * The algorithm used for canonicalization
+   * @public
+   * @type {string} The algorithm used for canonicalization
+   */
   public algorithm: 'RDFC-1.0' | 'JCS';
 
   /**
    * Creates an instance of Cryptosuite.
-   * @constructor
-   * @param {Multikey} multikey The parameters to create the multikey
+   * @param {CryptosuiteParams} params See {@link CryptosuiteParams} for required parameters to create a cryptosuite.
+   * @param {string} params.cryptosuite The name of the cryptosuite.
+   * @param {Multikey} params.multikey The parameters to create the multikey.
    */
   constructor({ cryptosuite, multikey }: CryptosuiteParams) {
     this.cryptosuite = cryptosuite;
@@ -56,14 +69,18 @@ export class Cryptosuite implements ICryptosuite {
     this.algorithm = cryptosuite.includes('rdfc') ? 'RDFC-1.0' : 'JCS';
   }
 
-  /** @see ICryptosuite.canonicalize */
+  /**
+   * Implements {@link ICryptosuite.canonicalize}.
+   */
   public async canonicalize(object: CanonicalizableObject): Promise<string> {
     const algorithm = this.algorithm;
     // If the cryptosuite includes 'rdfc', use RDFC canonicalization else use JCS
     return new Canonicalization(algorithm).canonicalize(object);
   }
 
-  /** @see ICryptosuite.createProof */
+  /**
+   * Implements {@link ICryptosuite.createProof}.
+   */
   public async createProof({ document, options }: InsecureDocumentParams): Promise<Proof> {
     // Get the context from the document
     const context = document['@context'];
@@ -98,7 +115,9 @@ export class Cryptosuite implements ICryptosuite {
     return proof;
   }
 
-  /** @see ICryptosuite.verifyProof */
+  /**
+   * Implements {@link ICryptosuite.verifyProof}.
+   */
   public async verifyProof(secure: SecureDocument): Promise<VerificationResult> {
     // Create an insecure document from the secure document by removing the proof
     const insecure = { ...secure, proof: undefined };
@@ -125,7 +144,9 @@ export class Cryptosuite implements ICryptosuite {
     return { verified, verifiedDocument: verified ? secure : undefined };
   }
 
-  /** @see ICryptosuite.transformDocument */
+  /**
+   * Implements {@link ICryptosuite.transformDocument}.
+   */
   public async transformDocument({ document, options }: TransformParams): Promise<string> {
     // Error type for the transformDocument method
     const ERROR_TYPE = 'PROOF_VERIFICATION_ERROR';
@@ -149,7 +170,9 @@ export class Cryptosuite implements ICryptosuite {
     return await this.canonicalize(document);
   }
 
-  /** @see ICryptosuite.generateHash */
+  /**
+   * Implements {@link ICryptosuite.generateHash}.
+   */
   public generateHash({ canonicalConfig, canonicalDocument }: GenerateHashParams): HashBytes {
     // Convert the canonical proof config to buffer and sha256 hash it
     const configHash = sha256(Buffer.from(canonicalConfig, 'utf-8'));
@@ -164,7 +187,9 @@ export class Cryptosuite implements ICryptosuite {
     return sha256(combinedHash);
   }
 
-  /** @see ICryptosuite.proofConfiguration */
+  /**
+   * Implements {@link ICryptosuite.proofConfiguration}.
+   */
   public async proofConfiguration({ options }: ProofOptionsParam): Promise<CanonicalizedProofConfig> {
     // Error type for the proofConfiguration method
     const ERROR_TYPE = 'PROOF_GENERATION_ERROR';
@@ -192,7 +217,9 @@ export class Cryptosuite implements ICryptosuite {
     return await this.canonicalize(options);
   }
 
-  /** @see ICryptosuite.proofSerialization */
+  /**
+   * Implements {@link ICryptosuite.proofSerialization}.
+   */
   public proofSerialization({ hash, options }: SerializeParams): SignatureBytes {
     // Error type for the proofSerialization method
     const ERROR_TYPE = 'PROOF_SERIALIZATION_ERROR';
@@ -208,7 +235,9 @@ export class Cryptosuite implements ICryptosuite {
     return this.multikey.sign(hash);
   }
 
-  /** @see ICryptosuite.proofVerification */
+  /**
+   * Implements {@link ICryptosuite.proofVerification}.
+   */
   public proofVerification({ hash, signature, options }: VerificationParams): boolean {
     // Error type for the proofVerification method
     const ERROR_TYPE = 'PROOF_VERIFICATION_ERROR';

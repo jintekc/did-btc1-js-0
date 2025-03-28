@@ -26,7 +26,6 @@ import { CryptosuiteError } from '../src/utils/error.js';
  * Implements section
  * {@link https://dcdpr.github.io/data-integrity-schnorr-secp256k1/#schnorr-secp256k1-rdfc-2025 | 3.3 schnorr-secp256k1-rdfc-2025}
  * of the {@link https://dcdpr.github.io/data-integrity-schnorr-secp256k1 | Data Integrity BIP-340 Cryptosuite} spec
- * @export
  * @class CryptosuiteRdfc
  * @type {CryptosuiteRdfc}
  */
@@ -42,7 +41,7 @@ export class CryptosuiteRdfc implements ICryptosuite {
 
   /**
    * Creates an instance of CryptosuiteRdfc.
-   * @constructor
+   *
    * @param {Multikey} multikey The parameters to create the multikey
    */
   constructor(multikey: Multikey) {

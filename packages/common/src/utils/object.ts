@@ -2,7 +2,7 @@ export class ObjectUtils extends Object {
   /**
    * Recursively checks deep equality of all keys, values, nested objects and arrays of
    * JSON objects using strict equality checks. Handles arrays as objects with numeric keys.
-   * @static
+   *
    * @param {*} a
    * @param {*} b
    * @returns {boolean}

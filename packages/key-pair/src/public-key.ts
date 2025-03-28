@@ -19,10 +19,9 @@ import {
  * Encapsulates a secp256k1 public key.
  * Provides get methods for different formats (compressed, x-only, multibase).
  * Provides helpers methods for comparison and serialization.
- * @export
  * @class PublicKey
  * @type {PublicKey}
- * @implements {IPublicKey}
+ * 
  */
 export class PublicKey implements IPublicKey {
   /** @type {PublicKeyBytes} The Uint8Array public key */
@@ -30,7 +29,7 @@ export class PublicKey implements IPublicKey {
 
   /**
    * Creates an instance of PublicKey.
-   * @constructor
+   *
    * @param {PublicKeyBytes} bytes The public key byte array.
    * @throws {PublicKeyError} if the byte length is not 32 (x-only) or 33 (compressed)
    */
@@ -120,7 +119,7 @@ export class PublicKey implements IPublicKey {
 
   /**
    * Decodes the multibase string to the 34-byte corresponding public key (2 byte prefix + 32 byte public key).
-   * @static
+   *
    * @returns {PublicKeyMultibaseBytes} The decoded public key: prefix and public key bytes
    */
   public decode(): PublicKeyMultibaseBytes {
@@ -148,7 +147,7 @@ export class PublicKey implements IPublicKey {
 
   /**
    * Encodes compressed secp256k1 public key from bytes to BIP340 base58btc multibase format
-   * @static
+   *
    * @returns {string} The public key encoded in base-58-btc multibase format
    */
   public encode(): string {
@@ -206,14 +205,13 @@ export class PublicKey implements IPublicKey {
 
 /**
  * Utility class for Multikey operations/
- * @export
  * @class PublicKeyUtils
  * @type {PublicKeyUtils}
  */
 export class PublicKeyUtils {
   /**
    * Computes the deterministic public key for a given private key.
-   * @static
+   *
    * @param {PrivateKey | PrivateKeyBytes} pk The PrivateKey object or the private key bytes
    * @returns {PublicKey} A new PublicKey object
    */
@@ -236,7 +234,7 @@ export class PublicKeyUtils {
   /**
    * Computes modular exponentiation: (base^exp) % mod.
    * Used for computing modular square roots.
-   * @static
+   *
    * @param {bigint} base The base value
    * @param {bigint} exp The exponent value
    * @param {bigint} mod The modulus value
@@ -255,7 +253,7 @@ export class PublicKeyUtils {
   /**
    * Computes `sqrt(a) mod p` using Tonelli-Shanks algorithm.
    * This finds `y` such that `y^2 ≡ a mod p`.
-   * @static
+   *
    * @param {bigint} a The value to find the square root of
    * @param {bigint} p The prime modulus
    * @returns {bigint} The square root of `a` mod `p`

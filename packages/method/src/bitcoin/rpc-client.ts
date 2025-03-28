@@ -1,7 +1,5 @@
+import { BitcoinRpcError } from '@did-btc1/common';
 import { default as RpcClient } from 'bitcoin-core';
-import '../exts.js';
-import { DEFAULT_RPC_CLIENT_CONFIG } from './constants.js';
-import { IBitcoinRpc } from './interface.js';
 import {
   AddMultiSigAddressParams,
   BatchOption,
@@ -61,20 +59,19 @@ import {
   ValidateAddressResult,
   VerbosityLevel,
   WalletTransaction
-} from './types.js';
-import { BitcoinRpcError } from '@did-btc1/common';
+} from '../types/bitcoin.js';
+import { DEFAULT_RPC_CLIENT_CONFIG } from './constants.js';
+import { IBitcoinRpc } from './interface.js';
 
 /**
  * Encapsulates a {@link RpcClient | Client} object from {@link https://www.npmjs.com/package/bitcoin-core | `bitcoin-core`}.
  * Implements a strongly-typed {@link IBitcoinRpc | IBitcoinRpc interface} for added expresivity and developer support.
- *
- * @export
  * @class BitcoinRpc
  * @type {BitcoinRpc}
- * @implements {IBitcoinRpc}
  */
 export default class BitcoinRpc implements IBitcoinRpc {
   /**
+   * The encapsulated {@link RpcClientConfig} object.
    * @private
    * @type {RpcClient} An instance of the Client class from {@link https://www.npmjs.com/package/bitcoin-core | `bitcoin-core`}.
    * See {@link https://github.com/ruimarinho/bitcoin-core/blob/master/src/index.d.ts#L64 | `Client`} for more information.
@@ -82,6 +79,7 @@ export default class BitcoinRpc implements IBitcoinRpc {
   private _client: RpcClient;
 
   /**
+   * The encapsulated {@link RpcClientConfig} object.
    * @private
    * @type {RpcClientConfig} ClientConfig from {@link https://www.npmjs.com/package/bitcoin-core | `bitcoin-core`}.
    * See {@link https://github.com/ruimarinho/bitcoin-core/blob/master/src/index.d.ts#L39 | `ClientConfig`} for more information.
@@ -136,8 +134,6 @@ export default class BitcoinRpc implements IBitcoinRpc {
    * The RpcClient returned by this method does not have any named methods.
    * Use this method to create and pass a new RpcClient instance to a BitcoinRpc constructor.
    *
-   * @public
-   * @static
    * @param {IClientConfig} options The configuration object for the client (optional).
    * @returns {RpcClient} A new RpcClient instance.
    * @example
@@ -162,8 +158,6 @@ export default class BitcoinRpc implements IBitcoinRpc {
    * To use default polar config, do not pass a config. See {@link DEFAULT_RPC_CLIENT_CONFIG} for default config.
    * @required A locally running {@link https://github.com/jamaljsr/polar | Polar Lightning} regtest node.
    *
-   * @public
-   * @static
    * @param {?RpcClientConfig} config The configuration object for the client (optional).
    * @returns A new {@link BitcoinRpc} instance.
    * @example
@@ -533,8 +527,6 @@ export default class BitcoinRpc implements IBitcoinRpc {
    *
    * See {@link https://github.com/bitcoin/bitcoin/blob/master/doc/descriptors.md | github.com/bitcoin/bitcoin/descriptors.md}
    * for more information.
-   *
-   * @public
    * @async
    * @param {string} descriptor The descriptor.
    * @param {Array<number>} range If descriptor is ranged, must specify end or [begin,end] to derive.
@@ -727,8 +719,6 @@ export default class BitcoinRpc implements IBitcoinRpc {
    * and no blockhash argument is passed, it will return the transaction if it is in the mempool or any block.
    * If a blockhash argument is passed, it will return the transaction if the specified block is available and
    * the transaction is in that block.
-   *
-   * @public
    * @async
    * @param {string} txid The transaction id (required).
    * @param {?VerbosityLevel} verbosity Response format: 0 (hex), 1 (json) or 2 (jsonext).
@@ -753,7 +743,7 @@ export default class BitcoinRpc implements IBitcoinRpc {
 
   /**
    * Get detailed information about multiple transactions. An extension of {@link getRawTransaction}.
-   * @public
+   *
    * @async
    * @param {Array<string>} txids An array of transaction ids.
    * @param {?VerbosityLevel} verbosity Response format: 0 (hex), 1 (json) or 2 (jsonext).

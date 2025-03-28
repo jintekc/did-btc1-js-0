@@ -14,7 +14,6 @@ import { Hex,
 
 /**
  * Interface for the PrivateKey class.
- * @export
  * @interface IPrivateKey
  * @type {IPrivateKey}
  */
@@ -46,7 +45,7 @@ export interface IPrivateKey {
 
   /**
    * Checks if this private key is equal to another private key.
-   * @public
+   *
    * @returns {boolean} True if the private keys are equal.
    */
   equals(other: PrivateKey): boolean;
@@ -54,7 +53,7 @@ export interface IPrivateKey {
   /**
    * Uses the private key to compute the corresponding public key.
    * @see PrivateKeyUtils.computePublicKey
-   * @public
+   *
    * @returns {PublicKey} A new PublicKey object.
    */
   computePublicKey(): PublicKey;
@@ -77,7 +76,6 @@ export interface IPrivateKey {
 
 /**
  * Interface for the PublicKey class.
- * @export
  * @interface IPublicKey
  * @type {IPublicKey}
  */
@@ -158,7 +156,6 @@ export interface IPublicKey {
 
 /**
  * Interface for class KeyPair.
- * @export
  * @interface IKeyPair
  * @type {IKeyPair}
  */

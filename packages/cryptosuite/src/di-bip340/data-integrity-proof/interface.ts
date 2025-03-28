@@ -8,7 +8,6 @@ import { Cryptosuite } from '../cryptosuite/index.js';
 
 /**
  * Interface representing a BIP-340 DataIntegrityProof.
- * @export
  * @interface IDataIntegrityProof
  * @type {IDataIntegrityProof}
  */

@@ -11,10 +11,8 @@ interface KeyPairParams {
 
 /**
  * Encapsulates a PublicKey and a PrivateKey object as a single KeyPair object.
- * @export
  * @class KeyPair
  * @type {KeyPair}
- * @implements {IKeyPair}
  */
 export class KeyPair implements IKeyPair {
   /** @type {PrivateKey} The private key object */
@@ -26,10 +24,10 @@ export class KeyPair implements IKeyPair {
   /**
    * Creates an instance of KeyPair. Must provide a at least a private key.
    * Can optionally provide btoh a private and public key, but must be a valid pair.
-   * @constructor
+   *
    * @param {PrivateKey} privateKey The private key object
    */
-  constructor({ privateKey, publicKey }: KeyPairParams = {} as KeyPairParams) {
+  constructor({ privateKey, publicKey }: KeyPairParams = {}) {
     // If no private key or public key, throw an error
     if (!publicKey && !privateKey) {
       throw new KeyPairError('Argument missing: must at least provide a publicKey', 'KEYPAIR_CONSTRUCTOR_ERROR');
@@ -94,14 +92,13 @@ export class KeyPair implements IKeyPair {
 
 /**
  * Utility class for creating and working with KeyPair objects.
- * @export
  * @class KeyPairUtils
  * @type {KeyPairUtils}
  */
 export class KeyPairUtils {
   /**
    * Static method creates a new KeyPair from a PrivateKey object or private key bytes.
-   * @static
+   *
    * @param {PrivateKey | PrivateKeyBytes} data The private key bytes
    * @returns {KeyPair} A new KeyPair object
    */
@@ -127,7 +124,7 @@ export class KeyPairUtils {
 
   /**
    * Static method creates a new KeyPair (PrivateKey/PublicKey) bigint secret.
-   * @static
+   *
    * @param {bigint} secret The private key secret
    * @returns {KeyPair} A new KeyPair object
    */
@@ -139,7 +136,7 @@ export class KeyPairUtils {
 
   /**
    * Converts key bytes to a hex string.
-   * @static
+   *
    * @param {KeyBytes} keyBytes The key bytes (private or public).
    * @returns {Hex} The key bytes as a hex string.
    */
@@ -168,7 +165,7 @@ export class KeyPairUtils {
 
   /**
    * Static method to generate a new random PrivateKey / PublicKey KeyPair.
-   * @static
+   *
    * @returns {KeyPair} A new PrivateKey object.
    */
   public static generate(): KeyPair {

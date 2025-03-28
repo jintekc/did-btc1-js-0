@@ -19,7 +19,6 @@ import { Multikey } from '../multikey/index.js';
 
 /**
  * Interface representing a BIP-340 Cryptosuite.
- * @export
  * @interface ICryptosuite
  * @type {ICryptosuite}
  */

@@ -13,10 +13,10 @@ import { base58btc } from 'multiformats/bases/base58';
  */
 export class GeneralUtils {
   /**
-     * @static Helper function to encode a secp256k1 key in SchnorrSecp256k1 Multikey Format
-     * @param {PublicKeyBytes} xOnlyPublicKeyBytes
-     * @returns {PublicKeyMultibase}
-     */
+   * Helper function to encode a secp256k1 key in SchnorrSecp256k1 Multikey Format
+   * @param {PublicKeyBytes} xOnlyPublicKeyBytes
+   * @returns {PublicKeyMultibase}
+   */
   public static encode(xOnlyPublicKeyBytes: PublicKeyBytes): string {
     if (xOnlyPublicKeyBytes.length !== 32) {
       throw new Error('x-only public key must be 32 bytes');
@@ -31,7 +31,6 @@ export class GeneralUtils {
 
   /**
    * Converts a bigint to a buffer
-   * @static
    * @param {bigint} value The bigint to convert
    * @returns {Buffer} The buffer representation of the bigint
    */
@@ -42,7 +41,6 @@ export class GeneralUtils {
 
   /**
    * Generates a new mnemonic phrase and HD wallet
-   * @static @async @method
    * @returns {HdWallet} Promise resolving to a new hdwallet object w/ mnemonic and hdkey
    * @throws {Error} if the public key bytes cannot be derived
    */
@@ -70,7 +68,6 @@ export class GeneralUtils {
 
   /**
    * Recovers an HDKey from a mnemonic phrase
-   * @static @async @method
    * @param {string} mnemonic The mnemonic phrase to recover the HDKey from
    * @param {Uint8Array} seed Optional seed to recover the HDKey from
    * @returns {HDKey} Promise resolving to the recovered HDKey
@@ -90,7 +87,6 @@ export class GeneralUtils {
 
   /**
    * Recovers a secp256k1 privateKey from its original entropy
-   * @static
    * @param {Uint8Array} xorEntropy The original entropy to recover the privateKey from
    * @param {Uint8Array} salt The salt used to tweak the privateKey
    * @returns {Uint8Array} The recovered privateKey
@@ -116,7 +112,6 @@ export class GeneralUtils {
 
   /**
    * Recovers a secp256k1 privateKey from its original entropy
-   * @static
    * @param {Uint8Array} entropy The entropy to recover the privateKey from
    * @returns {Uint8Array} The recovered privateKey
    * @throws {Error} if the privateKey cannot be recovered
@@ -140,7 +135,6 @@ export class GeneralUtils {
 
   /**
    * Tweak the entropy with a salt using XOR
-   * @static
    * @param {Uint8Array} entropy The entropy to tweak
    * @param {Uint8Array} salt The salt to tweak the entropy with
    * @returns {Uint8Array} The tweaked entropy
@@ -155,7 +149,7 @@ export class GeneralUtils {
 
   /**
    * Untweak the entropy with a salt using XNOR
-   * @static
+   *
    * @param {Uint8Array} tweakedEntropy The tweaked entropy to untweak
    * @param {Uint8Array} salt The salt to untweak the entropy with
    * @returns {Uint8Array} The original entropy
@@ -170,7 +164,6 @@ export class GeneralUtils {
 
   /**
    * Recovers an HDKey from a mnemonic phrase
-   * @static @async @method
    * @param {string} mnemonic The mnemonic phrase to recover the HDKey from
    * @param {string} path The path to derive the child key from
    * @returns {Uint8Array} Promise resolving to the recovered private key bytes
@@ -193,7 +186,6 @@ export class GeneralUtils {
 
   /**
    * Derives a child key from an HDKey
-   * @static
    * @param {HDKey} hdkey The HDKey to derive the child key from
    * @param {string} path The path to derive the child key from
    * @returns {HDKey} A Promise resolving to the child key
