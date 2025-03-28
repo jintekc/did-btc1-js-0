@@ -4,7 +4,7 @@ import { BeaconService } from '../../interfaces/ibeacon.js';
 import { SingletonBeacon } from './singleton.js';
 import { SMTAggregateBeacon } from './smt-aggregate.js';
 import { DidBtc1Error } from '@did-btc1/common';
-import { SidecarData } from '../../index.js';
+import { SidecarData } from '../../types/crud.js';
 
 /**
  * Factory for Beacon creation

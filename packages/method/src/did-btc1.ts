@@ -13,11 +13,12 @@ import { Btc1Read } from './btc1/crud/read.js';
 import { Btc1Update } from './btc1/crud/update.js';
 import { Btc1DidDocument } from './btc1/utils/did-document.js';
 import { Btc1KeyManager } from './btc1/key-manager/index.js';
-import { Btc1Networks, DidBtc1IdTypes } from './types/crud.js';
+import { Btc1Networks, DidBtc1IdTypes, RecoveryOptions } from './types/crud.js';
 import { Btc1Appendix } from './btc1/utils/btc1-appendix.js';
 import { W3C_DID_RESOLUTION_V1 } from './btc1/utils/constants.js';
-import { DidResolutionOptions, DidUpdateParams, IntermediateDocument } from './btc1/crud/crud.js';
 import { DidBtc1Error, PublicKeyBytes } from '@did-btc1/common';
+import { DidResolutionOptions, IntermediateDocument } from './interfaces/crud.js';
+import { PatchOperation } from './utils/json-patch.js';
 
 /** Initialize tiny secp256k1 */
 initEccLib(tinysecp);
@@ -33,6 +34,17 @@ export type DidCreateParams =
   | { idType: 'key'; pubKeyBytes: PublicKeyBytes; options?: DidCreateOptions }
   | { idType: 'external'; intermediateDocument: IntermediateDocument; options?: DidCreateOptions };
 
+export interface ConstructPayloadParams {
+    identifier: string;
+    sourceDocument: Btc1DidDocument;
+    sourceVersionId: string;
+    patch: PatchOperation[];
+}
+export interface DidUpdateParams extends ConstructPayloadParams {
+    verificationMethodId: string;
+    beaconIds: string[];
+    options: RecoveryOptions;
+}
 /**
  * Implements {@link https://dcdpr.github.io/did-btc1 | did:btc1 DID Method Specification}.
  *

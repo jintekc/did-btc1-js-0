@@ -332,11 +332,13 @@ export class Btc1Read {
    * @param {ResolutionOptions} params.options See {@link DidResolutionOptions} for details.
    * @returns {Btc1DidDocument} The resolved DID Document object with a validated single, canonical history
    */
-  public static async targetDocument({ initialDocument, network, options }: {
+  public static async targetDocument({ initialDocument, options }: {
     initialDocument: Btc1DidDocument;
-    network: BitcoinNetworkNames;
     options: DidResolutionOptions;
   }): Promise<Btc1DidDocument> {
+    // Set the network from the options or default to mainnet
+    const network = options.network ?? 'mainnet';
+
     // If options.versionId is not null, set targetVersionId to options.versionId
     const targetVersionId = options.versionId;
 

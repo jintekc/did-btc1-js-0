@@ -2,13 +2,13 @@ import { canonicalization, DidBtc1Error } from '@did-btc1/common';
 import type { DidService } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { base58btc } from 'multiformats/bases/base58';
-import { Btc1Appendix } from '../../index.js';
 import { DidUpdatePayload } from '../../interfaces/crud.js';
 import { BeaconService } from '../../interfaces/ibeacon.js';
 import { InvokePayloadParams, SignalMetdata } from '../../types/crud.js';
 import { GeneralUtils } from '../../utils/general.js';
 import JsonPatch, { PatchOperation } from '../../utils/json-patch.js';
 import { BeaconFactory } from '../beacons/factory.js';
+import { Btc1Appendix } from '../utils/btc1-appendix.js';
 import { BTC1_DID_UPDATE_PAYLOAD_CONTEXT } from '../utils/constants.js';
 import { Btc1DidDocument, Btc1VerificationMethod } from '../utils/did-document.js';
 

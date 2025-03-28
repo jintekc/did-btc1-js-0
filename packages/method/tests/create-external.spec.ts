@@ -1,13 +1,7 @@
 import { expect } from 'chai';
 import { DidBtc1 } from '../src/did-btc1.js';
-import { idTypes, networks, versions } from './test-data.js';
-import { IntermediateDocument } from '../src/btc1/crud/interface.js';
 import { canonicalization } from '@did-btc1/common';
-
-// Set the canonicalization algorithm to JCS (JSON Canonicalization Scheme)
-canonicalization.setAlgorithm('JCS');
-
-const idType = idTypes.external as 'external';
+import { IntermediateDocument } from '../src/interfaces/crud.js';
 
 /**
  * DidBtc1 Create External Test Cases
@@ -19,6 +13,11 @@ const idType = idTypes.external as 'external';
  *
  */
 describe('DidBtc1 Create External', () => {
+  // Set the canonicalization algorithm to JCS (JSON Canonicalization Scheme)
+  canonicalization.setAlgorithm('JCS');
+  const versions = ['1', '2', '3', '4', '5'];
+  const networks = ['mainnet', 'testnet', 'signet', 'regtest'];
+  const idType = 'external';
   const intermediateDocument = {
     '@context' : [
       'https://www.w3.org/ns/did/v1',

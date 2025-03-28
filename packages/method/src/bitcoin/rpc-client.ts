@@ -1,5 +1,4 @@
 import { default as RpcClient } from 'bitcoin-core';
-import '../exts.js';
 import { DEFAULT_RPC_CLIENT_CONFIG } from './constants.js';
 import { IBitcoinRpc } from './interface.js';
 import {
