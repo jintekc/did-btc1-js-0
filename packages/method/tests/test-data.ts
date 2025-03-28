@@ -1,4 +1,4 @@
-import { Btc1DidDocument } from '../src/index.js';
+import { Btc1DidDocument } from '../src/btc1/utils/did-document.js';
 
 export const idTypes = { key: 'key', external: 'external' };
 export const versions = ['1', '2', '3', '4', '5'];

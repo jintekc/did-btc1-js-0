@@ -1,12 +1,11 @@
+import { Btc1KeyManagerError, HashBytes, Hex, Logger, MULTIBASE_URI_PREFIX, SignatureBytes } from '@did-btc1/common';
 import { KeyPair, KeyPairUtils, PublicKey } from '@did-btc1/key-pair';
 import { schnorr } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
 import { KeyValueStore, MemoryStore } from '@web5/common';
 import { KeyIdentifier } from '@web5/crypto';
 import { randomBytes } from 'crypto';
-import { Btc1KeyManagerOptions, KeyManagerParams, MULTIBASE_URI_PREFIX } from '../../index.js';
-import { KeyManager } from './interface.js';
-import { Hex, SignatureBytes, Btc1KeyManagerError, HashBytes, Logger } from '@did-btc1/common';
+import { Btc1KeyManagerOptions, KeyManager, KeyManagerParams } from './interface.js';
 
 /**
  * A class for managing cryptographic keys for the Btc1 DID method.

@@ -4,7 +4,6 @@ import { bech32 } from '@scure/base';
 import type { DidService, DidVerificationMethod } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { getNetwork } from '../../bitcoin/network.js';
-import { DidBtc1 } from '../../did-btc1.js';
 import { IntermediateDocument, IntermediateVerificationMethod } from '../../interfaces/crud.js';
 import { DocumentBytes } from '../../types/crud.js';
 import { BeaconUtils } from '../utils/beacon-utils.js';
@@ -213,7 +212,7 @@ export class Btc1Create {
     const hrp = idType === 'key' ? 'k' : 'x';
 
     // Set the base did method prefix
-    let didMethodPrefix = `did:${DidBtc1.methodName}`;
+    let didMethodPrefix = `did:btc1`;
 
     // If version > 1, append it to the didMethodPrefix
     if (v > 1) {

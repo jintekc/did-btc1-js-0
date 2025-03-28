@@ -1,6 +1,6 @@
 import { DidDocument, DidService } from '@web5/dids';
 import { networks, payments } from 'bitcoinjs-lib';
-import { Maybe } from '../../exts.js';
+import { Maybe } from '@did-btc1/common';
 import { BeaconFactory } from '../beacons/factory.js';
 import { BeaconService, BeaconServiceAddress } from '../../interfaces/ibeacon.js';
 import { PublicKeyBytes, DidBtc1Error } from '@did-btc1/common';

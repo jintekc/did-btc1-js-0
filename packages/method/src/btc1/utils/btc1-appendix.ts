@@ -8,7 +8,6 @@ import {
   DidVerificationMethod,
   DidVerificationRelationship
 } from '@web5/dids';
-import { DidBtc1 } from '../../did-btc1.js';
 import { Btc1Networks } from '../../types/crud.js';
 import { W3C_ZCAP_V1 } from './constants.js';
 import { Btc1RootCapability } from '../../interfaces/crud.js';
@@ -58,7 +57,7 @@ export class Btc1Appendix {
     }
 
     // Validate the method is 'btc1'
-    if (!method || method !== DidBtc1.methodName) {
+    if (!method || method !== 'btc1') {
       throw new DidError(DidErrorCode.MethodNotSupported, `Did Method not supported: ${method} `);
     }
 
