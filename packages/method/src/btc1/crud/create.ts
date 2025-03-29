@@ -6,9 +6,9 @@ import { DidError, DidErrorCode } from '@web5/dids';
 import { getNetwork } from '../../bitcoin/network.js';
 import { IntermediateDocument, IntermediateVerificationMethod } from '../../interfaces/crud.js';
 import { DocumentBytes } from '../../types/crud.js';
-import { BeaconUtils } from '../utils/beacon-utils.js';
-import { ID_PLACEHOLDER_VALUE } from '../utils/constants.js';
-import { Btc1DidDocument } from '../utils/did-document.js';
+import { BeaconUtils } from '../../utils/btc1/beacon-utils.js';
+import { ID_PLACEHOLDER_VALUE } from '../../utils/btc1/constants.js';
+import { Btc1DidDocument } from '../../utils/btc1/did-document.js';
 
 export type NetworkVersionParams = {
   version?: string | undefined;
@@ -43,7 +43,6 @@ export type DidBtc1Identifier = string;
  * can be undertaken in an offline manner, i.e., the DID controller does not need to interact with the Bitcoin network
  * to create their DID.
  *
- * @export
  * @class Btc1Create
  * @type {Btc1Create}
  */
@@ -53,9 +52,6 @@ export class Btc1Create {
    *
    * For deterministic creation, the did:btc1 identifier encodes a secp256k1 public key. The key is then used to
    * deterministically generate the initial DID document.
-   *
-   * @public
-   * @static
    *
    * @param {DidCreateDeterministicParams} params See {@link DidCreateDeterministicParams} for details.
    * @param {string} params.version did-btc1 identifier version.
@@ -108,9 +104,6 @@ export class Btc1Create {
    * `did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`. The intermediateDocument should include at
    * least one verificationMethod and service of the type SingletonBeacon.
    *
-   * @public
-   * @static
-   * @async
    * @param {DidCreateExternalParams} params See {@link DidCreateExternalParams} for details.
    * @param {string} params.version Identifier version.
    * @param {string} params.network Identifier network name.
@@ -190,8 +183,6 @@ export class Btc1Create {
    * If idType is “key”, then genesisBytes is a compressed SEC encoded secp256k1 public key.
    * If idType is “external”, then genesisBytes is the byte representation of a SHA256 hash of an intermediate document.
    *
-   * @public
-   * @static
    * @param {CreateDidBtc1IdentifierParams} params See {@link CreateDidBtc1IdentifierParams} for details.
    * @param {string} params.idType Identifier type (key or external).
    * @param {string} params.network Bitcoin network name.

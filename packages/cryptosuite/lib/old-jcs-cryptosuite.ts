@@ -1,5 +1,4 @@
 import { sha256 } from '@noble/hashes/sha256';
-import * as jcs from '@web5/crypto';
 import { base58btc } from 'multiformats/bases/base58';
 import {
   CanonicalizableObject,
@@ -17,10 +16,9 @@ import {
   SecureDocument,
   VerificationResult
 } from '../src/types/di-proof.js';
-import { HashHex, SignatureBytes } from '../src/types/shared.js';
-import { CryptosuiteError } from '../src/utils/error.js';
 import { Multikey } from '../src/di-bip340/multikey/index.js';
 import { ICryptosuite } from '../src/di-bip340/cryptosuite/interface.js';
+import { canonicalization, CryptosuiteError, HashHex, SignatureBytes } from '@did-btc1/common';
 
 /**
  * Implements section
@@ -28,7 +26,6 @@ import { ICryptosuite } from '../src/di-bip340/cryptosuite/interface.js';
  * of the
  * {@link https://dcdpr.github.io/data-integrity-schnorr-secp256k1 | Data Integrity Schnorr Secp256k1 Cryptosuite v0.1}
  * specification
- * @export
  * @class CryptosuiteJcs
  * @type {CryptosuiteJcs}
  */
@@ -44,7 +41,7 @@ export class CryptosuiteJcs implements ICryptosuite {
 
   /**
    * Creates an instance of CryptosuiteJcs.
-   * @constructor
+   *
    * @param {Multikey} multikey The parameters to create the multikey
    */
   constructor(multikey: Multikey) {
@@ -53,7 +50,7 @@ export class CryptosuiteJcs implements ICryptosuite {
 
   /** @see ICryptosuite.canonicalize */
   public canonicalize(object: CanonicalizableObject): string {
-    return jcs.canonicalize(object);
+    return canonicalization.jcs(object);
   }
 
   /** @see ICryptosuite.createProof */
@@ -67,9 +64,9 @@ export class CryptosuiteJcs implements ICryptosuite {
     // Transform the document into a canonical form
     const canonicalDocument = await this.transformDocument({ document, options });
     // Create a canonical form of the proof configuration
-    const canonicalProofConfig = await this.proofConfiguration({ options: proof });
+    const canonicalConfig = await this.proofConfiguration({ options: proof });
     // Generate a hash of the canonical proof configuration and canonical document
-    const hashData = this.generateHash({ canonicalProofConfig, canonicalDocument });
+    const hashData = this.generateHash({ canonicalConfig, canonicalDocument });
     // Serialize the proof
     const proofBytes = this.proofSerialization({ hashData, options });
     // Encode the proof bytes to base
@@ -87,13 +84,13 @@ export class CryptosuiteJcs implements ICryptosuite {
     // Transform the secure document into a canonical form
     const canonicalDocument = await this.transformDocument({ document: secure, options: proof });
     // Create a canonical form of the proof configuration
-    const canonicalProofConfig = await this.proofConfiguration({ options });
+    const canonicalConfig = await this.proofConfiguration({ options });
     // Decode the proof value from base
     const proofBytes = base58btc.decode(options.proofValue);
     // Generate a hash of the canonical proof configuration and canonical document
-    const hashData = this.generateHash({ canonicalProofConfig, canonicalDocument });
+    const hash = this.generateHash({ canonicalConfig, canonicalDocument });
     // Verify the proof
-    const verified = this.proofVerification({ hashData, proofBytes, options });
+    const verified = this.proofVerification({ hash, proofBytes, options });
     // Return the verification result
     const verifiedDocument = verified ? secure : undefined;
     // Return the verification result
@@ -151,7 +148,7 @@ export class CryptosuiteJcs implements ICryptosuite {
   }
 
   /** @see ICryptosuite.proofSerialization */
-  public proofSerialization({ hashData, options }: SerializeParams): SignatureBytes {
+  public proofSerialization({ hash, options }: SerializeParams): SignatureBytes {
     // Error type for the proofSerialization method
     const ERROR_TYPE = 'PROOF_SERIALIZATION_ERROR';
     // Get the verification method from the options
@@ -162,12 +159,12 @@ export class CryptosuiteJcs implements ICryptosuite {
     if (vm !== fullId) {
       throw new CryptosuiteError(`Multikey fullId ${fullId} !== options verificationMethod ${vm}`, ERROR_TYPE);
     }
-    // Return the signed hashData
-    return this.multikey.sign(hashData);
+    // Return the signed hash
+    return this.multikey.sign(hash);
   }
 
   /** @see ICryptosuite.proofVerification */
-  public proofVerification({ hashData, proofBytes, options }: VerificationParams): boolean {
+  public proofVerification({ hash, signature, options }: VerificationParams): boolean {
     // Error type for the proofVerification method
     const ERROR_TYPE = 'PROOF_VERIFICATION_ERROR';
     // Get the verification method from the options
@@ -178,7 +175,7 @@ export class CryptosuiteJcs implements ICryptosuite {
     if (vm !== fullId) {
       throw new CryptosuiteError(`Multikey fullId ${fullId} !== verificationMethod ${vm}`, ERROR_TYPE);
     }
-    // Return the verified hashData and proofBytes
-    return this.multikey.verify(hashData, proofBytes);
+    // Return the verified hash and signature
+    return this.multikey.verify(hash, signature);
   }
 }

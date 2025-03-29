@@ -17,10 +17,9 @@ import {
  * Encapsulates a secp256k1 private key
  * Provides get methods for different formats (raw, secret, point).
  * Provides helpers methods for comparison, serialization and publicKey generation.
- * @export
  * @class PrivateKey
  * @type {PrivateKey}
- * @implements {IPrivateKey}
+ * 
  */
 export class PrivateKey implements IPrivateKey {
   /** @type {PrivateKeyBytes} The Uint8Array private key bytes */
@@ -31,7 +30,7 @@ export class PrivateKey implements IPrivateKey {
 
   /**
    * Instantiates an instance of PrivateKey.
-   * @constructor
+   *
    * @param {PrivateKeySeed} seed bytes (Uint8Array) or secret (bigint)
    * @throws {PrivateKeyError} If seed is not provided, not a valid 32-byte private key or not a valid bigint secret
    */
@@ -123,7 +122,7 @@ export class PrivateKey implements IPrivateKey {
 
   /**
    * Returns the raw private key as a hex string.
-   * @public
+   *
    * @see IPrivateKey.hex
    * @returns {Hex} The private key as a hex string
    */
@@ -135,7 +134,7 @@ export class PrivateKey implements IPrivateKey {
   /**
    * Checks if this private key is equal to another.
    * @see IPrivateKey.equals
-   * @public
+   *
    * @param {PrivateKey} other The other private key
    * @returns {boolean} True if the private keys are equal, false otherwise
    */
@@ -147,7 +146,7 @@ export class PrivateKey implements IPrivateKey {
   /**
    * Computes the public key from the private key bytes.
    * @see IPrivateKey.computePublicKey
-   * @public
+   *
    * @returns {PublicKey} The computed public key
    */
   public computePublicKey(): PublicKey {
@@ -158,7 +157,7 @@ export class PrivateKey implements IPrivateKey {
   /**
    * Checks if the private key is valid.
    * @see IPrivateKey.computePublicKey
-   * @public
+   *
    * @returns {boolean} True if the private key is valid, false otherwise
    */
   public isValid(): boolean {
@@ -181,7 +180,6 @@ export class PrivateKey implements IPrivateKey {
 
 /**
  * Utility class for creating and working with PrivateKey objects.
- * @export
  * @class PrivateKeyUtils
  * @type {PrivateKeyUtils}
  */
@@ -190,7 +188,7 @@ export class PrivateKeyUtils {
 
   /**
    * Convert a bigint secret to private key bytes.
-   * @public
+   *
    * @param {PrivateKeyBytes} bytes The private key bytes
    * @returns {bigint} The private key bytes as a bigint secret
    */
@@ -200,7 +198,7 @@ export class PrivateKeyUtils {
 
   /**
    * Convert a private key bytes to a bigint secret.
-   * @public
+   *
    * @param {bigint} secret The private key secret.
    * @returns {PrivateKeyBytes} The private key secret as private key bytes.
    */
@@ -223,7 +221,7 @@ export class PrivateKeyUtils {
 
   /**
    * Checks if the private key is valid.
-   * @public
+   *
    * @param {PrivateKeyBytes} bytes The private key bytes
    * @returns {boolean} True if the private key is valid, false otherwise
    */
@@ -233,7 +231,7 @@ export class PrivateKeyUtils {
 
   /**
    * Create a new PrivateKey object from a bigint secret.
-   * @static
+   *
    * @param {bigint} secret The secret bigint
    * @returns {PrivateKey} A new PrivateKey object
    */
@@ -248,7 +246,7 @@ export class PrivateKeyUtils {
 
   /**
    * Computes the public key bytes from a private key bytes.
-   * @public
+   *
    * @param {PrivateKeyBytes} privateKeyBytes The private key bytes
    * @returns {PublicKeyBytes} The public key bytes
    * @throws {PrivateKeyError} If the public key is not compressed or not derived
@@ -278,7 +276,7 @@ export class PrivateKeyUtils {
 
   /**
    * Static method to generate random private key bytes.
-   * @static
+   *
    * @returns {PrivateKeyBytes} Uint8Array of 32 random bytes.
    */
   public static randomBytes(): PrivateKeyBytes {

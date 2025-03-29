@@ -5,7 +5,6 @@ import { canonicalization } from '@did-btc1/common';
 
 /**
  * DidBtc1 Create Key Test Cases
- *
  * publicKey
  * idType=key, publicKey
  * idType=key, publicKey, version

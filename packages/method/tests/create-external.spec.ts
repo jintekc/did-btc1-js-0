@@ -5,12 +5,10 @@ import { IntermediateDocument } from '../src/interfaces/crud.js';
 
 /**
  * DidBtc1 Create External Test Cases
- *
  * idType=external, intermediateDocument
  * idType=external, intermediateDocument, version
  * idType=external, intermediateDocument, network
  * idType=external, intermediateDocument, version, network
- *
  */
 describe('DidBtc1 Create External', () => {
   // Set the canonicalization algorithm to JCS (JSON Canonicalization Scheme)

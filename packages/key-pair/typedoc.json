@@ -1,0 +1,14 @@
+{
+    "extends": ["../../typedoc.json"],
+    "entryPoints": [
+        "./src/index.ts",
+    ],
+    "tsconfig": "./tsconfig.json",
+    "out": "../../docs/key-pair",
+    "exclude": [
+        "**/lib/**",
+        "**/dist/**",
+        "**/tests/**",
+        "**/node_modules/**"
+    ]
+}

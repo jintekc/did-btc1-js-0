@@ -11,16 +11,16 @@ import * as Digest from 'multiformats/hashes/digest';
 import { DEFAULT_BLOCK_CONFIRMATIONS } from '../../bitcoin/constants.js';
 import { getNetwork } from '../../bitcoin/network.js';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
-import { BlockHeight, BlockV2, BlockV3, RawTransactionV2 } from '../../bitcoin/types.js';
 import { DidResolutionOptions, DidUpdatePayload } from '../../interfaces/crud.js';
 import { BeaconServiceAddress, BeaconSignal, Signal } from '../../interfaces/ibeacon.js';
+import { BlockHeight, BlockV2, BlockV3, RawTransactionV2 } from '../../types/bitcoin.js';
 import { CIDAggregateSidecar, SignalsMetadata, SingletonSidecar } from '../../types/crud.js';
+import { Btc1Appendix, DidComponents } from '../../utils/btc1/appendix.js';
+import { BeaconUtils } from '../../utils/btc1/beacon-utils.js';
+import { ID_PLACEHOLDER_VALUE, VALID_HRP } from '../../utils/btc1/constants.js';
+import { Btc1DidDocument } from '../../utils/btc1/did-document.js';
 import JsonPatch from '../../utils/json-patch.js';
 import { BeaconFactory } from '../beacons/factory.js';
-import { BeaconUtils } from '../utils/beacon-utils.js';
-import { Btc1Appendix, DidComponents } from '../utils/btc1-appendix.js';
-import { ID_PLACEHOLDER_VALUE, VALID_HRP } from '../utils/constants.js';
-import { Btc1DidDocument } from '../utils/did-document.js';
 
 const { process, canonicalize } = canonicalization;
 
@@ -73,13 +73,11 @@ export interface TargetBlockheightParams {
 
 /**
  * Implements {@link https://dcdpr.github.io/did-btc1/#read | 4.2 Read}.
- *
  * The read operation is executed by a resolver after a resolution request identifying a specific did:btc1 identifier is
  * received from a client at Resolution Time. The request MAY contain a resolutionOptions object containing additional
  * information to be used in resolution. The resolver then attempts to resolve the DID document of the identifier at a
  * specific Target Time. The Target Time is either provided in resolutionOptions or is set to the Resolution Time of the
  * request.
- *
  * To do so it executes the following algorithm:
  *  1. Let identifierComponents be the result of running the algorithm
  *     in Parse did:btc1 identifier, passing in the identifier.
@@ -89,10 +87,8 @@ export interface TargetBlockheightParams {
  *     Target Document passing in initialDocument and resolutionOptions.
  *  4. Return targetDocument.
  *
- * @export
  * @class Btc1Read
  * @type {Btc1Read}
- * @implements {DidBtc1.resolve}
  */
 export class Btc1Read {
   /**
@@ -102,8 +98,6 @@ export class Btc1Read {
    * Document from a secp256k1 public key. It takes in a did:btc1 identifier and a identifierComponents object and
    * returns an initialDocument.
    *
-   * @public
-   * @static
    * @param {Btc1ReadDeterministic} params See {@link Btc1ReadDeterministic} for details.
    * @param {string} params.identifier The did-btc1 version.
    * @param {DidComponents} params.components The name of the bitcoin network (mainnet, testnet, regtest).
@@ -148,9 +142,6 @@ export class Btc1Read {
    * takes in a did:btc1 identifier, a identifierComponents object and a resolutionOptions object. It returns an
    * initialDocument, which is a conformant DID document validated against the identifier.
    *
-   * @public
-   * @static
-   * @async
    * @param {Btc1ReadExternal} params Required params for calling the external method.
    * @param {string} params.identifier The DID to be resolved.
    * @param {DidComponents} params.components The components of the identifier.
@@ -186,15 +177,12 @@ export class Btc1Read {
    * encoded within the identifier. It takes in a did:btc1 identifier, identifierComponents and a
    * initialDocument. It returns the initialDocument if validated, otherwise it throws an error.
    *
-   * @public
-   * @static
-   * @async
    * @param {Btc1ReadSidecar} params Required params for calling the sidecar method
    * @param {string} params.identifier The DID to be resolved
    * @param {DidComponents} params.components The components of the DID identifier
    * @param {Btc1DidDocument} params.initialDocument The initial DID Document provided by the user
    * @returns {Btc1DidDocument} The resolved DID Document object
-   * @throws {DidError} with {@link DidErrorCode.InvalidDidDocument} if genesisBytes !== initialDocument hashBytes
+   * @throws {DidError} InvalidDidDocument if genesisBytes !== initialDocument hashBytes
    */
   public static async sidecar({ components, initialDocument }: Btc1ReadSidecar): Promise<Btc1DidDocument> {
     // Set intermediateDocument to a copy of initialDocument
@@ -225,11 +213,6 @@ export class Btc1Read {
    * The CAS Retrieval algorithm attempts to retrieve an initialDocument from a Content Addressable Storage (CAS) system
    * by converting the bytes in the identifier into a Content Identifier (CID). It takes in an identifier and
    * an identifierComponents object. It returns an initialDocument.
-   *
-   * @public
-   * @static
-   * @async
-   *
    * @param {DidReadCas} params Required params for calling the cas method
    * @param {string} params.identifier BTC1 DID used to resolve the DID Document
    * @param {DidComponents} params.components BTC1 DID components used to resolve the DID Document
@@ -276,19 +259,10 @@ export class Btc1Read {
    * a valid initialDocument for that identifier.
    *
    * @public
-   * @static
-   * @async
-   *
-   * @param {ResolveInitialDocument} params Required parameters for calling the initialDocument operation.
+   * @param {ResolveInitialDocument} params See {@link ResolveInitialDocument} for parameter details.
    * @param {string} params.identifier The DID to be resolved.
    * @param {DidComponents} params.components The components of the identifier.
-   * @param {DidResolutionOptions} params.options The options for resolving the DID Document.
-   *
-   * @param {number} params.options.versionId The versionId for resolving the DID Document.
-   * @param {UnixTimestamp} params.options.versionTime The versionTime for resolving the DID Document.
-   * @param {BitcoinRpc} params.options.rpc BitcoinRpc client connection.
-   * @param {SidecarDataCID | SidecarDataSMT} params.options.sidecarData The sidecar data for resolving the DID Document.
-   *
+   * @param {DidResolutionOptions} params.options See {@link DidResolutionOptions} for resolving the DID Document.
    * @returns {Promise<Btc1DidDocument>} The resolved DID Document object.
    * @throws {DidError} if the DID hrp is invalid, no sidecarData passed and hrp = "x".
    */
@@ -324,9 +298,6 @@ export class Btc1Read {
    * resolved. It takes as inputs initialDocument, resolutionOptions and network. It returns a valid DID document.
    *
    * @public
-   * @static
-   * @async
-   *
    * @param {TargetDocumentParams} params See {@link TargetDocumentParams} for details.
    * @param {Btc1DidDocument} params.initialDocument The initial DID Document to resolve
    * @param {ResolutionOptions} params.options See {@link DidResolutionOptions} for details.
@@ -391,9 +362,6 @@ export class Btc1Read {
    * targetTime. It returns a Bitcoin blockheight.
    *
    * @protected
-   * @static
-   * @async
-   *
    * @param {TargetBlockheightParams} params The parameters for the determineTargetBlockHeight operation.
    * @param {BitcoinNetworkNames} params.network The bitcoin network to connect to (mainnet, signet, testnet, regtest).
    * @param {?UnixTimestamp} params.targetTime Unix timestamp used to find highest block height < targetTime.
@@ -451,9 +419,7 @@ export class Btc1Read {
    * and network. It returns the contemporaryDIDDocument once either the targetBlockheight or targetVersionId have been
    * reached.
    *
-   * @public
-   * @static
-   * @async
+   * @protected
    * @param {ReadBlockchainParams} params The parameters for the traverseBlockchainHistory operation.
    * @param {Btc1DidDocument} params.contemporaryDIDDocument The DID Document at the contemporaryBlockheight.
    * @param {number} params.contemporaryBlockHeight The blockheight of the contemporaryDIDDocument.
@@ -583,8 +549,6 @@ export class Btc1Read {
    * object containing beaconId, beaconType, and tx properties.
    *
    * @public
-   * @static
-   * @async
    * @param {FindNextSignals} params The parameters for the findNextSignals operation.
    * @param {number} params.blockheight The blockheight to start looking for beacon signals.
    * @param {Array<BeaconService>} params.target The target blockheight at which to stop finding signals.
@@ -706,8 +670,6 @@ export class Btc1Read {
    * the resolutionOptions. If sidecarData is present it is used to process the Beacon Signals.
    *
    * @public
-   * @static
-   * @async
    * @param {Array<Signal>} signals The beacon signals to process.
    * @param {SignalsMetadata} signalsMetadata The sidecar data for the DID Document.
    * @returns {DidUpdatePayload[]} The updated DID Document object.
@@ -725,7 +687,7 @@ export class Btc1Read {
           } = signal;
 
           // Create a new Beacon object
-          const beacon = BeaconFactory.create({ id, type, serviceEndpoint: `bitcoin:${address}` });
+          const beacon = BeaconFactory.establish({ id, type, serviceEndpoint: `bitcoin:${address}` });
           console.log('beacon', beacon);
           // Process the signal
           const updates = await beacon.processSignal(tx, signalsMetadata);
@@ -752,9 +714,6 @@ export class Btc1Read {
    * returns.
    *
    * @public
-   * @static
-   * @async
-   *
    * @param {{ update: DidUpdatePayload; updateHashHistory: string[]; }} params Parameters for confirmDuplicateUpdate.
    * @param {DidUpdatePayload} params.update The DID Update Payload to confirm.
    * @param {Array<string>} params.updateHashHistory The history of hashes for previously applied updates.
@@ -794,9 +753,6 @@ export class Btc1Read {
    * contemporaryDIDDocument and an update.
    *
    * @public
-   * @static
-   * @async
-   *
    * @param {ApplyDidUpdateParams} params Parameters for applyDidUpdate.
    * @param {Btc1DidDocument} params.contemporaryDIDDocument The current DID Document to update.
    * @param {DidUpdatePayload} params.update The DID Update Payload to apply.

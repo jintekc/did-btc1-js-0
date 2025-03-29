@@ -1,16 +1,18 @@
-import { CIDAggregateBeacon } from './cid-aggregate.js';
+import { DidBtc1Error } from '@did-btc1/common';
 import { Beacon } from '../../interfaces/beacon.js';
 import { BeaconService } from '../../interfaces/ibeacon.js';
+import { SidecarData } from '../../types/crud.js';
+import { CIDAggregateBeacon } from './cid-aggregate.js';
 import { SingletonBeacon } from './singleton.js';
 import { SMTAggregateBeacon } from './smt-aggregate.js';
-import { DidBtc1Error } from '@did-btc1/common';
-import { SidecarData } from '../../types/crud.js';
 
 /**
- * Factory for Beacon creation
+ * Beacon Factory pattern to create Beacon instances.
+ * @class BeaconFactory
+ * @type {BeaconFactory}
  */
 export class BeaconFactory {
-  static create(params: BeaconService, sidecar?: SidecarData): Beacon {
+  static establish(params: BeaconService, sidecar?: SidecarData): Beacon {
     switch (params.type) {
       case 'SingletonBeacon':
         return new SingletonBeacon(params, sidecar);

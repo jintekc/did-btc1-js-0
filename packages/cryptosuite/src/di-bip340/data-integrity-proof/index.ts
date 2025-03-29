@@ -7,10 +7,8 @@ import { IDataIntegrityProof } from './interface.js';
  * Implements section
  * {@link https://dcdpr.github.io/data-integrity-schnorr-secp256k1/#dataintegrityproof | 2.2.1 DataIntegrityProof}
  * of the {@link https://dcdpr.github.io/data-integrity-schnorr-secp256k1 | Data Integrity BIP-340 Cryptosuite} spec
- * @export
  * @class DataIntegrityProof
  * @type {DataIntegrityProof}
- * @implements {IDataIntegrityProof}
  */
 export class DataIntegrityProof implements IDataIntegrityProof {
   /** @type {Cryptosuite} The cryptosuite to use for proof generation and verification. */
@@ -18,7 +16,7 @@ export class DataIntegrityProof implements IDataIntegrityProof {
 
   /**
    * Creates an instance of DataIntegrityProof.
-   * @constructor
+   *
    * @param {Cryptosuite} cryptosuite The cryptosuite to use for proof generation and verification.
    */
   constructor(cryptosuite: Cryptosuite) {

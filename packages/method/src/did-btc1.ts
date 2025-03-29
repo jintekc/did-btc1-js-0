@@ -11,11 +11,11 @@ import * as tinysecp from 'tiny-secp256k1';
 import { Btc1Create, DidCreateResponse } from './btc1/crud/create.js';
 import { Btc1Read } from './btc1/crud/read.js';
 import { Btc1Update } from './btc1/crud/update.js';
-import { Btc1DidDocument } from './btc1/utils/did-document.js';
+import { Btc1DidDocument } from './utils/btc1/did-document.js';
 import { Btc1KeyManager } from './btc1/key-manager/index.js';
 import { Btc1Networks, DidBtc1IdTypes, RecoveryOptions } from './types/crud.js';
-import { Btc1Appendix } from './btc1/utils/btc1-appendix.js';
-import { W3C_DID_RESOLUTION_V1 } from './btc1/utils/constants.js';
+import { Btc1Appendix } from './utils/btc1/appendix.js';
+import { W3C_DID_RESOLUTION_V1 } from './utils/btc1/constants.js';
 import { DidBtc1Error, PublicKeyBytes } from '@did-btc1/common';
 import { DidResolutionOptions, IntermediateDocument } from './interfaces/crud.js';
 import { PatchOperation } from './utils/json-patch.js';
@@ -47,16 +47,14 @@ export interface DidUpdateParams extends ConstructPayloadParams {
 }
 /**
  * Implements {@link https://dcdpr.github.io/did-btc1 | did:btc1 DID Method Specification}.
- *
  * did:btc1 is a censorship resistant DID Method using the Bitcoin blockchain as a Verifiable Data Registry to announce
  * changes to the DID document. It improves on prior work by allowing: zero-cost off-chain DID creation; aggregated
  * updates for scalable on-chain update costs; long-term identifiers that can support frequent updates; private
  * communication of the DID document; private DID resolution; and non-repudiation appropriate for serious contracts.
  *
- * @export
  * @class DidBtc1
  * @type {DidBtc1}
- * @implements {DidMethod}
+ *
  */
 export class DidBtc1 implements DidMethod {
   /** @type {string} Name of the DID method, as defined in the DID BTC1 specification */
@@ -70,11 +68,6 @@ export class DidBtc1 implements DidMethod {
    * seed, or it can be created from an arbitrary genesis intermediate DID document representation. In both cases,
    * DID creation can be undertaken in an offline manner, i.e., the DID controller does not need to interact with the
    * Bitcoin network to create their DID.
-   *
-   * @public
-   * @static
-   * @async
-   *
    * @param {DidCreateParams} params See {@link DidCreateParams} for details.
    * @param {IdType} params.idType Type of identifier to create (key or external).
    * @param {PublicKeyBytes} params.pubKeyBytes Public key byte array used to create a btc1 "key" identifier.
@@ -167,15 +160,12 @@ export class DidBtc1 implements DidMethod {
    * identifier at a specific Target Time. The Target Time is either provided in resolutionOptions or is set to the
    * Resolution Time of the request.
    *
-   * @public
-   * @static
-   * @async
    * @param {string} identifier The DID to be resolved
    * @param {DidResolutionOptions} options Optional parameters for the resolution operation
    * @param {Btc1DidDocument} options.sidecarData.initialDocument User-provided, offline DID Document to resolve sidecar
    * @returns {DidResolutionResult} Promise resolving to a DID Resolution Result
    * @throws {Error} if the resolution fails for any reason
-   * @throws {DidError} with {@link DidErrorCode.InvalidDid} if the identifier is invalid
+   * @throws {DidError} InvalidDid if the identifier is invalid
    * @example
    * ```ts
    * const resolution = await DidBtc1.resolve('did:btc1:k1q0dygyp3gz969tp46dychzy4q78c2k3js68kvyr0shanzg67jnuez2cfplh')
@@ -229,9 +219,6 @@ export class DidBtc1 implements DidMethod {
    * invocations for updates MUST be authorized using Data Integrity following the schnorr-secp256k1-jcs-2025
    * cryptosuite with a proofPurpose of capabilityInvocation.
    *
-   * @public
-   * @static
-   * @async
    * @param {DidUpdateParams} params Required parameters for the update operation
    * @param {string} params.identifier The DID to be updated
    * @param {Btc1DidDocument} params.sourceDocument The source document to be updated
@@ -274,9 +261,9 @@ export class DidBtc1 implements DidMethod {
       throw new DidError(DidErrorCode.InvalidDidDocument, 'Malformed verification method publicKeyMultibase');
     }
     // Invoke the update payload and announce the update
-    const didUpdateInvocation = Btc1Update.invoke({ identifier, updatePayload, verificationMethod: vm, options });
+    const didUpdatePayload = Btc1Update.invoke({ identifier, updatePayload, verificationMethod: vm, options });
     // TODO: finish once announcePayload complete
-    return await Btc1Update.announce({ sourceDocument, beaconIds, didUpdateInvocation });
+    return await Btc1Update.announce({ sourceDocument, beaconIds, didUpdatePayload });
   }
 
   /**
@@ -285,9 +272,6 @@ export class DidBtc1 implements DidMethod {
    * verification method. If not given, the Identity Key's verification method with an ID fragment
    * of '#initialKey' is used.
    *
-   * @public
-   * @static
-   * @async
    * @param {{ didDocument: Btc1DidDocument; methodId?: string; }} params Parameters for the `getSigningMethod` method.
    * @param {DidDocument} params.didDocument DID Document to get the verification method from.
    * @param {string} params.methodId Optional ID of the verification method to use for signing.

@@ -9,10 +9,8 @@ import { FromPrivateKey, FromPublicKey, IMultikey, MultikeyJSON, MultikeyParams 
  * Implements {@link https://dcdpr.github.io/data-integrity-schnorr-secp256k1/#multikey | 2.1.1 Multikey}
  * A Multikey is a secp256k1 compressed keypair that creates and verifies schnorr signatures.
  * The publicKeyMultibase is the Multikey public key encoded using base58btc algorithm with `z` identifier character.
- * @export
  * @class Multikey
  * @type {Multikey}
- * @implements {Multikey}
  */
 export class Multikey implements IMultikey {
   /** @type {string} The verification metod type */
@@ -30,7 +28,7 @@ export class Multikey implements IMultikey {
 
   /**
    * Creates an instance of Multikey.
-   * @constructor
+   *
    * @param {MultikeyParams} params The parameters to create the multikey
    * @param {string} params.id The id of the multikey (required)
    * @param {string} params.controller The controller of the multikey (required)
@@ -175,14 +173,13 @@ export class Multikey implements IMultikey {
 
 /**
  * A utility class for creating `Multikey` instances
- * @export
  * @class MultikeyUtils
  * @type {MultikeyUtils}
  */
 export class MultikeyUtils {
   /**
    * Creates a `Multikey` instance from a private key
-   * @static
+   *
    * @param {FromPublicKey} params The parameters to create the multikey
    * @param {string} params.id The id of the multikey
    * @param {string} params.controller The controller of the multikey
@@ -205,7 +202,7 @@ export class MultikeyUtils {
 
   /**
    * Creates a `Multikey` instance from a public key
-   * @static
+   *
    * @param {FromPublicKey} params The parameters to create the multikey
    * @param {string} params.id The id of the multikey
    * @param {string} params.controller The controller of the multikey
