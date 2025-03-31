@@ -8,7 +8,7 @@ import {
   SerializeParams,
   TransformParams,
   VerificationParams
-} from '../src/types/cryptosuite.js';
+} from '../src/types.js';
 import {
   CanonicalizedProofConfig,
   DataIntegrityProofType,

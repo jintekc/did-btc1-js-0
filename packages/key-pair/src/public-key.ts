@@ -21,7 +21,7 @@ import {
  * Provides helpers methods for comparison and serialization.
  * @class PublicKey
  * @type {PublicKey}
- * 
+ *
  */
 export class PublicKey implements IPublicKey {
   /** @type {PublicKeyBytes} The Uint8Array public key */

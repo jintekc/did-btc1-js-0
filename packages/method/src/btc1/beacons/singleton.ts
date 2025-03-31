@@ -1,8 +1,7 @@
-import { canonicalization, Logger, SingletonBeaconError } from '@did-btc1/common';
+import { canonicalization, DidUpdateInvocation, DidUpdatePayload, Logger, SingletonBeaconError } from '@did-btc1/common';
 import { DidServiceEndpoint } from '@web5/dids';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
 import { Beacon } from '../../interfaces/beacon.js';
-import { DidUpdatePayload } from '../../interfaces/crud.js';
 import { BeaconService, BeaconSignal } from '../../interfaces/ibeacon.js';
 import { RawTransactionV2 } from '../../types/bitcoin.js';
 import { SidecarData, SignalMetadata, SignalsMetadata, SingletonSidecar } from '../../types/crud.js';
@@ -93,7 +92,7 @@ export class SingletonBeacon extends Beacon {
    * @returns {Promise<DidUpdatePayload | undefined>} The DID Update payload announced by the Beacon Signal.
    * @throws {DidError} if the signalTx is invalid or the signalSidecarData is invalid.
    */
-  public async processSignal(signal: RawTransactionV2, signalsMetadata?: SignalsMetadata): Promise<DidUpdatePayload | undefined> {
+  public async processSignal(signal: RawTransactionV2, signalsMetadata: SignalsMetadata): Promise<DidUpdateInvocation | undefined> {
     // Get the first output of the transaction
     const txOut = signal.vout[0];
 

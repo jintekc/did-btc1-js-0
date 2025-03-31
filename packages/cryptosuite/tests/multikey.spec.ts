@@ -1,7 +1,7 @@
 import { KeyPair, KeyPairUtils, PrivateKey, PrivateKeyUtils, PublicKey } from '@did-btc1/key-pair';
 import { expect } from 'chai';
-import { Multikey } from '../src/di-bip340/multikey/index.js';
 import { MultikeyError, ObjectUtils, KeyPairError } from '@did-btc1/common';
+import { Multikey } from '../src/index.js';
 
 /**
  * Multikey Test Cases

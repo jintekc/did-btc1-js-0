@@ -1,12 +1,5 @@
-import { Btc1Error } from '@did-btc1/common';
+import { Btc1Error, PatchOperation } from '@did-btc1/common';
 import { Btc1DidDocument } from './btc1/did-document.js';
-
-export interface PatchOperation {
-  op: string; // 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'
-  path: string;
-  value?: any; // Required for add, replace, test
-  from?: string; // Required for move, copy
-}
 
 /**
  * Implementation of {@link https://datatracker.ietf.org/doc/html/rfc6902 | IETF RFC 6902 JSON Patch}.

@@ -1,6 +1,6 @@
 {
     "name": "@did-btc1/method",
-    "version": "0.5.3",
+    "version": "0.6.0",
     "type": "module",
     "description": "@did-btc1/method is the typescript/javascript reference implementation of the did:btc1 spec. did:btc1 is a censorship resistant DID Method using the Bitcoin blockchain as a Verifiable Data Registry to announce changes to the DID document. It improves on prior work by allowing: zero-cost off-chain DID creation; aggregated updates for scalable on-chain update costs; long-term identifiers that can support frequent updates; private communication of the DID document; private DID resolution; and non-repudiation appropriate for serious contracts.",
     "main": "./dist/cjs/index.js",
@@ -15,8 +15,11 @@
         }
     },
     "scripts": {
-        "del": "rimraf",
         "clean": "rimraf dist coverage tests/compiled",
+        "clean:build": "rimraf dist",
+        "clean:coverage": "rimraf coverage",
+        "clean:tests": "rimraf tests/compiled",
+        "clean:test-coverage": "pnpm clean:tests && pnpm clean:coverage",
         "wipe": "rimraf node_modules pnpm-lock.json",
         "wipe:clean": "pnpm wipe && pnpm clean",
         "wipe:install": "pnpm wipe && pnpm install",
@@ -32,13 +35,15 @@
         "release": "pnpm build && pnpm pack && mv *.tgz ../../release/method",
         "lint": "eslint . --max-warnings 0",
         "lint:fix": "eslint . --fix",
-        "test": "pnpm c8 --omit-relative mocha",
-        "build:test": "pnpm build && pnpm build:tests && pnpm c8 --omit-relative mocha",
+        "test": "pnpm c8 mocha",
+        "test:unit": "[ -z \"$FILE_NAME\" ] && echo 'ERROR: FILE_NAME is not set' || pnpm tsx lib/test-$FILE_NAME.ts",
+        "posttest": "sed -i '' \"s|$(pwd)|.|g\" coverage/cobertura-coverage.xml",
+        "build:test": "pnpm build && pnpm build:tests && pnpm c8 mocha",
         "build:lint:test": "pnpm build && pnpm build:tests && pnpm lint:fix",
         "prepublish": "pnpm build && pnpm release",
         "version": "pnpm version",
         "version:no-git": "pnpm version --no-commit-hooks --no-git-tag-version",
-        "version:new": "[ -z \"$NEW_VERSION\" ] && echo 'ERROR: NEW_VERSION is not set' && exit 1 || (git checkout -b $NEW_VERSION && git tag $NEW_VERSION && pnpm version:no-git $NEW_VERSION)"
+        "version:new": "[ -z \"$NEW_VERSION\" ] && echo 'ERROR: NEW_VERSION is not set' || (git checkout -b $NEW_VERSION && git tag $NEW_VERSION && pnpm version:no-git $NEW_VERSION)"
     },
     "contributors": [
         {

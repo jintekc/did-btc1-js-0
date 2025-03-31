@@ -1,9 +1,7 @@
 import { expect } from 'chai';
-import { Cryptosuite } from '../src/di-bip340/cryptosuite/index.js';
-import { DataIntegrityProof } from '../src/di-bip340/data-integrity-proof/index.js';
-import { Multikey } from '../src/di-bip340/multikey/index.js';
 import { KeyPair, PrivateKeyUtils } from '@did-btc1/key-pair';
-import { ProofOptions } from '../src/types/di-proof.js';
+import { ProofOptions } from '@did-btc1/common';
+import { Multikey, Cryptosuite, DataIntegrityProof } from '../src/index.js';
 
 const unsecuredDocument = {
   '@context' : [
@@ -21,7 +19,7 @@ const unsecuredDocument = {
       name : 'Example University',
     },
   },
-};
+} as any;
 const id = '#initialKey';
 const controller = 'did:btc1:k1q2ddta4gt5n7u6d3xwhdyua57t6awrk55ut82qvurfm0qnrxx5nw7vnsy65';
 const SECRET = 52464508790539176856770556715241483442035423615466097401201513777400180778402n;

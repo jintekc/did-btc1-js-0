@@ -12,6 +12,7 @@ import {
   PrivateKeyJSON,
   PublicKeyBytes
 } from '@did-btc1/common';
+import { KeyPair } from './key-pair.js';
 
 /**
  * Encapsulates a secp256k1 private key
@@ -19,7 +20,7 @@ import {
  * Provides helpers methods for comparison, serialization and publicKey generation.
  * @class PrivateKey
  * @type {PrivateKey}
- * 
+ *
  */
 export class PrivateKey implements IPrivateKey {
   /** @type {PrivateKeyBytes} The Uint8Array private key bytes */
@@ -184,7 +185,22 @@ export class PrivateKey implements IPrivateKey {
  * @type {PrivateKeyUtils}
  */
 export class PrivateKeyUtils {
+  /**
+   * Convert a PrivateKey or PrivateKeyBytes to a KeyPair.
+   * @param {PrivateKeyBytes} bytes
+   * @returns {KeyPair} The KeyPair object containing the public and private keys
+   * @throws {PrivateKeyError} If the private key is not valid
+   */
+  public static toKeyPair(bytes: PrivateKeyBytes): KeyPair {
+    // Create a new PrivateKey from the bytes
+    const privateKey = new PrivateKey(bytes);
 
+    // Compute the public key from the private key
+    const publicKey = privateKey.computePublicKey();
+
+    // Create a new KeyPair from the public key and private key
+    return new KeyPair({ publicKey, privateKey });
+  }
 
   /**
    * Convert a bigint secret to private key bytes.

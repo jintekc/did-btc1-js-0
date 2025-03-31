@@ -1,6 +1,5 @@
-import { PrivateKeyBytes, ProofBytes, PublicKeyBytes } from '@did-btc1/common';
+import { DidUpdatePayload, PrivateKeyBytes, ProofBytes, PublicKeyBytes } from '@did-btc1/common';
 import { DidBtc1Identifier } from '../btc1/crud/create.js';
-import { DidUpdatePayload } from '../interfaces/crud.js';
 import { BeaconService } from '../interfaces/ibeacon.js';
 import { Btc1DidDocument, Btc1VerificationMethod } from '../utils/btc1/did-document.js';
 import { BlockV3, TxId } from './bitcoin.js';
@@ -23,10 +22,9 @@ export type RecoveryOptions = {
   hd: { mnemonic: string; path: string };
 }
 export type InvokePayloadParams = {
-  identifier: string;
-  updatePayload: DidUpdatePayload;
+  btc1Identifier: string;
+  didUpdatePayload: DidUpdatePayload;
   verificationMethod: Btc1VerificationMethod;
-  options: RecoveryOptions;
 }
 
 export type Bytes = Uint8Array;

@@ -334,7 +334,6 @@ export default class BitcoinRpc implements IBitcoinRpc {
    * @throws {BitcoinRpcError} If neither `blockhash` nor `height` is provided.
    */
   public async getBlock({ blockhash, height, verbosity }: GetBlockParams): Promise<BlockResponse | undefined> {
-    console.log('getBlock', { blockhash, height, verbosity });
     // Check if blockhash or height is provided, if neither throw an error
     if(!blockhash && height === undefined) {
       throw new BitcoinRpcError('blockhash or height required', 'INVALID_PARAMS_GET_BLOCK', { blockhash, height });

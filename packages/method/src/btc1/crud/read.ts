@@ -1,4 +1,4 @@
-import { BitcoinNetworkNames, Btc1ReadError, canonicalization, Logger, UnixTimestamp } from '@did-btc1/common';
+import { BitcoinNetworkNames, Btc1Error, Btc1ReadError, canonicalization, DidUpdateInvocation, DidUpdatePayload, Logger, UnixTimestamp } from '@did-btc1/common';
 import { Cryptosuite, DataIntegrityProof, Multikey } from '@did-btc1/cryptosuite';
 import { KeyPair, PublicKey } from '@did-btc1/key-pair';
 import { strings } from '@helia/strings';
@@ -8,12 +8,12 @@ import { DidError, DidErrorCode } from '@web5/dids';
 import { createHelia } from 'helia';
 import { CID } from 'multiformats/cid';
 import * as Digest from 'multiformats/hashes/digest';
-import { DEFAULT_BLOCK_CONFIRMATIONS } from '../../bitcoin/constants.js';
+import { DEFAULT_BLOCK_CONFIRMATIONS, GENESIS_TX_ID, TXIN_WITNESS_COINBASE } from '../../bitcoin/constants.js';
 import { getNetwork } from '../../bitcoin/network.js';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
-import { DidResolutionOptions, DidUpdatePayload } from '../../interfaces/crud.js';
+import { DidResolutionOptions } from '../../interfaces/crud.js';
 import { BeaconServiceAddress, BeaconSignal, Signal } from '../../interfaces/ibeacon.js';
-import { BlockHeight, BlockV2, BlockV3, RawTransactionV2 } from '../../types/bitcoin.js';
+import { BlockHeight, BlockV3, RawTransactionV2 } from '../../types/bitcoin.js';
 import { CIDAggregateSidecar, SignalsMetadata, SingletonSidecar } from '../../types/crud.js';
 import { Btc1Appendix, DidComponents } from '../../utils/btc1/appendix.js';
 import { BeaconUtils } from '../../utils/btc1/beacon-utils.js';
@@ -381,14 +381,14 @@ export class Btc1Read {
     const height = await rpc.getBlockCount();
 
     // Get the block at the current height
-    let block = await rpc.getBlock({ height }) as BlockV2;
+    let block = await rpc.getBlock({ height }) as BlockV3;
 
     // Return block height response from targetBlockHeight
     if(!targetTime) {
       // Traverse Bitcoin blocks to find the largest block with confirmations >= DEFAULT_BLOCK_CONFIRMATIONS
       while (block.confirmations <= DEFAULT_BLOCK_CONFIRMATIONS) {
         // block.hash = await rpc.getBlockHash();
-        block = await rpc.getBlock({ height: --block.height }) as BlockV2;
+        block = await rpc.getBlock({ height: --block.height }) as BlockV3;
       }
       // Return the block height
       return block.height;
@@ -397,7 +397,7 @@ export class Btc1Read {
     // Traverse Bitcoin blocks to find the largest block with timestamp < targetTime
     while (block.time > targetTime) {
       // block.hash = await rpc.getBlockHash(--block.height);
-      block = await rpc.getBlock({ height: --block.height }) as BlockV2;
+      block = await rpc.getBlock({ height: --block.height }) as BlockV3;
     }
 
     // Return the block height
@@ -544,9 +544,29 @@ export class Btc1Read {
   /**
    * Implements {@link https://dcdpr.github.io/did-btc1/#find-next-signals | 4.2.3.3 Find Next Signals}.
    *
-   * Takes as inputs a Bitcoin blockheight specified by contemporaryBlockheight and an array of beacons and returns a
-   * nextSignals object, containing a blockheight the signals were found in and an array of signals. Each signal is an
-   * object containing beaconId, beaconType, and tx properties.
+   * The Find Next Signals algorithm finds the next Bitcoin block containing Beacon Signals from one or more of the
+   * beacons and retuns all Beacon Signals within that block.
+   *
+   * It takes the following inputs:
+   *  - `contemporaryBlockhieght`: The height of the block this function is looking for Beacon Signals in.
+   *                               An integer greater or equal to 0.
+   *  - `targetBlockheight`: The height of the Bitcoin block that the resolution algorithm searches for Beacon Signals
+   *                         up to. An integer greater or equal to 0.
+   *  - `beacons`: An array of Beacon services in the contemporary DID document. Each Beacon contains properties:
+   *      - `id`: The id of the Beacon service in the DID document. A string.
+   *      - `type`: The type of the Beacon service in the DID document. A string whose values MUST be
+   *                          either SingletonBeacon, CIDAggregateBeacon or SMTAggregateBeacon.
+   *      - `serviceEndpoint`: A BIP21 URI representing a Bitcoin address.
+   *      - `address`: The Bitcoin address decoded from the `serviceEndpoint value.
+   *  - `network`: A string identifying the Bitcoin network of the did:btc1 identifier. This algorithm MUST query the
+   *               Bitcoin blockchain identified by the network.
+   *
+   * It returns a nextSignals struct, containing the following properties:
+   *  - blockheight: The Bitcoin blockheight for the block containing the Beacon Signals.
+   *  - signals: An array of signals. Each signal is a struct containing the following:
+   *      - beaconId: The id for the Beacon that the signal was announced by.
+   *      - beaconType: The type of the Beacon that announced the signal.
+   *      - tx: The Bitcoin transaction that is the Beacon Signal.
    *
    * @public
    * @param {FindNextSignals} params The parameters for the findNextSignals operation.
@@ -560,7 +580,7 @@ export class Btc1Read {
     beacons: Array<BeaconServiceAddress>;
     network: BitcoinNetworkNames;
   }): Promise<BeaconSignal>{
-    Logger.info('// TODO: findNextSignals - Use network to connect to the correct bitcoin node', network);
+    Logger.info('// TODO: findNextSignals - Use `network` to connect to the correct bitcoin node', network);
     /**
      * Convert serviceEndpoint to bitcoin address and create mapping of address to beaconService object
      * E.g.
@@ -585,7 +605,7 @@ export class Btc1Read {
     // Create an empty array for beaconSignals
     const beaconSignal: BeaconSignal = {
       blockheight : height ?? block?.height,
-      signals     : []
+      signals     : new Array<Signal>()
     };
 
     // If the block is null, return an empty beaconSignal
@@ -596,24 +616,36 @@ export class Btc1Read {
 
     // Iterate over each transaction in the block
     for (const tx of block.tx) {
+      // If the txid is a coinbase, continue ...
+      if(tx.txid === GENESIS_TX_ID) {
+        Logger.info(`Tx ${tx.txid} is a coinbase transaction, skipping ...`, tx);
+        continue;
+      }
+
       // Iterate over each input in the transaction
       for (const vin of tx.vin) {
 
         // If the vin is a coinbase transaction, continue ...
         if (vin.coinbase) {
-          Logger.warn(`Tx id ${tx.txid} is a coinbase tx, continuing ... `, vin);
+          Logger.info(`Tx ${tx.txid} vin is coinbase, continuing ... `, vin);
+          continue;
+        }
+
+        // If the vin txinwitness contains a coinbase identifier, continue ...
+        if(vin.txinwitness && vin.txinwitness.length === 1 && vin.txinwitness[0] === TXIN_WITNESS_COINBASE) {
+          Logger.info(`Tx ${tx.txid} vin.txinwitness is coinbase, continuing ... `, vin);
           continue;
         }
 
         // If the txid from the vin is undefined, continue ...
         if (!vin.txid) {
-          Logger.warn(`No vin.txid for txid ${tx.txid}, continuing ... `, vin);
+          Logger.info(`Tx ${tx.txid} vin.txid is undefined, continuing ... `, vin);
           continue;
         }
 
-        // If the vout from the vin is undefined, continue
+        // If the vout from the vin is undefined, continue ...
         if (vin.vout === undefined) {
-          Logger.warn(`No vout for vin txid ${vin.txid}, continuing ... `, vin);
+          Logger.info(`Tx ${tx.txid} vin.vout is undefined, continuing ... `, vin);
           continue;
         }
 
@@ -622,7 +654,7 @@ export class Btc1Read {
 
         // If the previous output vout at the vin.vout index is undefined, continue ...
         if (!prevout.vout[vin.vout]) {
-          Logger.warn(`No vout ${vin.vout} for prevout id ${prevout.txid}, continuing ... `, prevout);
+          Logger.info(`Tx ${tx.txid} prevout.vout[vin.vout] is undefined, continuing ... `, prevout);
           continue;
         }
 
@@ -631,19 +663,19 @@ export class Btc1Read {
 
         // If the beaconAddress is undefined, continue ...
         if(!scriptPubKey.address) {
-          Logger.warn(`No address for prevout.vout[${vin.vout}].scriptPubKey, continuing ...`, prevout);
+          Logger.info(`Tx ${tx.txid} prevout.vout[vin.vout].scriptPubKey is undefined, continuing ...`, prevout);
           continue;
         }
 
         // If the beaconAddress from prevvout scriptPubKey is not a beacon service endpoint address, continue ...
         const beacon = (beaconAddresses.get(scriptPubKey.address) ?? {}) as BeaconServiceAddress;
         if (!beacon || !(beacon.id && beacon.type)) {
-          Logger.info(`No beacon signal for address ${beaconAddresses}, continuing ... `, prevout);
+          Logger.info(`Tx ${tx.txid} prevout.vout[vin.vout].scriptPubKey is not a beacon address, continuing ... `, scriptPubKey);
           continue;
         }
 
         // Log the found txid and beacon
-        Logger.info(`Found beacon signal in txid ${tx.txid}`, beacon);
+        Logger.info(`Tx ${tx.txid} contains a beacon signal!`, beacon);
 
         // Set the blockheight to the block height
         beaconSignal.blockheight = block.height;
@@ -655,6 +687,8 @@ export class Btc1Read {
           beaconAddress : beacon.address,
           tx
         });
+
+        break;
       };
     }
 
@@ -664,21 +698,38 @@ export class Btc1Read {
   /**
    * Implements {@link https://dcdpr.github.io/did-btc1/#process-beacon-signals | 4.2.3.4 Process Beacon Signals}.
    *
-   * The Process Beacon Signals algorithm takes in an array of struct beaconSignals and attempts to process these
-   * signals according the type of the Beacon they were produced by. Each beaconSignal struct contains the properties
-   * beaconId, beaconType, and a tx. Additionally, this algorithm takes in sidecarData passed into the resolver through
-   * the resolutionOptions. If sidecarData is present it is used to process the Beacon Signals.
+   * The Process Beacon Signals algorithm processes each Beacon Signal by attempting to retrieve and validate an
+   * announce DID Update Payload for that signal according to the type of the Beacon.
+   *
+   * It takes as inputs
+   *  - `beaconSignals`: An array of Beacon Signals retrieved from the Find Next Signals algorithm. Each signal contains:
+   *    - `beaconId`: The id for the Beacon that the signal was announced by.
+   *    - `beaconType`: The type of the Beacon that announced the signal.
+   *    - `tx`: The Bitcoin transaction that is the Beacon Signal.
+   *  - `signalsMetadata`: Maps Beacon Signal Bitcoin transaction ids to a SignalMetadata object containing:
+   *    - `updatePayload`: A DID Update Payload which should match the update announced by the Beacon Signal.
+   *                       In the case of a SMT proof of non-inclusion, no DID Update Payload may be provided.
+   *    - `proofs`: Sparse Merkle Tree proof used to verify that the `updatePayload` exists as the leaf indexed by the
+   *                did:btc1 identifier being resolved.
+   *
+   * It returns an array of {@link https://dcdpr.github.io/did-btc1/#def-did-update-payload | DID Update Payloads}.
    *
    * @public
    * @param {Array<Signal>} signals The beacon signals to process.
    * @param {SignalsMetadata} signalsMetadata The sidecar data for the DID Document.
    * @returns {DidUpdatePayload[]} The updated DID Document object.
    */
-  public static async processBeaconSignals(signals: Array<Signal>, signalsMetadata: SignalsMetadata): Promise<DidUpdatePayload[]> {
+  public static async processBeaconSignals(signals: Array<Signal>, signalsMetadata: SignalsMetadata): Promise<DidUpdateInvocation[]> {
+    // 1. Set updates to an empty array.
+    const updates = new Array<DidUpdatePayload>();
+
+    // 2. For beaconSignal in beaconSignals:
     return await Promise.all(
       signals.map(
         async (signal) => {
-          // Deconstruct the signal
+          // 2.1 Set type to beaconSignal.beaconType.
+          // 2.2 Set signalTx to beaconSignal.tx.
+          // 2.3 Set signalId to signalTx.id.
           const {
             beaconId: id,
             beaconType: type,
@@ -686,24 +737,35 @@ export class Btc1Read {
             tx
           } = signal;
 
-          // Create a new Beacon object
+          // 2.4 Set signalSidecarData to signalsMetadata[signalId]. TODO: formalize structure of sidecarData
+          const signalSidecarData = signalsMetadata.get(id);
+          Logger.warn('// TODO: processBeaconSignals - formalize structure of sidecarData', signalSidecarData);
+
+          // 2.6 If type == SingletonBeacon:
+          //     2.6.1 Set didUpdatePayload to the result of passing signalTx and signalSidecarData to Process Singleton Beacon Signal algorithm.
+          // 2.7 If type == CIDAggregateBeacon:
+          //     2.7.1 Set didUpdatePayload to the result of passing signalTx and signalSidecarData to the Process CIDAggregate Beacon Signal algorithm.
+          // 2.8 If type == SMTAggregateBeacon:
+          //     2.8.1 Set didUpdatePayload to the result of passing signalTx and signalSidecarData to the Process SMTAggregate Beacon Signal algorithm.
           const beacon = BeaconFactory.establish({ id, type, serviceEndpoint: `bitcoin:${address}` });
-          console.log('beacon', beacon);
-          // Process the signal
-          const updates = await beacon.processSignal(tx, signalsMetadata);
+
+          // 2.5 Set didUpdatePayload to null.
+          const didUpdatePayload = await beacon.processSignal(tx, signalsMetadata) ?? null;
 
           // If the updates is null, throw an error
-          if (!updates) {
-            throw new Error(`Invalid updates from signal ${tx}`);
+          if (!didUpdatePayload) {
+            throw new Btc1Error('No didUpdatePayload for beacon', 'PROCESS_BEACON_SIGNALS_ERROR', { tx, signalsMetadata });
           }
 
-          // Return the updatePayload
-          return updates;
+          // 2.9 If didUpdatePayload is not null, push didUpdatePayload to updates.
+          updates.push(didUpdatePayload);
+
+          // 3. Return updates.
+          return didUpdatePayload;
         }
       )
     );
   }
-
 
   /**
    * Implements {@link https://dcdpr.github.io/did-btc1/#confirm-duplicate-update | 4.2.3.5 Confirm Duplicate Update}.
@@ -739,11 +801,6 @@ export class Btc1Read {
   }
 
   /**
-   * TODO: applyDidUpdate - Refactor Multikey to accept KeyPair or JSON object.
-   * TODO: applyDidUpdate - Refactor Cryptosuite to default to RDFC
-   * TODO: applyDidUpdate - What is the mediaType?
-   * TODO: applyDidUpdate - How to ensure proof is valid invocation of root capability?
-   *
    * Implements {@link https://dcdpr.github.io/did-btc1/#apply-did-update | 4.2.3.6 Apply DID Update}.
    *
    * This algorithm attempts to apply a DID Update to a DID document, it first verifies the proof on the update is a
@@ -761,7 +818,7 @@ export class Btc1Read {
    */
   public static async applyDidUpdate({ contemporaryDIDDocument, update }: {
     contemporaryDIDDocument: Btc1DidDocument;
-    update: DidUpdatePayload;
+    update: DidUpdateInvocation;
   }): Promise<Btc1DidDocument> {
     // 1. Set capabilityId to update.proof.capability.
     const capabilityId = update.proof.capability;
@@ -816,7 +873,7 @@ export class Btc1Read {
 
     // 6. Set mediaType to ????
     const mediaType = 'application/json';
-    Logger.info('// TODO: applyDidUpdate - What is the mediaType?');
+    Logger.info('// TODO: applyDidUpdate - is this just application/json?');
 
     // 7. Set documentBytes to the bytes representation of update.
     const document  = await canonicalize(update);
@@ -825,7 +882,6 @@ export class Btc1Read {
     //    expectedProofPurpose into the Verify Proof algorithm defined in the VC Data Integrity specification.
     const diProof = new DataIntegrityProof(cryptosuite);
     const verificationResult = await diProof.verifyProof({ mediaType, document, expectedPurpose });
-    Logger.info('// TODO: applyDidUpdate - How to ensure proof is valid invocation of root capability?');
 
     // 9. If verificationResult.verified equals False, MUST raise a invalidUpdateProof exception.
     if(!verificationResult.verified) {
