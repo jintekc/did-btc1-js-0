@@ -6,7 +6,7 @@
 
 # Interface: IKeyPair
 
-Defined in: [interface.ts:162](https://github.com/jintekc/did-btc1-js/blob/39e4a4200a4ca873ea5b9fda29e99ad64678b8c2/packages/key-pair/src/interface.ts#L162)
+Defined in: [interface.ts:162](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/interface.ts#L162)
 
 Interface for class KeyPair.
  IKeyPair
@@ -17,7 +17,7 @@ Interface for class KeyPair.
 
 > `readonly` `optional` **privateKey**: [`PrivateKey`](../classes/PrivateKey.md)
 
-Defined in: [interface.ts:173](https://github.com/jintekc/did-btc1-js/blob/39e4a4200a4ca873ea5b9fda29e99ad64678b8c2/packages/key-pair/src/interface.ts#L173)
+Defined in: [interface.ts:173](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/interface.ts#L173)
 
 #### Throws
 
@@ -29,7 +29,7 @@ If the private key is not available.
 
 > `readonly` **publicKey**: [`PublicKey`](../classes/PublicKey.md)
 
-Defined in: [interface.ts:166](https://github.com/jintekc/did-btc1-js/blob/39e4a4200a4ca873ea5b9fda29e99ad64678b8c2/packages/key-pair/src/interface.ts#L166)
+Defined in: [interface.ts:166](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/interface.ts#L166)
 
 ## Methods
 
@@ -37,7 +37,7 @@ Defined in: [interface.ts:166](https://github.com/jintekc/did-btc1-js/blob/39e4a
 
 > **json**(): `KeyPairJSON`
 
-Defined in: [interface.ts:180](https://github.com/jintekc/did-btc1-js/blob/39e4a4200a4ca873ea5b9fda29e99ad64678b8c2/packages/key-pair/src/interface.ts#L180)
+Defined in: [interface.ts:180](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/interface.ts#L180)
 
 JSON representation of a KeyPair object.
 

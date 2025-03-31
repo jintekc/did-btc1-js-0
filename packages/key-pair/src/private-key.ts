@@ -19,7 +19,7 @@ import {
  * Provides helpers methods for comparison, serialization and publicKey generation.
  * @class PrivateKey
  * @type {PrivateKey}
- * 
+ *
  */
 export class PrivateKey implements IPrivateKey {
   /** @type {PrivateKeyBytes} The Uint8Array private key bytes */

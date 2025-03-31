@@ -6,7 +6,7 @@
 
 # Interface: IPrivateKey
 
-Defined in: [interface.ts:20](https://github.com/jintekc/did-btc1-js/blob/39e4a4200a4ca873ea5b9fda29e99ad64678b8c2/packages/key-pair/src/interface.ts#L20)
+Defined in: [interface.ts:20](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/interface.ts#L20)
 
 Interface for the PrivateKey class.
  IPrivateKey
@@ -17,7 +17,7 @@ Interface for the PrivateKey class.
 
 > `readonly` **bytes**: `Bytes`
 
-Defined in: [interface.ts:25](https://github.com/jintekc/did-btc1-js/blob/39e4a4200a4ca873ea5b9fda29e99ad64678b8c2/packages/key-pair/src/interface.ts#L25)
+Defined in: [interface.ts:25](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/interface.ts#L25)
 
 Get the private key bytes.
 
@@ -27,7 +27,7 @@ Get the private key bytes.
 
 > `readonly` **hex**: `Hex`
 
-Defined in: [interface.ts:44](https://github.com/jintekc/did-btc1-js/blob/39e4a4200a4ca873ea5b9fda29e99ad64678b8c2/packages/key-pair/src/interface.ts#L44)
+Defined in: [interface.ts:44](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/interface.ts#L44)
 
 Get the private key as a hex string.
 
@@ -37,7 +37,7 @@ Get the private key as a hex string.
 
 > `readonly` **point**: `bigint`
 
-Defined in: [interface.ts:38](https://github.com/jintekc/did-btc1-js/blob/39e4a4200a4ca873ea5b9fda29e99ad64678b8c2/packages/key-pair/src/interface.ts#L38)
+Defined in: [interface.ts:38](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/interface.ts#L38)
 
 Get the private key point.
 
@@ -47,7 +47,7 @@ Get the private key point.
 
 > **secret**: `bigint`
 
-Defined in: [interface.ts:32](https://github.com/jintekc/did-btc1-js/blob/39e4a4200a4ca873ea5b9fda29e99ad64678b8c2/packages/key-pair/src/interface.ts#L32)
+Defined in: [interface.ts:32](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/interface.ts#L32)
 
 Getter returns the private key bytes in secret form.
 Setter allows alternative method of using a bigint secret to genereate the private key bytes.
@@ -58,7 +58,7 @@ Setter allows alternative method of using a bigint secret to genereate the priva
 
 > **computePublicKey**(): [`PublicKey`](../classes/PublicKey.md)
 
-Defined in: [interface.ts:59](https://github.com/jintekc/did-btc1-js/blob/39e4a4200a4ca873ea5b9fda29e99ad64678b8c2/packages/key-pair/src/interface.ts#L59)
+Defined in: [interface.ts:59](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/interface.ts#L59)
 
 Uses the private key to compute the corresponding public key.
 
@@ -78,7 +78,7 @@ PrivateKeyUtils.computePublicKey
 
 > **equals**(`other`): `boolean`
 
-Defined in: [interface.ts:51](https://github.com/jintekc/did-btc1-js/blob/39e4a4200a4ca873ea5b9fda29e99ad64678b8c2/packages/key-pair/src/interface.ts#L51)
+Defined in: [interface.ts:51](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/interface.ts#L51)
 
 Checks if this private key is equal to another private key.
 
@@ -100,7 +100,7 @@ True if the private keys are equal.
 
 > **isValid**(): `boolean`
 
-Defined in: [interface.ts:66](https://github.com/jintekc/did-btc1-js/blob/39e4a4200a4ca873ea5b9fda29e99ad64678b8c2/packages/key-pair/src/interface.ts#L66)
+Defined in: [interface.ts:66](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/interface.ts#L66)
 
 Checks if the private key is valid.
 
@@ -116,7 +116,7 @@ Whether the private key is valid.
 
 > **json**(): `PrivateKeyJSON`
 
-Defined in: [interface.ts:73](https://github.com/jintekc/did-btc1-js/blob/39e4a4200a4ca873ea5b9fda29e99ad64678b8c2/packages/key-pair/src/interface.ts#L73)
+Defined in: [interface.ts:73](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/interface.ts#L73)
 
 JSON representation of a PrivateKey object.
 

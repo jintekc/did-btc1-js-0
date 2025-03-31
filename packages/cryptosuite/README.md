@@ -1,3 +1,3 @@
-# Data Integrity BIP340 Cryptosuite
+# @did-btc1/cryptosuite
 
-TypeScript/JavaScript reference implementation of the [Data Integrity BIP340 Cryptosuite v0.1 specification](https://dcdpr.github.io/data-integrity-schnorr-secp256k1/).
+* JavaScript/TypeScript implementation of [Data Integrity BIP340 Cryptosuite v0.1 specification](https://dcdpr.github.io/data-integrity-schnorr-secp256k1/).
