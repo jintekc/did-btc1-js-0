@@ -37,7 +37,7 @@ export type DidCreateParams =
 export interface ConstructPayloadParams {
     identifier: string;
     sourceDocument: Btc1DidDocument;
-    sourceVersionId: string;
+    sourceVersionId: number;
     patch: PatchOperation[];
 }
 export interface DidUpdateParams extends ConstructPayloadParams {
@@ -237,7 +237,7 @@ export class DidBtc1 implements DidMethod {
   public static async update(params: {
     identifier: string;
     sourceDocument: Btc1DidDocument;
-    sourceVersionId: string;
+    sourceVersionId: number;
     patch: PatchOperation[];
     verificationMethodId: string;
     beaconIds: string[];

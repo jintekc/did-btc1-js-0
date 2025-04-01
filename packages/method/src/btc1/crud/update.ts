@@ -1,7 +1,6 @@
-import { Btc1Error, canonicalization, Logger } from '@did-btc1/common';
+import { Btc1Error, INVALID_DID, canonicalization, Logger, INVALID_DID_DOCUMENT, INVALID_PUBLIC_KEY_TYPE, NOT_FOUND } from '@did-btc1/common';
 import { Cryptosuite, DataIntegrityProof, Multikey, ProofOptions } from '@did-btc1/cryptosuite';
 import type { DidService } from '@web5/dids';
-import { DidError, DidErrorCode } from '@web5/dids';
 import { base58btc } from 'multiformats/bases/base58';
 import { DidUpdatePayload } from '../../interfaces/crud.js';
 import { BeaconService } from '../../interfaces/ibeacon.js';
@@ -37,7 +36,7 @@ export class Btc1Update {
    * @param {string} params.sourceVersionId The versionId of the source document.
    * @param {DidDocumentPatch} params.documentPatch The JSON patch to be applied to the source document.
    * @returns {Promise<DidUpdatePayload>} The constructed DidUpdatePayload object.
-   * @throws {DidError} InvalidDid if sourceDocument.id does not match identifier.
+   * @throws {Btc1Error} InvalidDid if sourceDocument.id does not match identifier.
    */
   public static async construct({
     identifier,
@@ -47,41 +46,49 @@ export class Btc1Update {
   }: {
     identifier: string;
     sourceDocument: Btc1DidDocument;
-    sourceVersionId: string;
+    sourceVersionId: number;
     patch: PatchOperation[];
   }): Promise<DidUpdatePayload> {
-    // Validate the sourceDocument id matches the identifier
+
+    // 1. Check that sourceDocument.id equals btc1Identifier else MUST raise invalidDIDUpdate error.
     if (sourceDocument.id !== identifier) {
-      throw new DidError(DidErrorCode.InvalidDid, 'Source document id does not match identifier');
+      throw new Btc1Error(INVALID_DID, 'Source document id does not match identifier');
     }
 
-    // Canonical sha256 hash the sourceDocument
-    const sourceDocHash = await canonicalhash(sourceDocument);
-
-    // Set updatePayload object
-    const updatePayload: DidUpdatePayload = {
+    // 2. Initialize didUpdatePayload to an empty object.
+    const didUpdatePayload: DidUpdatePayload = {
+    // 3. Set didUpdatePayload.@context to the following list
       '@context'      : BTC1_DID_UPDATE_PAYLOAD_CONTEXT,
-      patch           : patch,
+      // 4. Set didUpdatePayload.patch to documentPatch.
+      patch,
       targetHash      : '',
-      targetVersionId : Number(sourceVersionId) + 1,
-      sourceHash      : base58btc.encode(sourceDocHash),
+      targetVersionId : 0,
+      sourceHash      : '',
       proof           : {}
     };
+    Logger.warn('// TODO: Need to add btc1 context. ["https://w3id.org/zcap/v1", "https://w3id.org/security/data-integrity/v2", "https://w3id.org/json-ld-patch/v1"]');
 
-    // Apply patch to source document
-    const updatedDocument = JsonPatch.apply(sourceDocument, patch);
+    // 5. Set targetDocument to the result of applying the documentPatch to the sourceDocument, following the JSON Patch
+    //    specification.
+    const targetDocument = JsonPatch.apply(sourceDocument, patch);
 
-    // Validate the targetDocument conforms to DID document spec
-    const targetDocument = Btc1DidDocument.validate(updatedDocument);
+    // 6. Validate targetDocument is a conformant DID document, else MUST raise invalidDIDUpdate error.
+    Btc1DidDocument.validate(targetDocument);
 
-    // Canonical sha256 hash the targetDocument
-    const targetDocHash = await canonicalhash(targetDocument);
+    // 7. Set sourceHashBytes to the result of passing sourceDocument into the JSON Canonicalization and Hash algorithm.
+    // 8. Set didUpdatePayload.sourceHash to the base58-btc Multibase encoding of sourceHashBytes.
+    didUpdatePayload.sourceHash = base58btc.encode(await canonicalhash(sourceDocument));
+    Logger.warn('// TODO: Question - is base58btc the correct encoding scheme?');
 
-    // Set the targetHash in the DidUpdatePayload
-    updatePayload.targetHash = base58btc.encode(targetDocHash);
+    // 9. Set targetHashBytes to the result of passing targetDocument into the JSON Canonicalization and Hash algorithm.
+    // 10. Set didUpdatePayload.targetHash to the base58-btc Multibase encoding of targetHashBytes.
+    didUpdatePayload.targetHash = base58btc.encode(await canonicalhash(targetDocument));
 
-    // Return the updatePayload
-    return updatePayload;
+    // 11. Set didUpdatePayload.targetVersionId to sourceVersionId + 1.
+    didUpdatePayload.targetVersionId = Number(sourceVersionId) + 1;
+
+    // 12. Return updatePayload.
+    return didUpdatePayload;
   }
 
   /**
@@ -108,11 +115,7 @@ export class Btc1Update {
   }: InvokePayloadParams): Promise<DidUpdatePayload> {
     // Validate the verificationMethod
     if(!verificationMethod.publicKeyMultibase) {
-      throw new Btc1Error(
-        'Invalid publicKeyMultibase: cannot be undefined',
-        DidErrorCode.InvalidPublicKeyType.toSnakeCaseScreaming(),
-        verificationMethod
-      );
+      throw new Btc1Error('Invalid publicKeyMultibase: cannot be undefined', INVALID_PUBLIC_KEY_TYPE, verificationMethod);
     }
 
     // Deconstruct the keys from the verificationMethod
@@ -127,11 +130,7 @@ export class Btc1Update {
     // If the privateKey is not found, throw an error
     const { privateKey } = keyPair  ?? { privateKey: privateKeyMultibase };
     if (!privateKey) {
-      throw new Btc1Error(
-        'Invalid privateKey: not found in keystore or verificationMethod',
-        DidErrorCode.NotFound.toSnakeCaseScreaming(),
-        verificationMethod
-      );
+      throw new Btc1Error('No privateKey: not found in kms or vm', NOT_FOUND, verificationMethod);
     }
 
     // Derive the root capability from the identifier
@@ -152,8 +151,10 @@ export class Btc1Update {
     const diproof = new DataIntegrityProof(new Cryptosuite({ cryptosuite, multikey }));
     Logger.warn('// TODO: need to set up the proof instantiation such that it can resolve / dereference the root capability. This is deterministic from the DID.');
 
-    // Set didUpdateInvocation to the result of executing the Add Proof algorithm from VC Data Integrity passing didUpdatePayload as the input document, cryptosuite, and the set of proofOptions.
+    // Set didUpdateInvocation to the result of executing the Add Proof algorithm from VC Data Integrity passing
+    // didUpdatePayload as the input document, cryptosuite, and the set of proofOptions.
     const didUpdateInvocation = await diproof.addProof({ document: updatePayload, options });
+
     // Return didUpdateInvocation
     return {
       ...updatePayload,
@@ -174,7 +175,7 @@ export class Btc1Update {
    * @param {string[]} params.beaconIds The didUpdatePayload object to be signed
    * @param {DidUpdatePayload} params.didUpdatePayload The verificationMethod object to be used for signing
    * @returns {} Array of signalMetadata objects with necessary data to validate Beacon Signal against Did Update
-   * @throws {DidError} if the beaconService type is invalid
+   * @throws {Btc1Error} if the beaconService type is invalid
    */
   public static async announce({ sourceDocument, beaconIds, didUpdatePayload }: {
     sourceDocument: Btc1DidDocument;
@@ -188,7 +189,7 @@ export class Btc1Update {
     for (const beaconId of beaconIds) {
       const beaconService = sourceDocument.service.find((s: DidService) => s.id === beaconId);
       if (!beaconService) {
-        throw new DidError(DidErrorCode.InvalidDidDocument, `Beacon not found: ${beaconId}`);
+        throw new Btc1Error(INVALID_DID_DOCUMENT, 'Beacon not found: sourceDocument does not contain beaconId', { beaconId });
       }
       beaconServices.push(beaconService);
     }

@@ -1,3 +1,74 @@
+/**
+ * An enumeration of possible DID error codes.
+ */
+export enum Btc1ErrorCode {
+  /** The DID supplied does not conform to valid syntax. */
+  INVALID_DID = 'INVALID_DID',
+
+  /** The supplied method name is not supported by the DID method and/or DID resolver implementation. */
+  METHOD_NOT_SUPPORTED = 'METHOD_NOT_SUPPORTED',
+
+  /** An unexpected error occurred during the requested DID operation. */
+  INTERNAL_ERROR = 'INTERNAL_ERROR',
+
+  /** The DID document supplied does not conform to valid syntax. */
+  INVALID_DID_DOCUMENT = 'INVALID_DID_DOCUMENT',
+
+  /** The byte length of a DID document does not match the expected value. */
+  INVALID_DID_DOCUMENT_LENGTH = 'INVALID_DID_DOCUMENT_LENGTH',
+
+  /** The DID URL supplied to the dereferencing function does not conform to valid syntax. */
+  INVALID_DID_URL = 'INVALID_DID_URL',
+
+  /** The given proof of a previous DID is invalid */
+  INVALID_PREVIOUS_DID_PROOF = 'INVALID_PREVIOUS_DID_PROOF',
+
+  /** An invalid public key is detected during a DID operation. */
+  INVALID_PUBLIC_KEY = 'INVALID_PUBLIC_KEY',
+
+  /** An invalid multibase format is detected on the public key during a DID operation. */
+  INVALID_PUBLIC_KEY_MULTIBASE = 'INVALID_PUBLIC_KEY_MULTIBASE',
+
+  /** The byte length of a public key does not match the expected value. */
+  INVALID_PUBLIC_KEY_LENGTH = 'INVALID_PUBLIC_KEY_LENGTH',
+
+  /** An invalid public key type was detected during a DID operation. */
+  INVALID_PUBLIC_KEY_TYPE = 'INVALID_PUBLIC_KEY_TYPE',
+
+  /** Verification of a signature failed during a DID operation. */
+  INVALID_SIGNATURE = 'INVALID_SIGNATURE',
+
+  /** The DID resolver was unable to find the DID document resulting from the resolution request. */
+  NOT_FOUND = 'NOT_FOUND',
+
+  /**
+   * The representation requested via the `accept` input metadata property is not supported by the
+   * DID method and/or DID resolver implementation.
+   */
+  REPRESENTATION_NOT_SUPPORTED = 'REPRESENTATION_NOT_SUPPORTED',
+
+  /** The type of a public key is not supported by the DID method and/or DID resolver implementation. */
+  UNSUPPORTED_PUBLIC_KEY_TYPE = 'UNSUPPORTED_PUBLIC_KEY_TYPE',
+}
+
+export const {
+  INVALID_DID,
+  METHOD_NOT_SUPPORTED,
+  INTERNAL_ERROR,
+  INVALID_DID_DOCUMENT,
+  INVALID_DID_DOCUMENT_LENGTH,
+  INVALID_DID_URL,
+  INVALID_PREVIOUS_DID_PROOF,
+  INVALID_PUBLIC_KEY,
+  INVALID_PUBLIC_KEY_MULTIBASE,
+  INVALID_PUBLIC_KEY_LENGTH,
+  INVALID_PUBLIC_KEY_TYPE,
+  INVALID_SIGNATURE,
+  NOT_FOUND,
+  REPRESENTATION_NOT_SUPPORTED,
+  UNSUPPORTED_PUBLIC_KEY_TYPE,
+} = Btc1ErrorCode;
+
 export type ErrorOptions = {
   type?: string;
   name?: string;
