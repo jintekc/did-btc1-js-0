@@ -1,5 +1,6 @@
 import {
   Btc1Error,
+  Btc1ErrorCode,
   CanonicalizableObject,
   Canonicalization,
   CanonicalizedProofConfig,
@@ -148,7 +149,7 @@ export class Cryptosuite implements ICryptosuite {
     // If the options type does not match this type, throw error
     const type = options.type;
     if (type !== this.type) {
-      throw new Btc1Error('Type mismatch: options.type !== this.type', ERROR_TYPE, { options, thisType: this.type });
+      throw new Btc1Error('Type mismatch: options.type !== this.type', Btc1ErrorCode, { options, thisType: this.type });
     }
 
     // Get the cryptosuite from the options and check:
