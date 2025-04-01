@@ -1,11 +1,11 @@
-import { DidVerificationMethod, DidResolutionOptions as IDidResolutionOptions } from '@web5/dids';
+import { DidVerificationMethod as IDidVerificationMethod, DidResolutionOptions as IDidResolutionOptions } from '@web5/dids';
 import BitcoinRpc from '../bitcoin/rpc-client.js';
 import { PatchOperation } from '../utils/json-patch.js';
 import { Btc1DidDocument } from '../utils/btc1/did-document.js';
 import { DidPlaceholder, SidecarData, UnixTimestamp } from '../types/crud.js';
 import { BitcoinNetworkNames } from '@did-btc1/common';
 
-export interface IntermediateVerificationMethod extends DidVerificationMethod {
+export interface DidVerificationMethod extends IDidVerificationMethod {
     id: string;
     type: string;
     controller: DidPlaceholder;
@@ -13,7 +13,7 @@ export interface IntermediateVerificationMethod extends DidVerificationMethod {
 }
 export interface IntermediateDocument extends Btc1DidDocument {
     id:  DidPlaceholder;
-    verificationMethod: IntermediateVerificationMethod[];
+    verificationMethod: DidVerificationMethod[];
 }
 
 /**

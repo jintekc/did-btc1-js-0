@@ -1,4 +1,3 @@
-import { Btc1Identifier } from '@did-btc1/common';
 import { CryptosuiteType } from './cryptosuite.js';
 
 /** Types */
@@ -18,11 +17,13 @@ export interface Proof {
   '@type'?: DataIntegrityProofType;
   created?: string;
   cryptosuite: CryptosuiteType;
-  verificationMethod: `${Btc1Identifier}#initialKey`;
+  verificationMethod: string;
   proofPurpose: string;
   proofValue: string;
   domain?: string[];
   challenge?: string;
+  capability?: string;
+  capabilityAction?: string;
 }
 export interface VerifyProofParams {
   mediaType?: string;

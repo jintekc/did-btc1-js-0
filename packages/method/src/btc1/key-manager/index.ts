@@ -6,6 +6,9 @@ import { KeyValueStore, MemoryStore } from '@web5/common';
 import { KeyIdentifier } from '@web5/crypto';
 import { randomBytes } from 'crypto';
 import { Btc1KeyManagerOptions, KeyManager, KeyManagerParams } from './interface.js';
+import { Multibase } from 'multiformats';
+
+export const defaultKeyStore = new MemoryStore<KeyIdentifier, KeyPair>();
 
 /**
  * Class for managing cryptographic keys for the Btc1 DID method.
@@ -13,7 +16,7 @@ import { Btc1KeyManagerOptions, KeyManager, KeyManagerParams } from './interface
  * @type {Btc1KeyManager}
  */
 export class Btc1KeyManager implements KeyManager {
-  public activeKeyUri: KeyIdentifier;
+  public activeKeyUri?: KeyIdentifier;
 
   /**
    * The `_keyStore` private variable in `Btc1KeyManager` is a `KeyValueStore` instance used for
@@ -37,8 +40,8 @@ export class Btc1KeyManager implements KeyManager {
    * @param {KeyIdentifier} params.keyUri An optional property to specify the active key URI for the key manager.
    */
   constructor(params?: KeyManagerParams) {
-    this._keyStore = params?.keyStore ?? new MemoryStore<KeyIdentifier, KeyPair>();
-    this.activeKeyUri = params?.keyUri ?? '';
+    this._keyStore = params?.keyStore ?? defaultKeyStore;
+    this.activeKeyUri = params?.keys ? Btc1KeyManager.computeKeyUri(params.keys) : params?.keyUri;
   }
 
   /**
@@ -123,7 +126,10 @@ export class Btc1KeyManager implements KeyManager {
    * @returns {Promise<KeyPair>} The key pair associated with the key URI.
    * @throws {Btc1KeyManagerError} If the key is not found in the key store.
    */
-  public async exportKey(keyUri: KeyIdentifier): Promise<KeyPair> {
+  public async exportKey(keyUri?: KeyIdentifier): Promise<KeyPair | undefined> {
+    // Use the active key URI if not provided
+    keyUri ??= this.activeKeyUri;
+
     // Get the key from the key store and return it
     return await this.getKey(keyUri);
   }
@@ -137,7 +143,7 @@ export class Btc1KeyManager implements KeyManager {
    */
   public async importKey(keyPair: KeyPair, options: Btc1KeyManagerOptions = {}): Promise<KeyIdentifier> {
     // Compute the key URI if not provided
-    const keyUri = this.computeKeyUri(keyPair);
+    const keyUri = Btc1KeyManager.computeKeyUri(keyPair);
 
     // Store the keypair in the key store
     await this._keyStore.set(keyUri, keyPair);
@@ -162,14 +168,26 @@ export class Btc1KeyManager implements KeyManager {
 
   /**
    * Computes the key URI of a given keypair. See {@link KeyManager.computeKeyUri} for more details.
-   * @param {KeyPair} keyPair The keypair to compute the URI for/
+   * @param {KeyPair | PublicKey | Multibase<'z66p'>} data The keypair to compute the URI for/
    * @returns {KeyIdentifier} The URI of the keypair/
    */
-  public computeKeyUri(keyPair: KeyPair): KeyIdentifier {
+  public static computeKeyUri(data: KeyPair | PublicKey | Multibase<'z66p'>): KeyIdentifier {
+    const ending = data instanceof KeyPair
+      ? data.publicKey.multibase
+      : data instanceof PublicKey
+        ? data.multibase
+        : data;
     // Concat the URI prefix to the publicKeyMultibase
-    return `${MULTIBASE_URI_PREFIX}${keyPair.publicKey.multibase}`;
+    return `${MULTIBASE_URI_PREFIX}${ending}`;
   }
 
+  /**
+   * Generates a new keypair and imports it into the key store. See {@link KeyManager.generateKey} for more details.
+   * @public
+   * @async
+   * @param {Btc1KeyManagerOptions} options
+   * @returns {Promise<KeyPair | KeyIdentifier>}
+   */
   public async generateKey(options: Btc1KeyManagerOptions): Promise<KeyPair | KeyIdentifier> {
     // Set default values for the options
     options ??= { importKey: true, active: false };
@@ -224,5 +242,19 @@ export class Btc1KeyManager implements KeyManager {
 
     // Return the key manager instance
     return keyManager;
+  }
+
+
+  /**
+   * Retrieves a keypair from the key store using the provided key URI.
+   * @public
+   * @param {KeyIdentifier} keyUri The URI of the keypair to retrieve.
+   * @returns {Promise<KeyPair | undefined>} The retrieved keypair, or undefined if not found.
+   */
+  public static async getKeyPair(keyUri: KeyIdentifier): Promise<KeyPair | undefined> {
+    // Instantiate a new Btc1KeyManager with the default key store
+    const km = new Btc1KeyManager({ keyStore: defaultKeyStore, keyUri });
+    // Retrieve and return the keypair from the key store
+    return await km.exportKey();
   }
 }

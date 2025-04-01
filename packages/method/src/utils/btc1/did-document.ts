@@ -17,11 +17,14 @@ export class Btc1VerificationMethod implements DidVerificationMethod {
   type: string;
   controller: string;
   publicKeyMultibase?: string | undefined;
-  constructor(id: string, type: string, controller: string, publicKeyMultibase?: string) {
+  privateKeyMultibase?: string | undefined;
+
+  constructor(id: string, type: string, controller: string, publicKeyMultibase?: string, privateKeyMultibase?: string) {
     this.id = id;
     this.type = type;
     this.controller = controller;
     this.publicKeyMultibase = publicKeyMultibase;
+    this.privateKeyMultibase = privateKeyMultibase;
   }
 
   // TODO: Add helper methods and properties

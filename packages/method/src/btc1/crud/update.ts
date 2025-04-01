@@ -1,4 +1,5 @@
-import { canonicalization, DidBtc1Error } from '@did-btc1/common';
+import { Btc1Error, canonicalization, Logger } from '@did-btc1/common';
+import { Cryptosuite, DataIntegrityProof, Multikey, ProofOptions } from '@did-btc1/cryptosuite';
 import type { DidService } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { base58btc } from 'multiformats/bases/base58';
@@ -9,9 +10,9 @@ import { InvokePayloadParams, Metadata, SignalsMetadata } from '../../types/crud
 import { Btc1Appendix } from '../../utils/btc1/appendix.js';
 import { BTC1_DID_UPDATE_PAYLOAD_CONTEXT } from '../../utils/btc1/constants.js';
 import { Btc1DidDocument } from '../../utils/btc1/did-document.js';
-import { GeneralUtils } from '../../utils/general.js';
 import JsonPatch, { PatchOperation } from '../../utils/json-patch.js';
 import { BeaconFactory } from '../beacons/factory.js';
+import { Btc1KeyManager } from '../key-manager/index.js';
 
 const { canonicalhash } = canonicalization;
 
@@ -88,51 +89,76 @@ export class Btc1Update {
    *
    * {@link https://dcdpr.github.io/did-btc1/#invoke-did-update-payload | 4.3.2 Invoke DID Update Payload}.
    *
-   * The Invoke DID Update Payload algorightm retrieves the privateKeyBytes for the verificationMethod and adds a
-   * capability invocation in the form of a Data Integrity proof following the Authorization Capabilities (ZCAP-LD) and
-   * VC Data Integrity specifications. It takes in a btc1Identifier, an unsigned didUpdatePayload, and a
-   * verificationMethod. It returns the invoked DID Update Payload.
+   * The Invoke DID Update Payload algorithm takes in a btc1Identifier, an unsigned didUpdatePayload, and a
+   * verificationMethod. It retrieves the privateKeyBytes for the verificationMethod and adds a capability invocation in
+   * the form of a Data Integrity proof following the Authorization Capabilities (ZCAP-LD) and VC Data Integrity
+   * specifications. It returns the invoked DID Update Payload.
+   *
    * @param {InvokePayloadParams} params Required params for calling the invokePayload method
    * @param {string} params.identifier The did-btc1 identifier to derive the root capability from
    * @param {DidUpdatePayload} params.updatePayload The updatePayload object to be signed
    * @param {DidVerificationMethod} params.verificationMethod The verificationMethod object to be used for signing
-   * @param {RecoveryOptions} params.options The options object containing seed, entropy, mnemonic, and path
-   * @returns {ProofOptions} Object containing the proof options
-   * @throws {DidBtc1Error} if the privateKeyBytes are invalid
+   * @returns {DidUpdatePayload} Object containing the proof options
+   * @throws {Btc1Error} if the privateKeyBytes are invalid
    */
-  public static invoke({
+  public static async invoke({
     identifier,
+    updatePayload,
     verificationMethod,
-    options: {
-      seed,
-      entropy,
-      hd: { mnemonic, path },
-    } }: InvokePayloadParams): any {
-    // Derive privateKeyBytes from mnemonic & path, seed, or entropy, salt
-    let privateKeyBytes = mnemonic && path
-      ? GeneralUtils.recoverHdChildFromMnemonic(mnemonic, path)
-      : seed
-        ? GeneralUtils.recoverHdWallet(seed)
-        : entropy
-          ? GeneralUtils.recoverRawPrivateKey(entropy)
-          : null;
-    // Validate privateKeyBytes
-    if (!privateKeyBytes) {
-      throw new DidBtc1Error('Invalid privateKeyBytes');
+  }: InvokePayloadParams): Promise<DidUpdatePayload> {
+    // Validate the verificationMethod
+    if(!verificationMethod.publicKeyMultibase) {
+      throw new Btc1Error(
+        'Invalid publicKeyMultibase: cannot be undefined',
+        DidErrorCode.InvalidPublicKeyType.toSnakeCaseScreaming(),
+        verificationMethod
+      );
     }
+
+    // Deconstruct the keys from the verificationMethod
+    const { publicKeyMultibase, privateKeyMultibase } = verificationMethod;
+
+    // Compute the keyUri and check if the key is in the keystore
+    // If not, use the privateKeyMultibase from the verificationMethod
+    const keyPair = await Btc1KeyManager.getKeyPair(
+      Btc1KeyManager.computeKeyUri(publicKeyMultibase)
+    );
+
+    // If the privateKey is not found, throw an error
+    const { privateKey } = keyPair  ?? { privateKey: privateKeyMultibase };
+    if (!privateKey) {
+      throw new Btc1Error(
+        'Invalid privateKey: not found in keystore or verificationMethod',
+        DidErrorCode.NotFound.toSnakeCaseScreaming(),
+        verificationMethod
+      );
+    }
+
     // Derive the root capability from the identifier
     const rootCapability = Btc1Appendix.deriveRootCapability(identifier);
+    const cryptosuite = 'bip340-jcs-2025';
     // Construct the proof options
-    const proofOptions = {
+    const options: ProofOptions = {
+      cryptosuite,
       type               : 'DataIntegrityProof',
-      cryptosuite        : 'bip340-jcs-2025',
-      verificationMethod : verificationMethod.id as any,
+      verificationMethod : verificationMethod.id,
       proofPurpose       : 'capabilityInvocation',
       capability         : rootCapability.id,
       capabilityAction   : 'Write',
     };
-    console.log('proofOptions:', proofOptions);
-    return proofOptions;
+    Logger.warn('// TODO: Wonder if we actually need this. Arent we always writing?');
+
+    const multikey = new Multikey({ id: verificationMethod.id, controller: verificationMethod.controller, keyPair });
+    const diproof = new DataIntegrityProof(new Cryptosuite({ cryptosuite, multikey }));
+    Logger.warn('// TODO: need to set up the proof instantiation such that it can resolve / dereference the root capability. This is deterministic from the DID.');
+
+    // Set didUpdateInvocation to the result of executing the Add Proof algorithm from VC Data Integrity passing didUpdatePayload as the input document, cryptosuite, and the set of proofOptions.
+    const didUpdateInvocation = await diproof.addProof({ document: updatePayload, options });
+    // Return didUpdateInvocation
+    return {
+      ...updatePayload,
+      ...didUpdateInvocation,
+    };
   }
 
   /**

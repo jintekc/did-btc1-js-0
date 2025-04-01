@@ -23,6 +23,15 @@ declare global {
         /** Normalize unprototyped JSON object to prototyped JSON object */
         normalize(unknown: Maybe<Unprototyped>): Prototyped;
     }
+
+    interface Date {
+      getUTCDateTime(): string;
+    }
+
+    interface String {
+      toSnakeCaseScreaming(): string;
+      toSnakeCase(): string;
+    }
 }
 
 Array.prototype.last = function <T>(): T | undefined {
@@ -68,6 +77,20 @@ JSON.normalize = function (unknown: Maybe<Unprototyped>): Prototyped {
   } catch {
     throw new Error('The object is not raw');
   }
+};
+
+Date.prototype.getUTCDateTime = function (): string {
+  return `${this.toISOString().slice(0, -5)}Z`;
+};
+
+String.prototype.toSnakeCase = function (): string {
+  return this
+    .replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
+    .replace(/([a-z])([A-Z])/g, '$1_$2');
+};
+
+String.prototype.toSnakeCaseScreaming = function (): string {
+  return this.toSnakeCase().toUpperCase();
 };
 
 export default global;

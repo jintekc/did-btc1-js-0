@@ -26,7 +26,6 @@ export type InvokePayloadParams = {
   identifier: string;
   updatePayload: DidUpdatePayload;
   verificationMethod: Btc1VerificationMethod;
-  options: RecoveryOptions;
 }
 
 export type Bytes = Uint8Array;

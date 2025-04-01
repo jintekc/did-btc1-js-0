@@ -1,10 +1,10 @@
 import { canonicalization, PublicKeyBytes } from '@did-btc1/common';
 import { PublicKey } from '@did-btc1/key-pair';
 import { bech32 } from '@scure/base';
-import type { DidService, DidVerificationMethod } from '@web5/dids';
+import type { DidService } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { getNetwork } from '../../bitcoin/network.js';
-import { IntermediateDocument, IntermediateVerificationMethod } from '../../interfaces/crud.js';
+import { IntermediateDocument, DidVerificationMethod } from '../../interfaces/crud.js';
 import { DocumentBytes } from '../../types/crud.js';
 import { BeaconUtils } from '../../utils/btc1/beacon-utils.js';
 import { ID_PLACEHOLDER_VALUE } from '../../utils/btc1/constants.js';
@@ -152,7 +152,7 @@ export class Btc1Create {
 
     /** Set the document.verificationMethod[i].controller to {@link ID_PLACEHOLDER_VALUE} */
     intermediateDocument.verificationMethod = verificationMethod.map(
-      (vm: IntermediateVerificationMethod) => ({ ...vm, controller: intermediateDocument.id })
+      (vm: DidVerificationMethod) => ({ ...vm, controller: intermediateDocument.id })
     );
 
     // Sha256 hash the canonicalized byte array of the intermediateDocument

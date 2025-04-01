@@ -1,6 +1,6 @@
-import { HashBytes, Hex, SignatureBytes } from '@did-btc1/common';
+import { HashBytes, Hex, PrivateKeyBytes, PublicKeyBytes, SignatureBytes } from '@did-btc1/common';
 import { MultikeyJSON } from '@did-btc1/cryptosuite';
-import { KeyPair, PublicKey } from '@did-btc1/key-pair';
+import { KeyPair, PrivateKey, PublicKey } from '@did-btc1/key-pair';
 import { KeyValueStore } from '@web5/common';
 
 export type Btc1KeyManagerOptions = {
@@ -18,14 +18,22 @@ export type KeyManagerParams = {
    * provided, {@link Btc1KeyManager | `Btc1KeyManager`} uses a default `MemoryStore` instance.
    * This store is responsible for managing cryptographic keys, allowing them to be retrieved,
    * stored, and managed during cryptographic operations.
+   * @type {KeyValueStore<KeyIdentifier, KeyPair>}
    */
   keyStore?: KeyValueStore<KeyIdentifier, KeyPair>;
 
   /**
    * An optional property to specify a key URI for the key manager. If not provided, the key manager
    * will generate a key URI based on the public key of the key pair.
+   * @type {KeyIdentifier}
    */
   keyUri?: KeyIdentifier;
+
+  /**
+   * An optional property to pass in an initial key pair
+   * @type {KeyPair}
+   */
+  keys?: KeyPair;
 };
 export type MultikeyPair = MultikeyJSON;
 export type GenerateKeyParams = {
@@ -56,17 +64,17 @@ export interface KeyManager {
     /**
      * Exports the full key pair from the key store.
      * @param {KeyIdentifier} keyUri The URI of the key to export.
-     * @returns {Promise<KeyPair>} The key pair associated with the key URI.
+     * @returns {Promise<KeyPair | undefined>} The key pair associated with the key URI.
      * @throws {Btc1KeyManagerError} If the key is not found in the key store.
      */
-    exportKey(keyUri: KeyIdentifier): Promise<KeyPair>;
+    exportKey(keyUri?: KeyIdentifier): Promise<KeyPair | undefined>;
 
     /**
      * Computes the URI of a key pair.
      * @param {KeyPair} keyPair The key pair to compute the URI for.
      * @returns {KeyIdentifier} The URI of the key pair.
      */
-    computeKeyUri(keyPair: KeyPair): KeyIdentifier;
+    // computeKeyUri(keyPair: KeyPair): KeyIdentifier;
 
     /**
      * Gets the public key of a key pair.
