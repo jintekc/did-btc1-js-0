@@ -23,7 +23,7 @@ export type RecoveryOptions = {
   hd: { mnemonic: string; path: string };
 }
 export type InvokePayloadParams = {
-  identifier: string;
+  btc1Identifier: string;
   updatePayload: DidUpdatePayload;
   verificationMethod: Btc1VerificationMethod;
 }

@@ -1,9 +1,8 @@
-import { DidVerificationMethod as IDidVerificationMethod, DidResolutionOptions as IDidResolutionOptions } from '@web5/dids';
-import BitcoinRpc from '../bitcoin/rpc-client.js';
-import { PatchOperation } from '../utils/json-patch.js';
-import { Btc1DidDocument } from '../utils/btc1/did-document.js';
-import { DidPlaceholder, SidecarData, UnixTimestamp } from '../types/crud.js';
 import { BitcoinNetworkNames } from '@did-btc1/common';
+import { DidResolutionOptions as IDidResolutionOptions, DidVerificationMethod as IDidVerificationMethod } from '@web5/dids';
+import BitcoinRpc from '../bitcoin/rpc-client.js';
+import { DidPlaceholder, SidecarData, UnixTimestamp } from '../types/crud.js';
+import { Btc1DidDocument } from '../utils/btc1/did-document.js';
 
 export interface DidVerificationMethod extends IDidVerificationMethod {
     id: string;
@@ -36,14 +35,6 @@ export interface Btc1RootCapability {
     controller: string;
     invocationTarget: string;
 }
-export interface DidUpdatePayload {
-    '@context': string[];
-    patch: PatchOperation[];
-    sourceHash: string;
-    targetHash: string;
-    targetVersionId: number;
-    proof: ProofOptions;
-}
 export interface ReadBlockchainParams {
   contemporaryDidDocument: Btc1DidDocument;
   contemporaryBlockHeight: number | 1;
@@ -53,12 +44,4 @@ export interface ReadBlockchainParams {
   updateHashHistory: string[];
   sidecarData?: SidecarData;
   options?: DidResolutionOptions;
-}
-export interface ProofOptions {
-  type?: string;
-  cryptosuite?: string;
-  verificationMethod?: string;
-  proofPurpose?: string;
-  capability?: string;
-  capabilityAction?: string;
 }

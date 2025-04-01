@@ -1,5 +1,6 @@
 import './exts.js';
 
+export * from './types/btc1.js';
 export * from './types/crypto.js';
 export * from './types/did.js';
 export * from './types/general.js';
@@ -10,5 +11,4 @@ export * from './utils/logger.js';
 export * from './utils/object.js';
 
 export * from './constants.js';
-
 export * from './exts.js';

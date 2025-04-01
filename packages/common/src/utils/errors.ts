@@ -49,6 +49,9 @@ export enum Btc1ErrorCode {
 
   /** The type of a public key is not supported by the DID method and/or DID resolver implementation. */
   UNSUPPORTED_PUBLIC_KEY_TYPE = 'UNSUPPORTED_PUBLIC_KEY_TYPE',
+
+  /** The proof verification failed during a DID operation. */
+  PROOF_VERIFICATION_ERROR = 'PROOF_VERIFICATION_ERROR',
 }
 
 export const {

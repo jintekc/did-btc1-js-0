@@ -1,21 +1,51 @@
-import { HashHex, SignatureBytes } from '@did-btc1/common';
-import {
-  CanonicalizableObject,
-  GenerateHashParams,
-  InsecureDocumentParams,
-  ProofOptionsParam,
-  SerializeParams,
-  TransformParams,
-  VerificationParams
-} from '../../types/cryptosuite.js';
 import {
   CanonicalizedProofConfig,
-  DataIntegrityProofType,
+  CryptosuiteName,
+  DidUpdateInvocation,
+  DidUpdatePayload,
+  HashBytes,
+  HashHex,
   Proof,
-  SecureDocument,
-  VerificationResult
-} from '../../types/di-proof.js';
+  ProofOptions,
+  SignatureBytes
+} from '@did-btc1/common';
+import { ProofVerificationResult } from '../data-integrity-proof/index.js';
 import { Multikey } from '../multikey/index.js';
+
+export type ProofOptionsParam = {
+  options: ProofOptions;
+};
+export interface DidUpdatePayloadParams extends ProofOptionsParam {
+  document: DidUpdatePayload
+}
+export interface DidUpdateInvocationParams extends ProofOptionsParam {
+  document: DidUpdateInvocation
+};
+export type DocumentParams = {
+  document:
+    | DidUpdatePayload
+    | DidUpdateInvocation
+};
+export type CanonicalizableObject = Record<string, any>;
+export type TransformDocumentParams = DocumentParams & ProofOptionsParam;
+export type ProofSerializeParams = {
+  hash: HashBytes;
+  options: ProofOptions;
+};
+export type ProofVerificationParams = {
+  hash: HashBytes;
+  signature: SignatureBytes;
+  options: ProofOptions;
+};
+export type GenerateHashParams = {
+  canonicalConfig: string;
+  canonicalDocument: string
+};
+export interface CryptosuiteParams {
+  type?: 'DataIntegrityProof';
+  cryptosuite: CryptosuiteName;
+  multikey: Multikey;
+}
 
 /**
  * Interface representing a BIP-340 Cryptosuite.
@@ -23,8 +53,8 @@ import { Multikey } from '../multikey/index.js';
  * @type {ICryptosuite}
  */
 export interface ICryptosuite {
-  /** @type {DataIntegrityProofType} The type of proof produced by the cryptosuite */
-  type: DataIntegrityProofType;
+  /** @type {'DataIntegrityProof'} The type of proof produced by the cryptosuite */
+  type: 'DataIntegrityProof';
 
   /** @type {string} The name of the cryptosuite */
   cryptosuite: string;
@@ -42,66 +72,83 @@ export interface ICryptosuite {
 
   /**
    * Create a proof for an insecure document.
-   * @param {InsecureDocumentParams} params The parameters to use when creating the proof.
-   * @param {InsecureDocument} params.document The document to create a proof for.
+   * @param {DidUpdatePayloadParams} params The parameters to use when creating the proof.
+   * @param {DidUpdatePayload} params.document The document to create a proof for.
    * @param {ProofOptions} params.options The options to use when creating the proof.
    * @returns {Proof} The proof for the document.
    */
-  createProof({ document, options }: InsecureDocumentParams): Promise<Proof>;
+  createProof({ document, options }: {
+    document: DidUpdatePayload
+    options: ProofOptions;
+  }): Promise<Proof>;
 
   /**
    * Verify a proof for a secure document.
-   * @param {SecureDocument} secure The secure document to verify.
-   * @returns {VerificationResult} The result of the verification.
+   * @param {DidUpdateInvocation} document The secure document to verify.
+   * @returns {ProofVerificationResult} The result of the verification.
    */
-  verifyProof(secure: SecureDocument): Promise<VerificationResult>;
+  verifyProof(document: DidUpdateInvocation): Promise<ProofVerificationResult>;
 
   /**
-   * Transform a document (secure or insecure) into canonical form.
-   * @param {TransformParams} params The parameters to use when transforming the document.
+   * Transform a document (insecure didUpdatePayload or secure didUpdateInvocation) into canonical form.
+   * @param {TransformDocumentParams} params The parameters to use when transforming the document.
    * @param {DocumentParams} params.document The document to transform: secure or insecure.
    * @param {ProofOptions} params.options The options to use when transforming the proof.
    * @returns {string} The canonicalized document.
    * @throws {CryptosuiteError} if the document cannot be transformed.
    */
-  transformDocument({ document, options }: TransformParams): Promise<string>;
+  transformDocument({ document, options }: {
+    document:
+        | DidUpdatePayload
+        | DidUpdateInvocation;
+    options: ProofOptions;
+  }): Promise<string>;
 
   /**
    * Generate a hash of the canonical proof configuration and document.
-   * @param {GenerateHashParams} params The parameters to use when generating the hash.
+   * @param {{ canonicalConfig: string; canonicalDocument: string }} params The parameters to use when generating the hash.
    * @param {string} params.canonicalConfig The canonicalized proof configuration.
    * @param {string} params.canonicalDocument The canonicalized document.
    * @returns {HashHex} The hash string of the proof configuration and document.
    */
-  generateHash({ canonicalConfig, canonicalDocument }: GenerateHashParams): HashHex;
+  generateHash({ canonicalConfig, canonicalDocument }: {
+    canonicalConfig: string;
+    canonicalDocument: string
+  }): HashHex;
 
   /**
    * Configure the proof by canonicalzing it.
-   * @param {ProofOptionsParam} params The parameters to use when transforming the document.
-   * @param {ProofOptions} params.options The options to use when transforming the proof.
+   * @param {ProofOptions} options The options to use when transforming the proof.
    * @returns {string} The canonicalized proof configuration.
    * @throws {CryptosuiteError} if the proof configuration cannot be canonicalized.
    */
-  proofConfiguration({ options }: ProofOptionsParam): Promise<CanonicalizedProofConfig>;
+  proofConfiguration(options: ProofOptions): Promise<CanonicalizedProofConfig>;
 
   /**
    * Serialize the proof into a byte array.
-   * @param {SerializeParams} params The parameters to use when serializing the proof.
+   * @param {ProofSerializeParams} params The parameters to use when serializing the proof.
    * @param {HashBytes} params.hash The canonicalized proof configuration.
    * @param {ProofOptions} params.options The options to use when serializing the proof.
    * @returns {SignatureBytes} The serialized proof.
    * @throws {CryptosuiteError} if the multikey does not match the verification method.
    */
-  proofSerialization({ hash, options }: SerializeParams): SignatureBytes;
+  proofSerialization({ hash, options }: {
+    hash: HashBytes;
+    options: ProofOptions;
+  }): SignatureBytes;
 
   /**
    * Verify the proof by comparing the hash of the proof configuration and document to the proof bytes.
-   * @param {VerificationParams} params The parameters to use when verifying the proof.
+   * @param {ProofVerificationParams} params The parameters to use when verifying the proof.
    * @param {HashBytes} params.hash The canonicalized proof configuration.
    * @param {SignatureBytes} params.signature The serialized proof.
    * @param {ProofOptions} params.options The options to use when verifying the proof.
    * @returns {boolean} True if the proof is verified, false otherwise.
    * @throws {CryptosuiteError} if the multikey does not match the verification method.
    */
-  proofVerification({ hash, signature, options }: VerificationParams): boolean;
+  proofVerification({ hash, signature, options }: {
+    hash: HashBytes;
+    signature: SignatureBytes;
+    options: ProofOptions;
+  }): boolean;
 }

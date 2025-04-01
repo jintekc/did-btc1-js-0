@@ -92,8 +92,6 @@ export class Btc1Update {
   }
 
   /**
-   * TODO: Update method per the spec
-   *
    * {@link https://dcdpr.github.io/did-btc1/#invoke-did-update-payload | 4.3.2 Invoke DID Update Payload}.
    *
    * The Invoke DID Update Payload algorithm takes in a btc1Identifier, an unsigned didUpdatePayload, and a
@@ -102,15 +100,15 @@ export class Btc1Update {
    * specifications. It returns the invoked DID Update Payload.
    *
    * @param {InvokePayloadParams} params Required params for calling the invokePayload method
-   * @param {string} params.identifier The did-btc1 identifier to derive the root capability from
-   * @param {DidUpdatePayload} params.updatePayload The updatePayload object to be signed
+   * @param {string} params.btc1Identifier The did-btc1 identifier to derive the root capability from
+   * @param {DidUpdatePayload} params.didUpdatePayload The updatePayload object to be signed
    * @param {DidVerificationMethod} params.verificationMethod The verificationMethod object to be used for signing
    * @returns {DidUpdatePayload} Object containing the proof options
    * @throws {Btc1Error} if the privateKeyBytes are invalid
    */
   public static async invoke({
-    identifier,
-    updatePayload,
+    btc1Identifier,
+    didUpdatePayload,
     verificationMethod,
   }: InvokePayloadParams): Promise<DidUpdatePayload> {
     // Validate the verificationMethod
@@ -134,7 +132,7 @@ export class Btc1Update {
     }
 
     // Derive the root capability from the identifier
-    const rootCapability = Btc1Appendix.deriveRootCapability(identifier);
+    const rootCapability = Btc1Appendix.deriveRootCapability(btc1Identifier);
     const cryptosuite = 'bip340-jcs-2025';
     // Construct the proof options
     const options: ProofOptions = {
@@ -153,11 +151,11 @@ export class Btc1Update {
 
     // Set didUpdateInvocation to the result of executing the Add Proof algorithm from VC Data Integrity passing
     // didUpdatePayload as the input document, cryptosuite, and the set of proofOptions.
-    const didUpdateInvocation = await diproof.addProof({ document: updatePayload, options });
+    const didUpdateInvocation = await diproof.addProof({ document: didUpdatePayload, options });
 
     // Return didUpdateInvocation
     return {
-      ...updatePayload,
+      ...didUpdatePayload,
       ...didUpdateInvocation,
     };
   }
