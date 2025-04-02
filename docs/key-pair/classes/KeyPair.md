@@ -6,7 +6,11 @@
 
 # Class: KeyPair
 
+<<<<<<< HEAD
 Defined in: [key-pair.ts:17](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L17)
+=======
+Defined in: [key-pair.ts:17](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/key-pair.ts#L17)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Encapsulates a PublicKey and a PrivateKey object as a single KeyPair object.
  KeyPair
@@ -21,7 +25,11 @@ Encapsulates a PublicKey and a PrivateKey object as a single KeyPair object.
 
 > **new KeyPair**(`privateKey`): `KeyPair`
 
+<<<<<<< HEAD
 Defined in: [key-pair.ts:30](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L30)
+=======
+Defined in: [key-pair.ts:30](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/key-pair.ts#L30)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Creates an instance of KeyPair. Must provide a at least a private key.
 Can optionally provide btoh a private and public key, but must be a valid pair.
@@ -46,7 +54,11 @@ The private key object
 
 > **get** **privateKey**(): [`PrivateKey`](PrivateKey.md)
 
+<<<<<<< HEAD
 Defined in: [key-pair.ts:71](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L71)
+=======
+Defined in: [key-pair.ts:71](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/key-pair.ts#L71)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Set the PrivateKey.
 
@@ -80,7 +92,11 @@ If the private key is not available.
 
 > **get** **publicKey**(): [`PublicKey`](PublicKey.md)
 
+<<<<<<< HEAD
 Defined in: [key-pair.ts:60](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L60)
+=======
+Defined in: [key-pair.ts:60](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/key-pair.ts#L60)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Get the PublicKey.
 
@@ -98,7 +114,11 @@ The PublicKey object
 
 > **set** **publicKey**(`publicKey`): `void`
 
+<<<<<<< HEAD
 Defined in: [key-pair.ts:51](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L51)
+=======
+Defined in: [key-pair.ts:51](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/key-pair.ts#L51)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Set the PublicKey.
 
@@ -128,7 +148,11 @@ The PublicKey object
 
 > **json**(): `KeyPairJSON`
 
+<<<<<<< HEAD
 Defined in: [key-pair.ts:85](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L85)
+=======
+Defined in: [key-pair.ts:85](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/key-pair.ts#L85)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 JSON representation of a KeyPair.
 
