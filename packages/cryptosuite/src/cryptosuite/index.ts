@@ -1,22 +1,25 @@
-import {
-  Btc1Error,
-  Btc1ErrorCode,
-  CanonicalizableObject,
-  Canonicalization,
-  CanonicalizedProofConfig,
-  CryptosuiteError,
-  CryptosuiteName,
-  DidUpdateInvocation,
-  HashBytes,
-  Proof,
-  ProofFactory,
-  SignatureBytes
-} from '@did-btc1/common';
+import { Canonicalization, CryptosuiteError, HashBytes, SignatureBytes } from '@did-btc1/common';
 import { sha256 } from '@noble/hashes/sha256';
 import { base58btc } from 'multiformats/bases/base58';
-import { ProofVerificationResult } from '../data-integrity-proof/index.js';
 import { Multikey } from '../multikey/index.js';
-import { CryptosuiteParams, DidUpdatePayloadParams, GenerateHashParams, ICryptosuite, ProofOptionsParam, TransformDocumentParams } from './interface.js';
+import {
+  CanonicalizableObject,
+  CryptosuiteParams,
+  CryptosuiteType,
+  GenerateHashParams,
+  InsecureDocumentParams,
+  ProofOptionsParam,
+  SerializeParams,
+  TransformParams,
+  VerificationParams
+} from '../types/cryptosuite.js';
+import {
+  CanonicalizedProofConfig,
+  Proof,
+  SecureDocument,
+  VerificationResult
+} from '../types/di-proof.js';
+import { ICryptosuite } from './interface.js';
 
 /**
  * TODO: Test RDFC and figure out what the contexts should be
@@ -28,7 +31,7 @@ import { CryptosuiteParams, DidUpdatePayloadParams, GenerateHashParams, ICryptos
 export class Cryptosuite implements ICryptosuite {
   /**
    * The type of the proof
-   * @type {DataIntegrityProofType} The type of proof produced by the Cryptosuite
+   * @type {'DataIntegrityProof'} The type of proof produced by the Cryptosuite
    */
   public type: 'DataIntegrityProof' = 'DataIntegrityProof';
 
@@ -37,7 +40,7 @@ export class Cryptosuite implements ICryptosuite {
    * @public
    * @type {string} The name of the cryptosuite
    */
-  public cryptosuite: CryptosuiteName;
+  public cryptosuite: CryptosuiteType;
 
   /**
    * The multikey used to sign and verify proofs
@@ -77,15 +80,16 @@ export class Cryptosuite implements ICryptosuite {
   /**
    * Implements {@link ICryptosuite.createProof}.
    */
-  public async createProof({ document, options }: DidUpdatePayloadParams): Promise<Proof> {
+  public async createProof({ document, options }: InsecureDocumentParams): Promise<Proof> {
     // Get the context from the document
     const context = document['@context'];
 
     // If a context exists, add it to the proof
-    const proofObject = ProofFactory.create(options);
-    const proof = context
-      ? { ...proofObject, '@context': context }
-      : proofObject;
+    const proof = (
+      context
+        ? { ...options, '@context': context }
+        : options
+    ) as Proof;
 
     // Create a canonical form of the proof configuration
     const canonicalConfig = await this.proofConfiguration({ options: proof });
@@ -101,18 +105,19 @@ export class Cryptosuite implements ICryptosuite {
 
     // Encode the proof bytes to base
     proof.proofValue = base58btc.encode(serialized);
+    if(this.cryptosuite.includes('rdfc'))
+      proof['@type'] = this.type;
+    else
+      proof.type = this.type;
 
-    // Set the proof type to DataIntegrityProof
-    proof.type = this.type;
-
-    // Return sproof
+    // Return the proof
     return proof;
   }
 
   /**
    * Implements {@link ICryptosuite.verifyProof}.
    */
-  public async verifyProof(secure: DidUpdateInvocation): Promise<ProofVerificationResult> {
+  public async verifyProof(secure: SecureDocument): Promise<VerificationResult> {
     // Create an insecure document from the secure document by removing the proof
     const insecure = { ...secure, proof: undefined };
 
@@ -141,15 +146,15 @@ export class Cryptosuite implements ICryptosuite {
   /**
    * Implements {@link ICryptosuite.transformDocument}.
    */
-  public async transformDocument({ document, options }: TransformDocumentParams): Promise<string> {
+  public async transformDocument({ document, options }: TransformParams): Promise<string> {
     // Error type for the transformDocument method
     const ERROR_TYPE = 'PROOF_VERIFICATION_ERROR';
 
     // Get the type from the options and check:
     // If the options type does not match this type, throw error
-    const type = options.type;
+    const type = options.type ?? options['@type'];
     if (type !== this.type) {
-      throw new Btc1Error('Type mismatch: options.type !== this.type', Btc1ErrorCode, { options, thisType: this.type });
+      throw new CryptosuiteError(`Type mismatch between config and this: ${type} !== ${this.type}`, ERROR_TYPE);
     }
 
     // Get the cryptosuite from the options and check:

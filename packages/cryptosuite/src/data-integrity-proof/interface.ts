@@ -1,6 +1,6 @@
 import {
   AddProofParams,
-  DidUpdateInvocation,
+  SecureDocument,
   VerificationResult,
   VerifyProofParams
 } from '../../types/di-proof.js';
@@ -20,9 +20,9 @@ export interface IDataIntegrityProof {
    * @param {AddProofParams} params Parameters for adding a proof to a document.
    * @param {InsecureDocument} params.document The document to add a proof to.
    * @param {ProofOptions} params.options Options for adding a proof to a document.
-   * @returns {DidUpdateInvocation} A document with a proof added.
+   * @returns {SecureDocument} A document with a proof added.
    */
-  addProof({ document, options }: AddProofParams): Promise<DidUpdateInvocation>;
+  addProof({ document, options }: AddProofParams): Promise<SecureDocument>;
 
   /**
    * Verify a proof.

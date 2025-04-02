@@ -1,26 +1,7 @@
 import { ProofError, ObjectUtils } from '@did-btc1/common';
+import { AddProofParams, Proof, SecureDocument, VerificationResult } from '../types/di-proof.js';
 import { Cryptosuite } from '../cryptosuite/index.js';
 import { IDataIntegrityProof } from './interface.js';
-
-import { DidUpdateInvocation, DidUpdatePayload, ProofOptions } from '@did-btc1/common';
-
-export type AddProofParams = {
-  document: DidUpdatePayload;
-  options: ProofOptions
-};
-export interface VerifyProofParams {
-  mediaType?: string;
-  document: string;
-  expectedPurpose: string;
-  expectedDomain?: string[];
-  expectedChallenge?: string;
-};
-export interface ProofVerificationResult {
-  verified: boolean;
-  verifiedDocument?: DidUpdateInvocation;
-  mediaType?: string;
-}
-
 
 /**
  * Implements section
@@ -43,7 +24,7 @@ export class DataIntegrityProof implements IDataIntegrityProof {
   }
 
   /** @see IDataIntegrityProof.addProof */
-  public async addProof({ document, options }: AddProofParams): Promise<DidUpdateInvocation> {
+  public async addProof({ document, options }: AddProofParams): Promise<SecureDocument> {
     // Generate the proof
     const proof = await this.cryptosuite.createProof({ document, options });
 
@@ -71,8 +52,8 @@ export class DataIntegrityProof implements IDataIntegrityProof {
       throw new ProofError('Challenge mismatch options and challenge passed', 'PROOF_GENERATION_ERROR');
     }
 
-    // Set the proof in the document and return as a DidUpdateInvocation
-    return { ...document, proof } as DidUpdateInvocation;
+    // Set the proof in the document and return as a SecureDocument
+    return { ...document, proof } as SecureDocument;
   }
 
   /** @see IDataIntegrityProof.verifyProof */
@@ -90,7 +71,7 @@ export class DataIntegrityProof implements IDataIntegrityProof {
     expectedChallenge?: string;
   }): Promise<VerificationResult> {
     // Parse the document
-    const secure = JSON.parse(document) as DidUpdateInvocation;
+    const secure = JSON.parse(document) as SecureDocument;
 
     // Deconstruct the secure object to get the proof
     const { proof }: { proof: Proof } = secure;
@@ -136,7 +117,7 @@ export class DataIntegrityProof implements IDataIntegrityProof {
     const sansProof = ObjectUtils.delete({
       obj : verifiedDocument as Record<string, any>,
       key : 'proof'
-    }) as DidUpdateInvocation;
+    }) as SecureDocument;
 
     // Return the verification result
     return {verified, verifiedDocument: verified ? sansProof : undefined, mediaType};
