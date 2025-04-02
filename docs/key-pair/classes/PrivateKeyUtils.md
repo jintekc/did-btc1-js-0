@@ -6,7 +6,11 @@
 
 # Class: PrivateKeyUtils
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:187](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L187)
+=======
+Defined in: [private-key.ts:186](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L186)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Utility class for creating and working with PrivateKey objects.
  PrivateKeyUtils
@@ -27,7 +31,11 @@ Utility class for creating and working with PrivateKey objects.
 
 > `static` **computePublicKey**(`privateKeyBytes`): `Bytes`
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:270](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L270)
+=======
+Defined in: [private-key.ts:254](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L254)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Computes the public key bytes from a private key bytes.
 
@@ -55,7 +63,11 @@ If the public key is not compressed or not derived
 
 > `static` **fromSecret**(`secret`): [`PrivateKey`](PrivateKey.md)
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:254](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L254)
+=======
+Defined in: [private-key.ts:238](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L238)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Create a new PrivateKey object from a bigint secret.
 
@@ -79,7 +91,11 @@ A new PrivateKey object
 
 > `static` **isValid**(`bytes`): `boolean`
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:244](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L244)
+=======
+Defined in: [private-key.ts:228](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L228)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Checks if the private key is valid.
 
@@ -103,7 +119,11 @@ True if the private key is valid, false otherwise
 
 > `static` **randomBytes**(): `Bytes`
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:298](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L298)
+=======
+Defined in: [private-key.ts:282](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L282)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Static method to generate random private key bytes.
 
@@ -119,7 +139,11 @@ Uint8Array of 32 random bytes.
 
 > `static` **toBytes**(`secret`): `Bytes`
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:221](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L221)
+=======
+Defined in: [private-key.ts:205](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L205)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Convert a private key bytes to a bigint secret.
 
@@ -169,7 +193,11 @@ If the private key is not valid
 
 > `static` **toSecret**(`bytes`): `bigint`
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:211](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L211)
+=======
+Defined in: [private-key.ts:195](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L195)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Convert a bigint secret to private key bytes.
 

@@ -6,7 +6,11 @@
 
 # Class: PrivateKey
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:25](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L25)
+=======
+Defined in: [private-key.ts:24](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L24)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Encapsulates a secp256k1 private key
 Provides get methods for different formats (raw, secret, point).
@@ -23,7 +27,11 @@ Provides helpers methods for comparison, serialization and publicKey generation.
 
 > **new PrivateKey**(`seed`): `PrivateKey`
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:38](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L38)
+=======
+Defined in: [private-key.ts:37](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L37)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Instantiates an instance of PrivateKey.
 
@@ -51,7 +59,11 @@ If seed is not provided, not a valid 32-byte private key or not a valid bigint s
 
 > **get** **bytes**(): `Uint8Array`
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:78](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L78)
+=======
+Defined in: [private-key.ts:77](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L77)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Return the private key bytes.
 
@@ -77,7 +89,11 @@ Get the private key bytes.
 
 > **get** **hex**(): `Hex`
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:130](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L130)
+=======
+Defined in: [private-key.ts:129](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L129)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Returns the raw private key as a hex string.
 
@@ -105,7 +121,11 @@ Get the private key as a hex string.
 
 > **get** **point**(): `bigint`
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:100](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L100)
+=======
+Defined in: [private-key.ts:99](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L99)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Return the private key point.
 
@@ -137,7 +157,11 @@ Get the private key point.
 
 > **get** **secret**(): `bigint`
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:88](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L88)
+=======
+Defined in: [private-key.ts:87](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L87)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Return the private key secret.
 
@@ -162,7 +186,11 @@ Setter allows alternative method of using a bigint secret to genereate the priva
 
 > **computePublicKey**(): [`PublicKey`](PublicKey.md)
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:153](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L153)
+=======
+Defined in: [private-key.ts:152](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L152)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Computes the public key from the private key bytes.
 
@@ -186,7 +214,11 @@ IPrivateKey.computePublicKey
 
 > **equals**(`other`): `boolean`
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:142](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L142)
+=======
+Defined in: [private-key.ts:141](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L141)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Checks if this private key is equal to another.
 
@@ -218,7 +250,11 @@ IPrivateKey.equals
 
 > **isValid**(): `boolean`
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:164](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L164)
+=======
+Defined in: [private-key.ts:163](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L163)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Checks if the private key is valid.
 
@@ -242,7 +278,11 @@ IPrivateKey.computePublicKey
 
 > **json**(): `PrivateKeyJSON`
 
+<<<<<<< HEAD
 Defined in: [private-key.ts:172](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/private-key.ts#L172)
+=======
+Defined in: [private-key.ts:171](https://github.com/jintekc/did-btc1-js/blob/c20c1728a05708ad9c42efd6a120ce1032864286/packages/key-pair/src/private-key.ts#L171)
+>>>>>>> a27f4cb (cli@0.1.0)
 
 Returns the private key as a JSON object.
 

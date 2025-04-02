@@ -1,5 +1,7 @@
 packages:
   - packages/common
-  - packages/cryptosuite
   - packages/key-pair
+  - packages/cryptosuite
   - packages/method
+  - packages/cli
+  - packages/smt
