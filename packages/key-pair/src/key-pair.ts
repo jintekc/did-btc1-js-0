@@ -147,20 +147,28 @@ export class KeyPairUtils {
   /**
    * Compares two KeyPair objects for equality.
    * @param {KeyPair} keyPair The main keyPair.
-   * @param {KeyPair} keyPair1 The other keyPair.
+   * @param {KeyPair} otherKeyPair The other keyPair.
    * @returns {boolean} True if the public key and private key hex are equal, false otherwise.
    */
-  public static equals(keyPair: KeyPair, keyPair1: KeyPair): boolean {
-    // Get the public key hex strings for both key pairs
-    const publicKey0 = keyPair.publicKey.hex;
-    const publicKey1 = keyPair1.publicKey.hex;
+  public static equals(keyPair: KeyPair, otherKeyPair: KeyPair): boolean {
+    // Deconstruct the public keys from the key pairs
+    const { publicKey } = keyPair;
+    const { publicKey: otherPublicKey } = otherKeyPair;
 
-    // Get the private key hex strings for both key pairs
-    const privateKey0 = keyPair.privateKey.hex;
-    const privateKey1 = keyPair1.privateKey.hex;
+    // If publicKeys present, use to compare as hex strings.
+    if(publicKey && otherKeyPair) {
+      return publicKey.hex === otherPublicKey.hex;
+    }
 
-    // Return true if the public and private keys are equal
-    return publicKey0 === publicKey1 && privateKey0 === privateKey1;
+    // Deconstruct the private keys from the key pairs
+    const { privateKey } = keyPair;
+    const { privateKey: otherPrivateKey } = otherKeyPair;
+    if(privateKey && otherPrivateKey) {
+      // Get the public key hex strings for both key pair publicKeys
+      return privateKey.hex === otherPrivateKey.hex;
+    }
+
+    throw new KeyPairError('Cannot compare invalid key pair(s)', 'KEYPAIR_EQUALS_ERROR');
   }
 
   /**

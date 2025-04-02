@@ -1,6 +1,6 @@
 {
   "name": "@did-btc1/common",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "module",
   "description": "Common utilities, types, and interfaces for did-btc1-js pacakges.",
   "main": "./dist/cjs/index.js",
