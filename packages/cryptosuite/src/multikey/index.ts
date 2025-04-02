@@ -1,4 +1,4 @@
-import { Hex, MultikeyError, SignatureBytes } from '@did-btc1/common';
+import { Hex, MultikeyError, SignatureBytes, MULTIKEY_VERIFICATION_METHOD_ERROR, Btc1Error } from '@did-btc1/common';
 import { KeyPair, PrivateKey, PublicKey } from '@did-btc1/key-pair';
 import { schnorr } from '@noble/curves/secp256k1';
 import { DidVerificationMethod } from '@web5/dids';
@@ -132,29 +132,27 @@ export class Multikey implements IMultikey {
 
   /** @see IMultikey.fromVerificationMethod */
   public fromVerificationMethod(vm: DidVerificationMethod): Multikey {
-    const VM_ERROR = 'MULTIKEY_VERIFICATION_METHOD_ERROR';
-
     // Destructure the verification method
     const { id, controller, publicKeyMultibase, type } = vm;
 
     // Check if the required field id is missing
     if (!id) {
-      throw new MultikeyError(`Missing key: id required in verificationMethod ${vm}`, VM_ERROR);
+      throw new Btc1Error(`Missing "id" in verificationMethod`, MULTIKEY_VERIFICATION_METHOD_ERROR, { vm });
     }
 
     // Check if the required field controller is missing
     if (!controller) {
-      throw new MultikeyError(`Missing key: controller required in verificationMethod ${vm}`, VM_ERROR);
+      throw new Btc1Error(`Missing "controller" in verificationMethod`, MULTIKEY_VERIFICATION_METHOD_ERROR, { vm });
     }
 
     // Check if the required field publicKeyMultibase is missing
     if (!publicKeyMultibase) {
-      throw new MultikeyError(`Missing key: publicKeyMultibase required in verificationMethod ${vm}`, VM_ERROR);
+      throw new Btc1Error(`Missing "publicKeyMultibase" in verificationMethod`, MULTIKEY_VERIFICATION_METHOD_ERROR, { vm });
     }
 
     // Check if the type is not Multikey
     if (type !== 'Multikey') {
-      throw new MultikeyError(`Invalid value: verificationMethod type is invalid ${vm}`, VM_ERROR);
+      throw new Btc1Error(`Invalid value: verificationMethod type is invalid`, MULTIKEY_VERIFICATION_METHOD_ERROR, { vm });
     }
 
     // Decode the public key multibase

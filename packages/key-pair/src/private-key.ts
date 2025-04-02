@@ -29,6 +29,9 @@ export class PrivateKey implements IPrivateKey {
   /** @type {PrivateKeySecret} The bigint private key secret */
   private _secret?: PrivateKeySecret;
 
+  /** @type {PublicKey} Memoized version of the PublicKey object */
+  private _computedPublicKey?: PublicKey;
+
   /**
    * Instantiates an instance of PrivateKey.
    *
@@ -151,9 +154,13 @@ export class PrivateKey implements IPrivateKey {
    * @returns {PublicKey} The computed public key
    */
   public computePublicKey(): PublicKey {
-    const publicKeyBytes = PrivateKeyUtils.computePublicKey(this.bytes);
-    return new PublicKey(publicKeyBytes);
+    if (!this._computedPublicKey) {
+      const publicKeyBytes = PrivateKeyUtils.computePublicKey(this.bytes);
+      this._computedPublicKey = new PublicKey(publicKeyBytes);
+    }
+    return this._computedPublicKey;
   }
+
 
   /**
    * Checks if the private key is valid.

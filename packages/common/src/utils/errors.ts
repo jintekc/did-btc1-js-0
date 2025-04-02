@@ -61,6 +61,9 @@ export enum Btc1ErrorCode {
 
   /** The proof could not be parsed properly. */
   PROOF_PARSING_ERROR = 'PROOF_PARSING_ERROR',
+
+  /** The Multikey verification method was formed improperly. */
+  MULTIKEY_VERIFICATION_METHOD_ERROR = 'MULTIKEY_VERIFICATION_METHOD_ERROR',
 }
 
 export const {
@@ -82,7 +85,8 @@ export const {
   PROOF_VERIFICATION_ERROR,
   PROOF_GENERATION_ERROR,
   PROOF_SERIALIZATION_ERROR,
-  PROOF_PARSING_ERROR
+  PROOF_PARSING_ERROR,
+  MULTIKEY_VERIFICATION_METHOD_ERROR
 } = Btc1ErrorCode;
 
 export type ErrorOptions = {
