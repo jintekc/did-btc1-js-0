@@ -50,8 +50,17 @@ export enum Btc1ErrorCode {
   /** The type of a public key is not supported by the DID method and/or DID resolver implementation. */
   UNSUPPORTED_PUBLIC_KEY_TYPE = 'UNSUPPORTED_PUBLIC_KEY_TYPE',
 
-  /** The proof verification failed during a DID operation. */
+  /** The proof verification operation failed. */
   PROOF_VERIFICATION_ERROR = 'PROOF_VERIFICATION_ERROR',
+
+  /** The proof generation operation failed. */
+  PROOF_GENERATION_ERROR = 'PROOF_GENERATION_ERROR',
+
+  /** The proof serialization operation failed. */
+  PROOF_SERIALIZATION_ERROR = 'PROOF_SERIALIZATION_ERROR',
+
+  /** The proof could not be parsed properly. */
+  PROOF_PARSING_ERROR = 'PROOF_PARSING_ERROR',
 }
 
 export const {
@@ -70,6 +79,10 @@ export const {
   NOT_FOUND,
   REPRESENTATION_NOT_SUPPORTED,
   UNSUPPORTED_PUBLIC_KEY_TYPE,
+  PROOF_VERIFICATION_ERROR,
+  PROOF_GENERATION_ERROR,
+  PROOF_SERIALIZATION_ERROR,
+  PROOF_PARSING_ERROR
 } = Btc1ErrorCode;
 
 export type ErrorOptions = {

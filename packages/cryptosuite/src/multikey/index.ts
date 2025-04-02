@@ -4,6 +4,7 @@ import { schnorr } from '@noble/curves/secp256k1';
 import { DidVerificationMethod } from '@web5/dids';
 import { randomBytes } from 'crypto';
 import { FromPrivateKey, FromPublicKey, IMultikey, MultikeyJSON, MultikeyParams } from './interface.js';
+import { Cryptosuite } from '../cryptosuite/index.js';
 
 /**
  * Implements {@link https://dcdpr.github.io/data-integrity-schnorr-secp256k1/#multikey | 2.1.1 Multikey}
@@ -77,6 +78,23 @@ export class Multikey implements IMultikey {
       throw new MultikeyError('Cannot get: no privateKey', 'MULTIKEY_PRIVATE_KEY_ERROR');
     }
     return privateKey;
+  }
+
+  /**
+   * Constructs an instance of Cryptosuite from the current Multikey instance.
+   * @public
+   * @param {('bip340-jcs-2025' | 'bip340-rdfc-2025')} [cryptosuite='bip340-rdfc-2025']
+   * @returns {Cryptosuite}
+   */
+  public toCryptosuite(cryptosuite: 'bip340-jcs-2025' | 'bip340-rdfc-2025' = 'bip340-rdfc-2025'): Cryptosuite {
+    return new Cryptosuite({
+      cryptosuite,
+      multikey : new Multikey({
+        id         : this.id,
+        controller : this.controller,
+        keyPair    : this.keyPair
+      })
+    });
   }
 
   /** @see IMultikey.sign */

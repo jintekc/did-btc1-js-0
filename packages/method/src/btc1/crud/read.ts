@@ -1,4 +1,4 @@
-import { BitcoinNetworkNames, Btc1Error, Btc1ReadError, canonicalization, Logger, UnixTimestamp } from '@did-btc1/common';
+import { BitcoinNetworkNames, Btc1Error, Btc1ReadError, canonicalization, DidUpdateInvocation, DidUpdatePayload, Logger, UnixTimestamp } from '@did-btc1/common';
 import { Cryptosuite, DataIntegrityProof, Multikey } from '@did-btc1/cryptosuite';
 import { KeyPair, PublicKey } from '@did-btc1/key-pair';
 import { strings } from '@helia/strings';
@@ -11,9 +11,9 @@ import * as Digest from 'multiformats/hashes/digest';
 import { DEFAULT_BLOCK_CONFIRMATIONS, GENESIS_TX_ID, TXIN_WITNESS_COINBASE } from '../../bitcoin/constants.js';
 import { getNetwork } from '../../bitcoin/network.js';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
-import { DidResolutionOptions, DidUpdatePayload } from '../../interfaces/crud.js';
+import { DidResolutionOptions } from '../../interfaces/crud.js';
 import { BeaconServiceAddress, BeaconSignal, Signal } from '../../interfaces/ibeacon.js';
-import { BlockHeight, BlockV2, BlockV3, RawTransactionV2 } from '../../types/bitcoin.js';
+import { BlockHeight, BlockV3, RawTransactionV2 } from '../../types/bitcoin.js';
 import { CIDAggregateSidecar, SignalsMetadata, SingletonSidecar } from '../../types/crud.js';
 import { Btc1Appendix, DidComponents } from '../../utils/btc1/appendix.js';
 import { BeaconUtils } from '../../utils/btc1/beacon-utils.js';
@@ -381,14 +381,14 @@ export class Btc1Read {
     const height = await rpc.getBlockCount();
 
     // Get the block at the current height
-    let block = await rpc.getBlock({ height }) as BlockV2;
+    let block = await rpc.getBlock({ height }) as BlockV3;
 
     // Return block height response from targetBlockHeight
     if(!targetTime) {
       // Traverse Bitcoin blocks to find the largest block with confirmations >= DEFAULT_BLOCK_CONFIRMATIONS
       while (block.confirmations <= DEFAULT_BLOCK_CONFIRMATIONS) {
         // block.hash = await rpc.getBlockHash();
-        block = await rpc.getBlock({ height: --block.height }) as BlockV2;
+        block = await rpc.getBlock({ height: --block.height }) as BlockV3;
       }
       // Return the block height
       return block.height;
@@ -397,7 +397,7 @@ export class Btc1Read {
     // Traverse Bitcoin blocks to find the largest block with timestamp < targetTime
     while (block.time > targetTime) {
       // block.hash = await rpc.getBlockHash(--block.height);
-      block = await rpc.getBlock({ height: --block.height }) as BlockV2;
+      block = await rpc.getBlock({ height: --block.height }) as BlockV3;
     }
 
     // Return the block height
@@ -719,7 +719,7 @@ export class Btc1Read {
    * @param {SignalsMetadata} signalsMetadata The sidecar data for the DID Document.
    * @returns {DidUpdatePayload[]} The updated DID Document object.
    */
-  public static async processBeaconSignals(signals: Array<Signal>, signalsMetadata: SignalsMetadata): Promise<DidUpdatePayload[]> {
+  public static async processBeaconSignals(signals: Array<Signal>, signalsMetadata: SignalsMetadata): Promise<DidUpdateInvocation[]> {
     // 1. Set updates to an empty array.
     const updates = new Array<DidUpdatePayload>();
 
@@ -766,7 +766,6 @@ export class Btc1Read {
       )
     );
   }
-
 
   /**
    * Implements {@link https://dcdpr.github.io/did-btc1/#confirm-duplicate-update | 4.2.3.5 Confirm Duplicate Update}.
@@ -819,7 +818,7 @@ export class Btc1Read {
    */
   public static async applyDidUpdate({ contemporaryDIDDocument, update }: {
     contemporaryDIDDocument: Btc1DidDocument;
-    update: DidUpdatePayload;
+    update: DidUpdateInvocation;
   }): Promise<Btc1DidDocument> {
     // 1. Set capabilityId to update.proof.capability.
     const capabilityId = update.proof.capability;

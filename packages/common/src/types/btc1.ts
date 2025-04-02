@@ -22,59 +22,27 @@ export interface DidUpdateInvocation extends DidUpdatePayload {
     proof: Proof;
 }
 export interface ProofOptions {
-    type?: string;
-    cryptosuite?: string;
-    verificationMethod?: string;
-    proofPurpose?: string;
-    capability?: string;
-    capabilityAction?: string;
-  }
-
-/** Interfaces */
+  type?: string;
+  cryptosuite?: string;
+  verificationMethod?: string;
+  proofPurpose?: string;
+  capability?: string;
+  capabilityAction?: string;
+  domain?: string[];
+  challenge?: string;
+  created?: string;
+}
 export interface Proof {
-    type?: 'DataIntegrityProof';
-    '@context': Context;
-    created?: string;
-    cryptosuite: CryptosuiteName;
-    verificationMethod: string;
-    proofPurpose: string;
-    proofValue: string;
-    domain?: string[];
-    challenge?: string;
-    capability?: string;
-    capabilityAction?: string;
-}
-
-export interface ProofJcs extends Proof {
-    type?: 'DataIntegrityProof';
-}
-
-export interface ProofRdfc extends Proof {
-    '@context': Context;
-    '@type'?: 'DataIntegrityProof';
-    created?: string;
-    cryptosuite: CryptosuiteName;
-    verificationMethod: string;
-    proofPurpose: string;
-    proofValue: string;
-    domain?: string[];
-    challenge?: string;
-    capability?: string;
-    capabilityAction?: string;
-}
-
-export class ProofFactory {
-  public static create(options: ProofOptions): Proof {
-    const { type, cryptosuite } = options;
-    if(type !== 'DataIntegrityProof') {
-      throw new Btc1Error('Invalid type: Expected "DataIntegrityProof".', INVALID_PREVIOUS_DID_PROOF);
-    }
-    if (cryptosuite === 'bip340-jcs-2025') {
-      return options as ProofJcs;
-    } else if (cryptosuite === 'bip340-rdfc-2025') {
-      return options as ProofRdfc;
-    } else {
-      return options as Proof;
-    }
-  }
+  '@context': Context;
+  '@type'?: 'DataIntegrityProof';
+  type?: 'DataIntegrityProof';
+  created?: string;
+  cryptosuite: 'jcs' | 'rdfc';
+  verificationMethod: string;
+  proofPurpose: string;
+  proofValue: string;
+  domain?: string[];
+  challenge?: string;
+  capability?: string;
+  capabilityAction?: string;
 }

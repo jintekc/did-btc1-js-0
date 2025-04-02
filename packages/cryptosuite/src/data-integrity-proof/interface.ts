@@ -1,10 +1,19 @@
-import {
-  AddProofParams,
-  SecureDocument,
-  VerificationResult,
-  VerifyProofParams
-} from '../../types/di-proof.js';
+import { DidUpdateInvocation, DidUpdatePayload, ProofOptions } from '@did-btc1/common';
 import { Cryptosuite } from '../cryptosuite/index.js';
+import { VerificationResult } from '../cryptosuite/interface.js';
+
+export interface VerifyProofParams {
+  mediaType?: string;
+  document: string;
+  expectedPurpose: string;
+  expectedDomain?: string[];
+  expectedChallenge?: string;
+};
+
+export type AddProofParams = {
+  document: DidUpdatePayload;
+  options: ProofOptions;
+};
 
 /**
  * Interface representing a BIP-340 DataIntegrityProof.
@@ -22,7 +31,7 @@ export interface IDataIntegrityProof {
    * @param {ProofOptions} params.options Options for adding a proof to a document.
    * @returns {SecureDocument} A document with a proof added.
    */
-  addProof({ document, options }: AddProofParams): Promise<SecureDocument>;
+  addProof({ document, options }: AddProofParams): Promise<DidUpdateInvocation>;
 
   /**
    * Verify a proof.

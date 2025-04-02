@@ -38,7 +38,8 @@
     "cryptosuite": "pnpm --filter cryptosuite",
     "common": "pnpm --filter common",
     "key-pair": "pnpm --filter key-pair",
-    "method": "pnpm --filter method"
+    "method": "pnpm --filter method",
+    "workflow": "npm install -g pnpm && pnpm install -r --no-lockfile && pnpm lint && pnpm build:all && pnpm test"
   },
   "keywords": [
     "did",

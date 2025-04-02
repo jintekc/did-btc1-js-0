@@ -1,3 +1,4 @@
+import { Btc1Error, PatchOperation, PublicKeyBytes } from '@did-btc1/common';
 import type { DidResolutionResult, DidVerificationMethod, DidCreateOptions as IDidCreateOptions } from '@web5/dids';
 import {
   Did,
@@ -11,14 +12,12 @@ import * as tinysecp from 'tiny-secp256k1';
 import { Btc1Create, DidCreateResponse } from './btc1/crud/create.js';
 import { Btc1Read } from './btc1/crud/read.js';
 import { Btc1Update } from './btc1/crud/update.js';
-import { Btc1DidDocument } from './utils/btc1/did-document.js';
 import { Btc1KeyManager } from './btc1/key-manager/index.js';
+import { DidResolutionOptions, IntermediateDocument } from './interfaces/crud.js';
 import { Btc1Networks, DidBtc1IdTypes, RecoveryOptions } from './types/crud.js';
 import { Btc1Appendix } from './utils/btc1/appendix.js';
 import { W3C_DID_RESOLUTION_V1 } from './utils/btc1/constants.js';
-import { Btc1Error, DidBtc1Error, PublicKeyBytes } from '@did-btc1/common';
-import { DidResolutionOptions, IntermediateDocument } from './interfaces/crud.js';
-import { PatchOperation } from './utils/json-patch.js';
+import { Btc1DidDocument } from './utils/btc1/did-document.js';
 
 /** Initialize tiny secp256k1 */
 initEccLib(tinysecp);
@@ -280,13 +279,13 @@ export class DidBtc1 implements DidMethod {
     }
 
     // Set vars for convenience
-    const updatePayload = unsignedUpdate;
+    const didUpdatePayload = unsignedUpdate;
     const verificationMethod = vm;
 
     // Invoke the update payload and announce the update
     const didUpdateInvocation = await Btc1Update.invoke({
-      identifier,
-      updatePayload,
+      didUpdatePayload,
+      btc1Identifier : identifier,
       verificationMethod,
     });
     return await Btc1Update.announce({ sourceDocument, beaconIds, didUpdatePayload: didUpdateInvocation });

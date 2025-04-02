@@ -1,7 +1,7 @@
-import { ProofError, ObjectUtils } from '@did-btc1/common';
-import { AddProofParams, Proof, SecureDocument, VerificationResult } from '../types/di-proof.js';
+import { Btc1Error, DidUpdateInvocation, Logger, ObjectUtils, Proof, PROOF_GENERATION_ERROR, PROOF_PARSING_ERROR, } from '@did-btc1/common';
 import { Cryptosuite } from '../cryptosuite/index.js';
-import { IDataIntegrityProof } from './interface.js';
+import { VerificationResult } from '../cryptosuite/interface.js';
+import { AddProofParams, IDataIntegrityProof } from './interface.js';
 
 /**
  * Implements section
@@ -24,7 +24,7 @@ export class DataIntegrityProof implements IDataIntegrityProof {
   }
 
   /** @see IDataIntegrityProof.addProof */
-  public async addProof({ document, options }: AddProofParams): Promise<SecureDocument> {
+  public async addProof({ document, options }: AddProofParams): Promise<DidUpdateInvocation> {
     // Generate the proof
     const proof = await this.cryptosuite.createProof({ document, options });
 
@@ -33,27 +33,26 @@ export class DataIntegrityProof implements IDataIntegrityProof {
 
     // Check if the type, verificationMethod, and proofPurpose are defined
     if (!type || !verificationMethod || !proofPurpose) {
-      throw new ProofError('Missing properties: type, verificationMethod or proofPurpose', 'PROOF_GENERATION_ERROR');
+      throw new Btc1Error('Proof missing "type", "verificationMethod" and/or "proofPurpose"', PROOF_GENERATION_ERROR, proof);
     }
 
     // Deconstruct the domain from the proof object and check:
     // if the options domain is defined, ensure it matches the proof domain
-    // TODO: Adjust the domain check to match the spec (domain as a list of urls)
-    console.info('TODO: Adjust the domain check to match the spec (domain as a list of urls)');
+    Logger.warn('// TODO: Adjust the domain check to match the spec (domain as a list of urls)');
     const { domain } = proof;
     if (options.domain && options.domain !== domain) {
-      throw new ProofError('Domain mismatch between options and domain passed', 'PROOF_GENERATION_ERROR');
+      throw new Btc1Error('Domain mismatch between options and domain passed', PROOF_GENERATION_ERROR, proof);
     }
 
     // Deconstruct the challenge from the proof object and check:
     // if options challenge is defined, ensure it matches the proof challenge
     const { challenge } = proof;
     if (options.challenge && options.challenge !== challenge) {
-      throw new ProofError('Challenge mismatch options and challenge passed', 'PROOF_GENERATION_ERROR');
+      throw new Btc1Error('Challenge mismatch options and challenge passed', PROOF_GENERATION_ERROR, proof);
     }
 
-    // Set the proof in the document and return as a SecureDocument
-    return { ...document, proof } as SecureDocument;
+    // Set the proof in the document and return as a DidUpdateInvocation
+    return { ...document, proof } as DidUpdateInvocation;
   }
 
   /** @see IDataIntegrityProof.verifyProof */
@@ -71,41 +70,41 @@ export class DataIntegrityProof implements IDataIntegrityProof {
     expectedChallenge?: string;
   }): Promise<VerificationResult> {
     // Parse the document
-    const secure = JSON.parse(document) as SecureDocument;
+    const secure = JSON.parse(document) as DidUpdateInvocation;
 
     // Deconstruct the secure object to get the proof
     const { proof }: { proof: Proof } = secure;
 
     // Check if the proof object is an object
     if (typeof secure !== 'object' || typeof proof !== 'object') {
-      throw new Error('PARSING_ERROR');
+      throw new Btc1Error('', PROOF_PARSING_ERROR);
     }
 
     // Deconstruct the proof object
     const { type, proofPurpose, verificationMethod, challenge, domain } = proof;
     // Check if the type, proofPurpose, and verificationMethod are defined
     if (!type || !verificationMethod || !proofPurpose) {
-      throw new Error('PROOF_VERIFICATION_ERROR');
+      throw new Btc1Error('', 'PROOF_VERIFICATION_ERROR');
     }
 
     // Check if the expectedPurpose is defined and if it matches the proofPurpose
     if (expectedPurpose && expectedPurpose !== proofPurpose) {
-      throw new Error('PROOF_VERIFICATION_ERROR');
+      throw new Btc1Error('', 'PROOF_VERIFICATION_ERROR');
     }
 
     // Check if the expectedChallenge is defined and if it matches the challenge
     if (expectedChallenge && expectedChallenge !== challenge) {
-      throw new Error('INVALID_CHALLENGE_ERROR');
+      throw new Btc1Error('', 'INVALID_CHALLENGE_ERROR');
     }
 
     // Check if the expectedDomain length matches the proof.domain length
     if(expectedDomain && expectedDomain?.length !== domain?.length) {
-      throw new Error('INVALID_DOMAIN_ERROR');
+      throw new Btc1Error('', 'INVALID_DOMAIN_ERROR');
     }
 
     // If defined, check that each entry in expectedDomain can be found in proof.domain
     if(expectedDomain && !expectedDomain?.every(url => domain?.includes(url))) {
-      throw new Error('INVALID_DOMAIN_ERROR');
+      throw new Btc1Error('', 'INVALID_DOMAIN_ERROR');
     }
 
     // Verify the proof
@@ -117,7 +116,7 @@ export class DataIntegrityProof implements IDataIntegrityProof {
     const sansProof = ObjectUtils.delete({
       obj : verifiedDocument as Record<string, any>,
       key : 'proof'
-    }) as SecureDocument;
+    }) as DidUpdateInvocation;
 
     // Return the verification result
     return {verified, verifiedDocument: verified ? sansProof : undefined, mediaType};

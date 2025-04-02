@@ -26,6 +26,7 @@ declare global {
 
     interface Date {
       getUTCDateTime(): string;
+      toUnixTimestamp(): number;
     }
 
     interface String {
@@ -75,12 +76,21 @@ JSON.normalize = function (unknown: Maybe<Unprototyped>): Prototyped {
   try {
     return JSON.parse(JSON.stringify(unknown));
   } catch {
-    throw new Error('The object is not raw');
+    throw new Error('The object is not unprotocyped');
   }
 };
 
 Date.prototype.getUTCDateTime = function (): string {
   return `${this.toISOString().slice(0, -5)}Z`;
+};
+
+Date.prototype.toUnixTimestamp = function (): number {
+  const date = new Date(this);
+  const time = date.getTime();
+  if (isNaN(time)) {
+    throw new Error(`Invalid date string: "${date}"`);
+  }
+  return time;
 };
 
 String.prototype.toSnakeCase = function (): string {

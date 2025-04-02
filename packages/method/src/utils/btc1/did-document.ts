@@ -4,7 +4,7 @@ import { BeaconUtils } from './beacon-utils.js';
 import { BTC1_DID_DOCUMENT_CONTEXT } from './constants.js';
 import { DidBtc1Identifier } from '../../btc1/crud/create.js';
 import { Btc1Appendix } from './appendix.js';
-import { DidDocumentError } from '@did-btc1/common';
+import { DidDocumentError, INVALID_DID_DOCUMENT } from '@did-btc1/common';
 
 /**
  * DID BTC1 Verification Method extends the DidVerificationMethod class adding helper methods and properties
@@ -59,10 +59,9 @@ export class Btc1DidDocument implements IBtc1DidDocument {
   service: BeaconService[];
 
   constructor({ id, verificationMethod, service }: Btc1DidDocument) {
-    const ERROR_TYPE = 'BTC1_DID_DOCUMENT_CONSTRUCTOR_ERROR';
     // Validate the id
     if (!Btc1DidDocument.isValidId(id)) {
-      throw new DidDocumentError('Invalid "id"', ERROR_TYPE, { id });
+      throw new DidDocumentError('Invalid "id"', INVALID_DID_DOCUMENT, { id });
     }
     // Set the id and controller
     this.id = id;
@@ -70,14 +69,14 @@ export class Btc1DidDocument implements IBtc1DidDocument {
 
     // Validate the verification method
     if (!Btc1DidDocument.isValidVerificationMethods(verificationMethod)) {
-      throw new DidDocumentError('Invalid "verificationMethod"', ERROR_TYPE, { verificationMethod });
+      throw new DidDocumentError('Invalid "verificationMethod"', INVALID_DID_DOCUMENT, { verificationMethod });
     }
     // Set the verification method
     this.verificationMethod = verificationMethod;
 
     // Validate the service
     if (!Btc1DidDocument.isValidServices(service)) {
-      throw new DidDocumentError('Invalid "service"', ERROR_TYPE, { service });
+      throw new DidDocumentError('Invalid "service"', INVALID_DID_DOCUMENT, { service });
     }
     // Set the service
     this.service = service;
@@ -94,19 +93,19 @@ export class Btc1DidDocument implements IBtc1DidDocument {
    */
   public static isValid(didDocument: Btc1DidDocument): boolean {
     if (!this.isValidContext(didDocument?.['@context'])) {
-      throw new DidDocumentError('Invalid "@context"', 'DID_DOCUMENT_CONTEXT_ERROR', didDocument);
+      throw new DidDocumentError('Invalid "@context"', INVALID_DID_DOCUMENT, didDocument);
     }
     if (!this.isValidId(didDocument?.id)) {
-      throw new DidDocumentError('Invalid "id"', 'DID_DOCUMENT_ID', didDocument);
+      throw new DidDocumentError('Invalid "id"', INVALID_DID_DOCUMENT, didDocument);
     }
     if (!this.isValidVerificationMethods(didDocument?.verificationMethod)) {
-      throw new DidDocumentError('Invalid "verificationMethod"', 'DID_DOCUMENT_VERIFICATION_METHOD_ERROR', didDocument);
+      throw new DidDocumentError('Invalid "verificationMethod"', INVALID_DID_DOCUMENT, didDocument);
     }
     if (!this.isValidServices(didDocument?.service)) {
-      throw new DidDocumentError('Invalid "service"', 'DID_DOCUMENT_SERVICE_ERROR', didDocument);
+      throw new DidDocumentError('Invalid "service"', INVALID_DID_DOCUMENT, didDocument);
     }
     if (!this.isValidVerificationRelationships(didDocument)) {
-      throw new DidDocumentError('Invalid verification relationships', 'DID_DOCUMENT_ERROR', didDocument);
+      throw new DidDocumentError('Invalid verification relationships', INVALID_DID_DOCUMENT, didDocument);
     }
     return true;
   }

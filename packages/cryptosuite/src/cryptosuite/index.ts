@@ -1,30 +1,51 @@
-import { Canonicalization, CryptosuiteError, HashBytes, SignatureBytes } from '@did-btc1/common';
+import {
+  Btc1Error,
+  CanonicalizableObject,
+  canonicalization,
+  CanonicalizedProofConfig,
+  CryptosuiteError,
+  DidUpdateInvocation,
+  HashBytes,
+  Proof,
+  PROOF_GENERATION_ERROR,
+  PROOF_SERIALIZATION_ERROR,
+  PROOF_VERIFICATION_ERROR,
+  ProofOptions,
+  SignatureBytes
+} from '@did-btc1/common';
 import { sha256 } from '@noble/hashes/sha256';
 import { base58btc } from 'multiformats/bases/base58';
 import { Multikey } from '../multikey/index.js';
 import {
-  CanonicalizableObject,
+  CreateProofParams,
   CryptosuiteParams,
-  CryptosuiteType,
   GenerateHashParams,
-  InsecureDocumentParams,
-  ProofOptionsParam,
-  SerializeParams,
-  TransformParams,
-  VerificationParams
-} from '../types/cryptosuite.js';
-import {
-  CanonicalizedProofConfig,
-  Proof,
-  SecureDocument,
+  ICryptosuite,
+  ProofSerializationParams,
+  ProofVerificationParams,
+  TransformDocumentParams,
   VerificationResult
-} from '../types/di-proof.js';
-import { ICryptosuite } from './interface.js';
+} from './interface.js';
+import { DataIntegrityProof } from '../data-integrity-proof/index.js';
 
 /**
- * TODO: Test RDFC and figure out what the contexts should be
  * Implements
  * {@link https://dcdpr.github.io/data-integrity-schnorr-secp256k1/#instantiate-cryptosuite | 3.1 Instantiate Cryptosuite}
+ *
+ * The Instantiate Cryptosuite algorithm is used to configure a cryptographic suite to be used by the Add Proof and
+ * Verify Proof functions in Verifiable Credential Data Integrity 1.0. The algorithm takes an options object
+ * (map options) as input and returns a cryptosuite instance (struct cryptosuite).
+ *
+ * 1) Initialize cryptosuite to an empty struct.
+ * 2) If options.type does not equal DataIntegrityProof, return cryptosuite.
+ * 3) If options.cryptosuite is bip340-rdfc-2025:
+ *    3.1) Set cryptosuite.createProof to the algorithm in Section 3.2.1 Create Proof (bip340-rdfc-2025).
+ *    3.2) Set cryptosuite.verifyProof to the algorithm in Section 3.2.2 Verify Proof (bip340-rdfc-2025).
+ * 4) If options.cryptosuite is bip340-jcs-2025:
+ *    4.2) Set cryptosuite.createProof to the algorithm in Section 3.3.1 Create Proof (bip340-jcs-2025).
+ *    4.3) Set cryptosuite.verifyProof to the algorithm in Section 3.3.2 Verify Proof (bip340-jcs-2025).
+ * 5) Return cryptosuite.
+
  * @class Cryptosuite
  * @type {Cryptosuite}
  */
@@ -40,7 +61,7 @@ export class Cryptosuite implements ICryptosuite {
    * @public
    * @type {string} The name of the cryptosuite
    */
-  public cryptosuite: CryptosuiteType;
+  public cryptosuite: 'bip340-jcs-2025' | 'bip340-rdfc-2025';
 
   /**
    * The multikey used to sign and verify proofs
@@ -57,7 +78,7 @@ export class Cryptosuite implements ICryptosuite {
   public algorithm: 'RDFC-1.0' | 'JCS';
 
   /**
-   * Creates an instance of Cryptosuite.
+   * Constructs an instance of Cryptosuite.
    * @param {CryptosuiteParams} params See {@link CryptosuiteParams} for required parameters to create a cryptosuite.
    * @param {string} params.cryptosuite The name of the cryptosuite.
    * @param {Multikey} params.multikey The parameters to create the multikey.
@@ -68,19 +89,35 @@ export class Cryptosuite implements ICryptosuite {
     this.algorithm = cryptosuite.includes('rdfc') ? 'RDFC-1.0' : 'JCS';
   }
 
+
+  /**
+   * Constructs an instance of DataIntegrityProof from the current Cryptosuite instance.
+   * @public
+   * @returns {DataIntegrityProof} A new DataIntegrityProof instance.
+   */
+  public toDataIntegrityProof(): DataIntegrityProof {
+    const cryptosuite = new Cryptosuite({
+      cryptosuite : this.cryptosuite,
+      multikey    : this.multikey
+    });
+    return new DataIntegrityProof(cryptosuite);
+  }
+
   /**
    * Implements {@link ICryptosuite.canonicalize}.
    */
   public async canonicalize(object: CanonicalizableObject): Promise<string> {
-    const algorithm = this.algorithm;
-    // If the cryptosuite includes 'rdfc', use RDFC canonicalization else use JCS
-    return new Canonicalization(algorithm).canonicalize(object);
+    // Set the canonicalization algorithm
+    canonicalization.setAlgorithm(this.algorithm);
+
+    // Call the canonicalization function with the object and return the result
+    return canonicalization.canonicalize(object);
   }
 
   /**
    * Implements {@link ICryptosuite.createProof}.
    */
-  public async createProof({ document, options }: InsecureDocumentParams): Promise<Proof> {
+  public async createProof({ document, options }: CreateProofParams): Promise<Proof> {
     // Get the context from the document
     const context = document['@context'];
 
@@ -92,7 +129,7 @@ export class Cryptosuite implements ICryptosuite {
     ) as Proof;
 
     // Create a canonical form of the proof configuration
-    const canonicalConfig = await this.proofConfiguration({ options: proof });
+    const canonicalConfig = await this.proofConfiguration(proof);
 
     // Transform the document into a canonical form
     const canonicalDocument = await this.transformDocument({ document, options });
@@ -105,33 +142,36 @@ export class Cryptosuite implements ICryptosuite {
 
     // Encode the proof bytes to base
     proof.proofValue = base58btc.encode(serialized);
-    if(this.cryptosuite.includes('rdfc'))
-      proof['@type'] = this.type;
-    else
-      proof.type = this.type;
+
+    // Set the cryptosuite and type in the proof
+    if(this.cryptosuite.includes('rdfc')) {
+      (proof as any)['@type'] = this.type;
+    } else {
+      (proof as any).type = this.type;
+    }
 
     // Return the proof
-    return proof;
+    return proof as Proof;
   }
 
   /**
    * Implements {@link ICryptosuite.verifyProof}.
    */
-  public async verifyProof(secure: SecureDocument): Promise<VerificationResult> {
+  public async verifyProof(document: DidUpdateInvocation): Promise<VerificationResult> {
     // Create an insecure document from the secure document by removing the proof
-    const insecure = { ...secure, proof: undefined };
+    const payload = { ...document, proof: undefined };
 
     // Create a copy of the proof options removing the proof value
-    const options = { ...secure.proof, proofValue: undefined };
+    const options = { ...document.proof, proofValue: undefined };
 
     // Decode the secure document proof value from base58btc to bytes
-    const proof = base58btc.decode(secure.proof.proofValue);
+    const proof = base58btc.decode(document.proof.proofValue);
 
     // Transform the newly insecured document to canonical form
-    const canonicalDocument = await this.transformDocument({ document: insecure, options });
+    const canonicalDocument = await this.transformDocument({ document: payload, options });
 
     // Canonicalize the proof options to create a proof configuration
-    const canonicalConfig = await this.proofConfiguration({ options });
+    const canonicalConfig = await this.proofConfiguration(options);
 
     // Generate a hash of the canonical insecured document and the canonical proof configuration`
     const hash = this.generateHash({ canonicalConfig, canonicalDocument });
@@ -140,29 +180,33 @@ export class Cryptosuite implements ICryptosuite {
     const verified = this.proofVerification({ hash, signature: proof, options });
 
     // Return the verification result
-    return { verified, verifiedDocument: verified ? secure : undefined };
+    return { verified, verifiedDocument: verified ? document : undefined };
   }
 
   /**
    * Implements {@link ICryptosuite.transformDocument}.
    */
-  public async transformDocument({ document, options }: TransformParams): Promise<string> {
-    // Error type for the transformDocument method
-    const ERROR_TYPE = 'PROOF_VERIFICATION_ERROR';
-
+  public async transformDocument({ document, options }: TransformDocumentParams): Promise<string> {
     // Get the type from the options and check:
     // If the options type does not match this type, throw error
-    const type = options.type ?? options['@type'];
+    const type = options.type;
     if (type !== this.type) {
-      throw new CryptosuiteError(`Type mismatch between config and this: ${type} !== ${this.type}`, ERROR_TYPE);
+      throw new Btc1Error(
+        `Type mismatch between config and this: ${type} !== ${this.type}`,
+        PROOF_VERIFICATION_ERROR,
+        options
+      );
     }
 
     // Get the cryptosuite from the options and check:
     // If the options cryptosuite does not match this cryptosuite, throw error
     const { cryptosuite } = options;
     if (cryptosuite !== this.cryptosuite) {
-      const message = `Cryptosuite mismatch between config and this: ${cryptosuite} !== ${this.cryptosuite}`;
-      throw new CryptosuiteError(message, ERROR_TYPE);
+      throw new Btc1Error(
+        `Cryptosuite mismatch between config and this: ${cryptosuite} !== ${this.cryptosuite}`,
+        PROOF_VERIFICATION_ERROR,
+        options
+      );
     }
 
     // Return the canonicalized document
@@ -189,22 +233,19 @@ export class Cryptosuite implements ICryptosuite {
   /**
    * Implements {@link ICryptosuite.proofConfiguration}.
    */
-  public async proofConfiguration({ options }: ProofOptionsParam): Promise<CanonicalizedProofConfig> {
-    // Error type for the proofConfiguration method
-    const ERROR_TYPE = 'PROOF_GENERATION_ERROR';
-
+  public async proofConfiguration(options: ProofOptions): Promise<CanonicalizedProofConfig> {
     // Get the type from the options
-    const type = options.type ?? options['@type'];
+    const type = options.type;
 
     // If the type does not match the cryptosuite type, throw
     if (type !== this.type) {
-      throw new CryptosuiteError(`Mismatch "type" between config and this: ${type} !== ${this.type}`, ERROR_TYPE);
+      throw new CryptosuiteError(`Mismatch "type" between config and this: ${type} !== ${this.type}`, PROOF_GENERATION_ERROR);
     }
 
     // If the cryptosuite does not match the cryptosuite name, throw
     if (options.cryptosuite !== this.cryptosuite) {
       const message = `Mismatch on "cryptosuite" in config and this: ${options.cryptosuite} !== ${this.cryptosuite}`;
-      throw new CryptosuiteError(message, ERROR_TYPE);
+      throw new CryptosuiteError(message, PROOF_GENERATION_ERROR);
     }
 
     // TODO: check valid XMLSchema DateTime
@@ -219,16 +260,14 @@ export class Cryptosuite implements ICryptosuite {
   /**
    * Implements {@link ICryptosuite.proofSerialization}.
    */
-  public proofSerialization({ hash, options }: SerializeParams): SignatureBytes {
-    // Error type for the proofSerialization method
-    const ERROR_TYPE = 'PROOF_SERIALIZATION_ERROR';
+  public proofSerialization({ hash, options }: ProofSerializationParams): SignatureBytes {
     // Get the verification method from the options
     const vm = options.verificationMethod;
     // Get the multikey fullId
     const fullId = this.multikey.fullId();
     // If the verification method does not match the multikey fullId, throw an error
     if (vm !== fullId) {
-      throw new CryptosuiteError(`Mismatch on "fullId" in options and multikey: ${fullId} !== ${vm}`, ERROR_TYPE);
+      throw new CryptosuiteError(`Mismatch on "fullId" in options and multikey: ${fullId} !== ${vm}`, PROOF_SERIALIZATION_ERROR);
     }
     // Return the signed hash
     return this.multikey.sign(hash);
@@ -237,16 +276,14 @@ export class Cryptosuite implements ICryptosuite {
   /**
    * Implements {@link ICryptosuite.proofVerification}.
    */
-  public proofVerification({ hash, signature, options }: VerificationParams): boolean {
-    // Error type for the proofVerification method
-    const ERROR_TYPE = 'PROOF_VERIFICATION_ERROR';
+  public proofVerification({ hash, signature, options }: ProofVerificationParams): boolean {
     // Get the verification method from the options
     const vm = options.verificationMethod;
     // Get the multikey fullId
     const fullId = this.multikey.fullId();
     // If the verification method does not match the multikey fullId, throw an error
     if (vm !== fullId) {
-      throw new CryptosuiteError(`Mismatch on "fullId" in options and multikey: ${fullId} !== ${vm}`, ERROR_TYPE);
+      throw new CryptosuiteError(`Mismatch on "fullId" in options and multikey: ${fullId} !== ${vm}`, PROOF_VERIFICATION_ERROR);
     }
     // Return the verified hashData and signedProof
     return this.multikey.verify(signature, hash);

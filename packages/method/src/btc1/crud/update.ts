@@ -1,15 +1,25 @@
-import { Btc1Error, INVALID_DID, canonicalization, Logger, INVALID_DID_DOCUMENT, INVALID_PUBLIC_KEY_TYPE, NOT_FOUND } from '@did-btc1/common';
-import { Cryptosuite, DataIntegrityProof, Multikey, ProofOptions } from '@did-btc1/cryptosuite';
+import {
+  Btc1Error,
+  canonicalization,
+  DidUpdatePayload,
+  INVALID_DID,
+  INVALID_DID_DOCUMENT,
+  INVALID_PUBLIC_KEY_TYPE,
+  Logger,
+  NOT_FOUND,
+  PatchOperation,
+  ProofOptions,
+} from '@did-btc1/common';
+import { DataIntegrityProof, Multikey } from '@did-btc1/cryptosuite';
 import type { DidService } from '@web5/dids';
 import { base58btc } from 'multiformats/bases/base58';
-import { DidUpdatePayload } from '../../interfaces/crud.js';
 import { BeaconService } from '../../interfaces/ibeacon.js';
 import { TxId } from '../../types/bitcoin.js';
 import { InvokePayloadParams, Metadata, SignalsMetadata } from '../../types/crud.js';
 import { Btc1Appendix } from '../../utils/btc1/appendix.js';
 import { BTC1_DID_UPDATE_PAYLOAD_CONTEXT } from '../../utils/btc1/constants.js';
 import { Btc1DidDocument } from '../../utils/btc1/did-document.js';
-import JsonPatch, { PatchOperation } from '../../utils/json-patch.js';
+import JsonPatch from '../../utils/json-patch.js';
 import { BeaconFactory } from '../beacons/factory.js';
 import { Btc1KeyManager } from '../key-manager/index.js';
 
@@ -64,7 +74,6 @@ export class Btc1Update {
       targetHash      : '',
       targetVersionId : 0,
       sourceHash      : '',
-      proof           : {}
     };
     Logger.warn('// TODO: Need to add btc1 context. ["https://w3id.org/zcap/v1", "https://w3id.org/security/data-integrity/v2", "https://w3id.org/json-ld-patch/v1"]');
 
@@ -133,10 +142,10 @@ export class Btc1Update {
 
     // Derive the root capability from the identifier
     const rootCapability = Btc1Appendix.deriveRootCapability(btc1Identifier);
-    const cryptosuite = 'bip340-jcs-2025';
+    const suite = 'bip340-jcs-2025';
     // Construct the proof options
     const options: ProofOptions = {
-      cryptosuite,
+      cryptosuite        : suite,
       type               : 'DataIntegrityProof',
       verificationMethod : verificationMethod.id,
       proofPurpose       : 'capabilityInvocation',
@@ -146,7 +155,8 @@ export class Btc1Update {
     Logger.warn('// TODO: Wonder if we actually need this. Arent we always writing?');
 
     const multikey = new Multikey({ id: verificationMethod.id, controller: verificationMethod.controller, keyPair });
-    const diproof = new DataIntegrityProof(new Cryptosuite({ cryptosuite, multikey }));
+    const cryptosuite = multikey.toCryptosuite(suite);
+    const diproof = new DataIntegrityProof(cryptosuite);
     Logger.warn('// TODO: need to set up the proof instantiation such that it can resolve / dereference the root capability. This is deterministic from the DID.');
 
     // Set didUpdateInvocation to the result of executing the Add Proof algorithm from VC Data Integrity passing

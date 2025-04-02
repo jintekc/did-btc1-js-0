@@ -56,7 +56,7 @@ pnpm build
 
 ## Usage
 
-The use the @did-btc1/method package in your own project, install it using your fave package manager.
+To use the @did-btc1/method package in your own project, install it using your favorite package manager.
 
 ```sh
 pnpm install @did-btc1/{common,cryptosuite,key-pair,method}
@@ -65,14 +65,44 @@ pnpm install @did-btc1/{common,cryptosuite,key-pair,method}
 
 Once installed, import the method to your project and use it to perform CRUD operations or interact with Beacons.
 
+### CRUD operations
+
 ```ts
 // ESM
 import { DidBtc1 } from "@did-btc1/method";
+
 const idType = 'key';
 const pubKeyBytes = new Uint8Array(32);
+
+// Create
 const { did, initialDocument } = await DidBtc1.create({ idType, pubKeyBytes })
-console.log('did', did);
-console.log('initialDocument', initialDocument);
+console.log('{ did, initialDocument }', { did, initialDocument });
+
+// Read / Resolve
+const resolution = await DidBtc1.resolve(did);
+console.log('resolution', resolution);
+
+// Update
+const update = await DidBtc1.update({
+  identifier           : did,
+  sourceDocument       : initialDocument,
+  sourceVersionId      : 1,
+  patch                : [[
+    {
+      "op": "add",
+      "path": "/service/1",
+      "value": {
+        "id": "#initialP2PKH",
+        "type": "SingletonBeacon",
+        "serviceEndpoint": "z66p..."
+      }
+    }
+  ],],
+  verificationMethodId : `${did}#initialP2PKH`,
+  beaconIds            : [`${did}#initialP2PKH`],
+});
+
+// TODO: Deactivate / Delete
 ```
 
 ```ts
