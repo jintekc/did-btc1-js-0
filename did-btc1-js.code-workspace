@@ -9,16 +9,20 @@
       "path": "packages/common"
     },
     {
-      "name": "cryptosuite",
-      "path": "packages/cryptosuite"
-    },
-    {
       "name": "key-pair",
       "path": "packages/key-pair"
     },
     {
+      "name": "cryptosuite",
+      "path": "packages/cryptosuite"
+    },
+    {
       "name": "method",
       "path": "packages/method"
+    },
+    {
+      "name": "cli",
+      "path": "packages/cli"
     }
   ],
   "settings": {
