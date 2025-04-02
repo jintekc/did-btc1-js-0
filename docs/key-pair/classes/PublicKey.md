@@ -6,7 +6,7 @@
 
 # Class: PublicKey
 
-Defined in: [public-key.ts:26](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L26)
+Defined in: [public-key.ts:26](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L26)
 
 Encapsulates a secp256k1 public key.
 Provides get methods for different formats (compressed, x-only, multibase).
@@ -23,7 +23,7 @@ Provides helpers methods for comparison and serialization.
 
 > **new PublicKey**(`bytes`): `PublicKey`
 
-Defined in: [public-key.ts:36](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L36)
+Defined in: [public-key.ts:36](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L36)
 
 Creates an instance of PublicKey.
 
@@ -51,7 +51,7 @@ if the byte length is not 32 (x-only) or 33 (compressed)
 
 > **get** **bytes**(): `Uint8Array`
 
-Defined in: [public-key.ts:56](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L56)
+Defined in: [public-key.ts:56](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L56)
 
 Get the public key bytes.
 
@@ -79,7 +79,7 @@ Compressed public key getter.
 
 > **get** **hex**(): `Hex`
 
-Defined in: [public-key.ts:174](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L174)
+Defined in: [public-key.ts:174](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L174)
 
 Returns the raw public key as a hex string.
 
@@ -107,7 +107,7 @@ Public key hex string getter.
 
 > **get** **multibase**(): `string`
 
-Defined in: [public-key.ts:106](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L106)
+Defined in: [public-key.ts:106](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L106)
 
 Get the multibase public key.
 
@@ -135,7 +135,7 @@ Public key multibase getter.
 
 > **get** **parity**(): `number`
 
-Defined in: [public-key.ts:76](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L76)
+Defined in: [public-key.ts:76](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L76)
 
 Get the parity byte of the public key.
 
@@ -163,7 +163,7 @@ Public key parity getter.
 
 > **get** **prefix**(): `Bytes`
 
-Defined in: [public-key.ts:115](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L115)
+Defined in: [public-key.ts:115](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L115)
 
 Get the public key prefix bytes.
 
@@ -191,7 +191,7 @@ Public key multibase prefix getter.
 
 > **get** **uncompressed**(): `Bytes`
 
-Defined in: [public-key.ts:66](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L66)
+Defined in: [public-key.ts:66](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L66)
 
 Get the uncompressed public key.
 
@@ -219,7 +219,7 @@ Uncompressed public key getter.
 
 > **get** **x**(): `Bytes`
 
-Defined in: [public-key.ts:86](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L86)
+Defined in: [public-key.ts:86](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L86)
 
 Get the x-coordinate of the public key.
 
@@ -247,7 +247,7 @@ Public key x-coordinate getter.
 
 > **get** **y**(): `Bytes`
 
-Defined in: [public-key.ts:96](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L96)
+Defined in: [public-key.ts:96](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L96)
 
 Get the y-coordinate of the public key.
 
@@ -273,7 +273,7 @@ Public key y-coordinate getter.
 
 > **decode**(): `Bytes`
 
-Defined in: [public-key.ts:125](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L125)
+Defined in: [public-key.ts:125](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L125)
 
 Decodes the multibase string to the 34-byte corresponding public key (2 byte prefix + 32 byte public key).
 
@@ -293,7 +293,7 @@ The decoded public key: prefix and public key bytes
 
 > **encode**(): `string`
 
-Defined in: [public-key.ts:153](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L153)
+Defined in: [public-key.ts:153](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L153)
 
 Encodes compressed secp256k1 public key from bytes to BIP340 base58btc multibase format
 
@@ -313,7 +313,7 @@ The public key encoded in base-58-btc multibase format
 
 > **equals**(`other`): `boolean`
 
-Defined in: [public-key.ts:185](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L185)
+Defined in: [public-key.ts:185](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L185)
 
 Compares this public key to another public key.
 
@@ -345,7 +345,7 @@ IPublicKey.equals
 
 > **json**(): `PublicKeyJSON`
 
-Defined in: [public-key.ts:194](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/public-key.ts#L194)
+Defined in: [public-key.ts:194](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/public-key.ts#L194)
 
 Public key JSON representation.
 

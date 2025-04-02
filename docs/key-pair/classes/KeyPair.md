@@ -6,7 +6,7 @@
 
 # Class: KeyPair
 
-Defined in: [key-pair.ts:17](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/key-pair.ts#L17)
+Defined in: [key-pair.ts:17](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L17)
 
 Encapsulates a PublicKey and a PrivateKey object as a single KeyPair object.
  KeyPair
@@ -21,7 +21,7 @@ Encapsulates a PublicKey and a PrivateKey object as a single KeyPair object.
 
 > **new KeyPair**(`privateKey`): `KeyPair`
 
-Defined in: [key-pair.ts:30](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/key-pair.ts#L30)
+Defined in: [key-pair.ts:30](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L30)
 
 Creates an instance of KeyPair. Must provide a at least a private key.
 Can optionally provide btoh a private and public key, but must be a valid pair.
@@ -46,7 +46,7 @@ The private key object
 
 > **get** **privateKey**(): [`PrivateKey`](PrivateKey.md)
 
-Defined in: [key-pair.ts:71](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/key-pair.ts#L71)
+Defined in: [key-pair.ts:71](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L71)
 
 Set the PrivateKey.
 
@@ -80,7 +80,7 @@ If the private key is not available.
 
 > **get** **publicKey**(): [`PublicKey`](PublicKey.md)
 
-Defined in: [key-pair.ts:60](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/key-pair.ts#L60)
+Defined in: [key-pair.ts:60](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L60)
 
 Get the PublicKey.
 
@@ -98,7 +98,7 @@ The PublicKey object
 
 > **set** **publicKey**(`publicKey`): `void`
 
-Defined in: [key-pair.ts:51](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/key-pair.ts#L51)
+Defined in: [key-pair.ts:51](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L51)
 
 Set the PublicKey.
 
@@ -128,7 +128,7 @@ The PublicKey object
 
 > **json**(): `KeyPairJSON`
 
-Defined in: [key-pair.ts:85](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/key-pair.ts#L85)
+Defined in: [key-pair.ts:85](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L85)
 
 JSON representation of a KeyPair.
 

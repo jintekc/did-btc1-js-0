@@ -6,7 +6,7 @@
 
 # Class: KeyPairUtils
 
-Defined in: [key-pair.ts:98](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/key-pair.ts#L98)
+Defined in: [key-pair.ts:98](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L98)
 
 Utility class for creating and working with KeyPair objects.
  KeyPairUtils
@@ -27,7 +27,7 @@ Utility class for creating and working with KeyPair objects.
 
 > `static` **equals**(`keyPair`, `keyPair1`): `boolean`
 
-Defined in: [key-pair.ts:153](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/key-pair.ts#L153)
+Defined in: [key-pair.ts:153](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L153)
 
 Compares two KeyPair objects for equality.
 
@@ -57,7 +57,7 @@ True if the public key and private key hex are equal, false otherwise.
 
 > `static` **fromPrivateKey**(`data`): [`KeyPair`](KeyPair.md)
 
-Defined in: [key-pair.ts:105](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/key-pair.ts#L105)
+Defined in: [key-pair.ts:105](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L105)
 
 Static method creates a new KeyPair from a PrivateKey object or private key bytes.
 
@@ -81,7 +81,7 @@ A new KeyPair object
 
 > `static` **fromSecret**(`secret`): [`KeyPair`](KeyPair.md)
 
-Defined in: [key-pair.ts:131](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/key-pair.ts#L131)
+Defined in: [key-pair.ts:131](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L131)
 
 Static method creates a new KeyPair (PrivateKey/PublicKey) bigint secret.
 
@@ -105,7 +105,7 @@ A new KeyPair object
 
 > `static` **generate**(): [`KeyPair`](KeyPair.md)
 
-Defined in: [key-pair.ts:171](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/key-pair.ts#L171)
+Defined in: [key-pair.ts:171](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L171)
 
 Static method to generate a new random PrivateKey / PublicKey KeyPair.
 
@@ -121,7 +121,7 @@ A new PrivateKey object.
 
 > `static` **toHex**(`keyBytes`): `Hex`
 
-Defined in: [key-pair.ts:143](https://github.com/jintekc/did-btc1-js/blob/9b649231f8bcea8c1911a9bbc579d27a54fe8a3f/packages/key-pair/src/key-pair.ts#L143)
+Defined in: [key-pair.ts:143](https://github.com/jintekc/did-btc1-js/blob/4e83e31069f73b9a38a52892558302bd20237e8b/packages/key-pair/src/key-pair.ts#L143)
 
 Converts key bytes to a hex string.
 
