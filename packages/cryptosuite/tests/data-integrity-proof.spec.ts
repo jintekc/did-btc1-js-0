@@ -44,8 +44,7 @@ describe('Data Integrity Proof', () => {
 
       const verifiedProof = await diProof.verifyProof({
         document        : JSON.stringify(securedDocument),
-        expectedPurpose : 'attestationMethod',
-        mediaType       : 'application/json'
+        expectedPurpose : 'attestationMethod'
       });
       expect(verifiedProof.verified).to.be.true;
     });

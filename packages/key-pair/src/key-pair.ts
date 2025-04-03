@@ -1,4 +1,11 @@
-import { Hex, KeyBytes, KeyPairError, KeyPairJSON, PrivateKeyBytes, PublicKeyBytes } from '@did-btc1/common';
+import {
+  Hex,
+  KeyBytes,
+  KeyPairError,
+  KeyPairJSON,
+  PrivateKeyBytes,
+  PublicKeyBytes
+} from '@did-btc1/common';
 import { IKeyPair } from './interface.js';
 import { PrivateKey, PrivateKeyUtils } from './private-key.js';
 import { PublicKey } from './public-key.js';

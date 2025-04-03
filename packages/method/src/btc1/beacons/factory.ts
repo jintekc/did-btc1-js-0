@@ -12,14 +12,14 @@ import { SMTAggregateBeacon } from './smt-aggregate.js';
  * @type {BeaconFactory}
  */
 export class BeaconFactory {
-  static establish(params: BeaconService, sidecar?: SidecarData): Beacon {
-    switch (params.type) {
+  static establish(service: BeaconService, sidecar?: SidecarData): Beacon {
+    switch (service.type) {
       case 'SingletonBeacon':
-        return new SingletonBeacon(params, sidecar);
+        return new SingletonBeacon(service, sidecar);
       case 'CIDAggregateBeacon':
-        return new CIDAggregateBeacon(params, sidecar);
+        return new CIDAggregateBeacon(service, sidecar);
       case 'SMTAggregateBeacon':
-        return new SMTAggregateBeacon(params, sidecar);
+        return new SMTAggregateBeacon(service, sidecar);
       default:
         throw new DidBtc1Error('Invalid Beacon Type', { type: 'BEACON_ERROR' });
     }

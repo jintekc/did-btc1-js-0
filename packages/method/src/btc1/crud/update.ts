@@ -41,7 +41,7 @@ export class Btc1Update {
    * sourceVersionId, and documentPatch objects. It returns an unsigned DID Update Payload.
    *
    * @param {ConstructPayloadParams} params See  {@link ConstructPayloadParams} for more details.
-   * @param {string} params.identifier The did-btc1 identifier to derive the root capability from.
+   * @param {string} params.btc1Identifier The did-btc1 identifier to derive the root capability from.
    * @param {Btc1DidDocument} params.sourceDocument The source document to be updated.
    * @param {string} params.sourceVersionId The versionId of the source document.
    * @param {DidDocumentPatch} params.documentPatch The JSON patch to be applied to the source document.
@@ -49,19 +49,19 @@ export class Btc1Update {
    * @throws {Btc1Error} InvalidDid if sourceDocument.id does not match identifier.
    */
   public static async construct({
-    identifier,
+    btc1Identifier,
     sourceDocument,
     sourceVersionId,
     patch,
   }: {
-    identifier: string;
+    btc1Identifier: string;
     sourceDocument: Btc1DidDocument;
     sourceVersionId: number;
     patch: PatchOperation[];
   }): Promise<DidUpdatePayload> {
 
     // 1. Check that sourceDocument.id equals btc1Identifier else MUST raise invalidDIDUpdate error.
-    if (sourceDocument.id !== identifier) {
+    if (sourceDocument.id !== btc1Identifier) {
       throw new Btc1Error(INVALID_DID, 'Source document id does not match identifier');
     }
 
@@ -191,7 +191,7 @@ export class Btc1Update {
     didUpdatePayload: DidUpdatePayload;
   }): Promise<SignalsMetadata> {
     const beaconServices: BeaconService[] = [];
-    const signalsMetadata: SignalsMetadata = new Map<TxId, Metadata>();
+    const signalsMetadataMap = new Map<TxId, Metadata>();
 
     // Find the beacon services in the sourceDocument
     for (const beaconId of beaconIds) {
@@ -206,10 +206,10 @@ export class Btc1Update {
     for (const beaconService of beaconServices) {
       const beacon = BeaconFactory.establish(beaconService);
       const signalMetadata = await beacon.broadcastSignal(didUpdatePayload);
-      Object.entries(signalMetadata).map(([signalId, metadata]) => signalsMetadata.set(signalId, metadata));
+      Object.entries(signalMetadata).map(([signalId, metadata]) => signalsMetadataMap.set(signalId, metadata));
     }
 
     // Return the signalsMetadata
-    return signalsMetadata;
+    return Object.fromEntries(Object.entries(signalsMetadataMap));
   }
 }

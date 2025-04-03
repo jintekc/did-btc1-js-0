@@ -1,7 +1,6 @@
+import { KeyPair } from '@did-btc1/key-pair';
 import { expect } from 'chai';
 import { DidBtc1 } from '../src/did-btc1.js';
-import { KeyPair } from '@did-btc1/key-pair';
-import { canonicalization } from '@did-btc1/common';
 
 /**
  * DidBtc1 Create Key Test Cases
@@ -12,7 +11,7 @@ import { canonicalization } from '@did-btc1/common';
  * idType=key, publicKey, version, network
  */
 describe('DidBtc1 Create Deterministic', () => {
-  canonicalization.setAlgorithm('JCS');
+  JSON.canonicalization.algorithm = 'jcs';
   const versions = ['1', '2', '3', '4', '5'];
   const networks = ['mainnet', 'testnet', 'signet', 'regtest'];
   const idType = 'key';

@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import { DidBtc1 } from '../src/did-btc1.js';
-import { canonicalization } from '@did-btc1/common';
 import { IntermediateDocument } from '../src/interfaces/crud.js';
 
 /**
@@ -12,7 +11,7 @@ import { IntermediateDocument } from '../src/interfaces/crud.js';
  */
 describe('DidBtc1 Create External', () => {
   // Set the canonicalization algorithm to JCS (JSON Canonicalization Scheme)
-  canonicalization.setAlgorithm('JCS');
+  JSON.canonicalization.algorithm = 'jcs';
   const versions = ['1', '2', '3', '4', '5'];
   const networks = ['mainnet', 'testnet', 'signet', 'regtest'];
   const idType = 'external';

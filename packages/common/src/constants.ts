@@ -35,8 +35,8 @@ export const DEFAULT_CLIENT_CONFIG = POLAR_BOB_CLIENT_CONFIG;
 export const DEFAULT_BLOCK_CONFIRMATIONS = 7;
 
 // Fixed header bytes per the spec for a BIP-340 Multikey
-// Hex [e1, 4a] === Decimal [225, 74]
-export const BIP340_MULTIKEY_PREFIX: Bytes = new Uint8Array([0xe1, 0x4a]);
+// Hex [e7, 01] === Decimal [231, 1]
+export const BIP340_MULTIKEY_PREFIX: Bytes = new Uint8Array([0xe7, 0x01]);
 // Hash of the BIP-340 Multikey prefix
 export const BIP340_MULTIKEY_PREFIX_HASH: HashHex = Buffer.from(sha256(BIP340_MULTIKEY_PREFIX)).toString('hex');
 // curve's field size

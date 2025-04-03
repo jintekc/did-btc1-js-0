@@ -1,10 +1,10 @@
+import { DidDocumentError, INVALID_DID_DOCUMENT } from '@did-btc1/common';
 import { DidService, DidVerificationMethod, DidDocument as IDidDocument } from '@web5/dids';
+import { DidBtc1Identifier } from '../../btc1/crud/create.js';
 import { BeaconService } from '../../interfaces/ibeacon.js';
+import { Btc1Appendix } from './appendix.js';
 import { BeaconUtils } from './beacon-utils.js';
 import { BTC1_DID_DOCUMENT_CONTEXT } from './constants.js';
-import { DidBtc1Identifier } from '../../btc1/crud/create.js';
-import { Btc1Appendix } from './appendix.js';
-import { DidDocumentError, INVALID_DID_DOCUMENT } from '@did-btc1/common';
 
 /**
  * DID BTC1 Verification Method extends the DidVerificationMethod class adding helper methods and properties
@@ -32,7 +32,6 @@ export class Btc1VerificationMethod implements DidVerificationMethod {
 
 export interface IBtc1DidDocument extends IDidDocument {
   id: string;
-  controller?: string | string[];
   '@context'?: string | (string | Record<string, any>)[];
   verificationMethod: DidVerificationMethod[];
   authentication?: (string | DidVerificationMethod)[];
@@ -49,7 +48,6 @@ export interface IBtc1DidDocument extends IDidDocument {
  */
 export class Btc1DidDocument implements IBtc1DidDocument {
   id: string;
-  controller?: string | string[];
   '@context'?: string | (string | Record<string, any>)[] = BTC1_DID_DOCUMENT_CONTEXT;
   verificationMethod: DidVerificationMethod[];
   authentication?: (string | DidVerificationMethod)[] = ['#initialKey'];
@@ -63,9 +61,8 @@ export class Btc1DidDocument implements IBtc1DidDocument {
     if (!Btc1DidDocument.isValidId(id)) {
       throw new DidDocumentError('Invalid "id"', INVALID_DID_DOCUMENT, { id });
     }
-    // Set the id and controller
+    // Set the id
     this.id = id;
-    this.controller = id;
 
     // Validate the verification method
     if (!Btc1DidDocument.isValidVerificationMethods(verificationMethod)) {
