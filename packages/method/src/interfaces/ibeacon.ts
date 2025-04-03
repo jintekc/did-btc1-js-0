@@ -1,6 +1,6 @@
 import { DidServiceEndpoint, DidService as IDidService } from '@web5/dids';
 import { RawTransactionV2 } from '../types/bitcoin.js';
-import { SignalMetadata, SignalsMetadata } from '../types/crud.js';
+import { SignalsMetadata } from '../types/crud.js';
 import { DidUpdatePayload } from '@did-btc1/common';
 
 /**
@@ -41,7 +41,7 @@ export interface IBeacon {
     generateSignal(didUpdatePayload: string): BeaconSignal;
 
     /**
-     * Processes a Beacon Signal
+     * Processes a Beacon Signal.
      * @param {RawTransactionV2} signal The raw transaction
      * @param {SidecarData} signalsMetadata The signals metadata from the sidecar data
      * @returns {Promise<DidUpdatePayload | undefined>} The DID update payload
@@ -54,7 +54,7 @@ export interface IBeacon {
      * @param {DidUpdatePayload} didUpdatePayload The DID update payload.
      * @returns {Promise<SignalMetadata>} The signal metadata.
      */
-    broadcastSignal(didUpdatePayload: DidUpdatePayload): Promise<SignalMetadata>;
+    broadcastSignal(didUpdatePayload: DidUpdatePayload): Promise<SignalsMetadata>;
 }
 
 export interface BeaconService extends IDidService {

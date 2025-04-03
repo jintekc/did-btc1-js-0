@@ -1,19 +1,19 @@
+import {
+  BIP340_MULTIKEY_PREFIX,
+  BIP340_MULTIKEY_PREFIX_HASH,
+  CURVE,
+  Hex,
+  PrefixBytes,
+  PrivateKeyBytes,
+  PublicKeyBytes,
+  PublicKeyError,
+  PublicKeyJSON,
+  PublicKeyMultibaseBytes
+} from '@did-btc1/common';
 import { sha256 } from '@noble/hashes/sha256';
 import { base58btc } from 'multiformats/bases/base58';
 import { IPublicKey } from './interface.js';
 import { PrivateKey } from './private-key.js';
-import {
-  PublicKeyBytes,
-  PublicKeyError,
-  PrefixBytes,
-  PublicKeyMultibaseBytes,
-  BIP340_MULTIKEY_PREFIX_HASH,
-  BIP340_MULTIKEY_PREFIX,
-  Hex,
-  PublicKeyJSON,
-  PrivateKeyBytes,
-  CURVE
-} from '@did-btc1/common';
 
 /**
  * Encapsulates a secp256k1 public key.
@@ -34,23 +34,20 @@ export class PublicKey implements IPublicKey {
    * @throws {PublicKeyError} if the byte length is not 32 (x-only) or 33 (compressed)
    */
   constructor(bytes: PublicKeyBytes) {
-    // If the byte length is not 32 or 33, throw an error
-    const bytelength = bytes.length;
-    if(![32, 33].includes(bytelength)) {
+    // If the byte length is not 33, throw an error
+    if(bytes.length !== 33) {
       throw new PublicKeyError(
-        'Invalid argument: byte length must be 32 (x-only) or 33 (compressed)',
+        'Invalid argument: byte length must be 33 (compressed)',
         'PUBLIC_KEY_CONSTRUCTOR_ERROR'
       );
     }
-    // If the byte length is 32, prepend the parity byte, else set the bytes
-    this._bytes = bytelength === 32
-      ? new Uint8Array([0x02, ...Array.from(bytes)])
-      : bytes;
+    // Set the bytes
+    this._bytes = bytes;
   }
 
   /**
    * Get the public key bytes.
-   * @see IPublicKey.bytes
+   * See {@link IPublicKey.bytes | IPublicKey Method bytes} for more details.
    * @returns {Uint8Array} The public key bytes
    */
   get bytes(): Uint8Array {
@@ -60,7 +57,7 @@ export class PublicKey implements IPublicKey {
 
   /**
    * Get the uncompressed public key.
-   * @see IPublicKey.uncompressed
+   * See {@link IPublicKey.uncompressed | IPublicKey Method uncompressed} for more details.
    * @returns {Uint8Array} The 65-byte uncompressed public key (0x04, x, y).
    */
   get uncompressed(): PublicKeyBytes {
@@ -70,7 +67,7 @@ export class PublicKey implements IPublicKey {
 
   /**
    * Get the parity byte of the public key.
-   * @see IPublicKey.parity
+   * See {@link IPublicKey.parity | IPublicKey Method parity} for more details.
    * @returns {number} The parity byte of the public key.
    */
   get parity(): number {
@@ -80,7 +77,7 @@ export class PublicKey implements IPublicKey {
 
   /**
    * Get the x-coordinate of the public key.
-   * @see IPublicKey.x
+   * See {@link IPublicKey.x | IPublicKey Method x} for more details.
    * @returns {Uint8Array} The 32-byte x-coordinate of the public key.
    */
   get x(): PublicKeyBytes {
@@ -90,7 +87,7 @@ export class PublicKey implements IPublicKey {
 
   /**
    * Get the y-coordinate of the public key.
-   * @see IPublicKey.y
+   * See {@link IPublicKey.y | IPublicKey Method y} for more details.
    * @returns {Uint8Array} The 32-byte y-coordinate of the public key.
    */
   get y(): PublicKeyBytes {
@@ -100,16 +97,17 @@ export class PublicKey implements IPublicKey {
 
   /**
    * Get the multibase public key.
-   * @see IPublicKey.multibase
+   * See {@link IPublicKey.multibase | IPublicKey Method multibase} for more details.
    * @returns {string} The public key in base58btc x-only multibase format.
    */
   get multibase(): string {
-    return this.encode();
+    const mbase = this.encode();
+    return mbase;
   }
 
   /**
    * Get the public key prefix bytes.
-   * @see IPublicKey.prefix
+   * See {@link IPublicKey.prefix | IPublicKey Method prefix} for more details.
    * @returns {PrefixBytes} The 2-byte prefix of the public key.
    */
   get prefix(): PrefixBytes {
@@ -118,8 +116,18 @@ export class PublicKey implements IPublicKey {
   }
 
   /**
+   * Returns the raw public key as a hex string.
+   * See {@link IPublicKey.hex | IPublicKey Method hex} for more details.
+   * @returns {Hex} The public key as a hex string.
+   */
+  get hex(): Hex {
+    const hex = Buffer.from(this.bytes).toString('hex');
+    return hex;
+  }
+
+  /**
    * Decodes the multibase string to the 34-byte corresponding public key (2 byte prefix + 32 byte public key).
-   *
+   * See {@link IPublicKey.decode | IPublicKey Method } for more details.
    * @returns {PublicKeyMultibaseBytes} The decoded public key: prefix and public key bytes
    */
   public decode(): PublicKeyMultibaseBytes {
@@ -147,38 +155,34 @@ export class PublicKey implements IPublicKey {
 
   /**
    * Encodes compressed secp256k1 public key from bytes to BIP340 base58btc multibase format
-   *
+   * See {@link IPublicKey.encode | IPublicKey Method } for more details.
    * @returns {string} The public key encoded in base-58-btc multibase format
    */
   public encode(): string {
-    // Create a local copy of the public key x-coordinate to avoid mutation
-    const xCoordinate = this.x;
+    // Convert public key bytes to an array
+    const publicKeyBytes = Array.from(this.bytes);
 
-    // Ensure the public key is schnorr x-only (32 bytes)
-    if (xCoordinate.length !== 32) {
-      throw new PublicKeyError('Invalid argument: must be x-only public key (32 bytes)', 'ENCODE_PUBLIC_KEY_ERROR');
+    // Ensure the public key is 33-byte secp256k1 compressed public key
+    if (publicKeyBytes.length !== 33) {
+      throw new PublicKeyError('Invalid argument: must be 33-byte (compressed) public key', 'ENCODE_PUBLIC_KEY_ERROR');
     }
 
-    // Convert the prefix and public key bytes to arrays and dump into new Uint8Array
-    const multikeyBytes = new Uint8Array([...Array.from(BIP340_MULTIKEY_PREFIX), ...Array.from(xCoordinate)]);
+    // Convert prefix to an array
+    const multikeyByteArray = Array.from(BIP340_MULTIKEY_PREFIX);
+
+    // Push the public key bytes at the end of the prefix
+    multikeyByteArray.push(...publicKeyBytes);
+
+    // Convert the prefix + public key bytes to Uint8Array
+    const multikeyBytes = new Uint8Array(multikeyByteArray);
 
     // Encode as a multibase base58btc string
     return base58btc.encode(multikeyBytes);
   }
 
   /**
-   * Returns the raw public key as a hex string.
-   * @see IPublicKey.hex
-   * @returns {Hex} The public key as a hex string.
-   */
-  get hex(): Hex {
-    const hex = Buffer.from(this.bytes).toString('hex');
-    return hex;
-  }
-
-  /**
    * Compares this public key to another public key.
-   * @see IPublicKey.equals
+   * See {@link IPublicKey.equals | IPublicKey Method equals} for more details.
    * @param {PublicKey} other The other public key to compare
    * @returns {boolean} True if the public keys are equal, false otherwise.
    */
@@ -188,7 +192,7 @@ export class PublicKey implements IPublicKey {
 
   /**
    * Public key JSON representation.
-   * @see IPublicKey.json
+   * See {@link IPublicKey.json} for more details.
    * @returns {PublicKeyJSON} The public key as a JSON object.
    */
   public json(): PublicKeyJSON {

@@ -83,7 +83,7 @@ export interface ICryptosuite {
 
   /**
    * Verify a proof for a secure document.
-   * @param {SecureDocument} document The secure document to verify.
+   * @param {DidUpdateInvocation} document The secure document to verify.
    * @returns {VerificationResult} The result of the verification.
    */
   verifyProof(document: DidUpdateInvocation): Promise<VerificationResult>;

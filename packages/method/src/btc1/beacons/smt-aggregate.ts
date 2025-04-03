@@ -1,10 +1,9 @@
-import { Btc1Error, DidUpdateInvocation, DidUpdatePayload } from '@did-btc1/common';
+import { Btc1Error, DidUpdatePayload } from '@did-btc1/common';
 import { DidServiceEndpoint } from '@web5/dids';
 import { Beacon } from '../../interfaces/beacon.js';
 import { BeaconService, BeaconSignal } from '../../interfaces/ibeacon.js';
 import { RawTransactionV2 } from '../../types/bitcoin.js';
-import { SidecarData, SignalMetadata, SignalsMetadata, SMTAggregateSidecar } from '../../types/crud.js';
-
+import { SidecarData, SignalsMetadata, SMTAggregateSidecar } from '../../types/crud.js';
 
 /**
  * TODO: Finish implementation
@@ -85,6 +84,8 @@ export class SMTAggregateBeacon extends Beacon {
    *
    * Implements {@link https://dcdpr.github.io/did-btc1/#broadcast-smtaggregate-beacon-signal | 5.3.2 Broadcast SMTAggregate Beacon Signal}.
    *
+   * See {@link Beacon.broadcastSignal | Beacon Interface Method broadcastSignal} for more information.
+   *
    * To publish a DID Update Payload, the DID controller MUST get a hash of the DID Update Payload included at the leaf
    * of the Sparse Merkle Tree (SMT) identified by their did:btc1 identifier and receive an inclusion proof for this
    * data. If a member of the Beacon cohort does not wish to announce an update in a Beacon Signal, they MUST receive
@@ -98,13 +99,15 @@ export class SMTAggregateBeacon extends Beacon {
    * @returns {Promise<SignalMetadata>} The signal metadata.
    * @throws {Btc1Error} if the signal is invalid.
    */
-  public broadcastSignal(didUpdatePayload: DidUpdatePayload): Promise<SignalMetadata> {
+  public broadcastSignal(didUpdatePayload: DidUpdatePayload): Promise<SignalsMetadata> {
     throw new Btc1Error('Method not implemented.', `METHOD_NOT_IMPLEMENTED`, didUpdatePayload);
   }
 
 
   /**
    * Implements {@link https://dcdpr.github.io/did-btc1/#process-smtaggregate-beacon-signal | 5.3.3 Process SMTAggregate Beacon Signal}.
+   *
+   * See {@link Beacon.processSignal | Beacon Interface Method processSignal} for more information.
    *
    * A Beacon Signal from a SMTAggregate Beacon is a Bitcoin transaction with the first transaction output of the format
    * [OP_RETURN, OP_PUSH32, <32bytes>]. The 32 bytes of data contained within this transaction output represent the root
@@ -127,7 +130,7 @@ export class SMTAggregateBeacon extends Beacon {
    * @returns {Promise<DidUpdatePayload | undefined>} The updated DID document.
    * @throws {Btc1Error} if the signal is invalid.
    */
-  public processSignal(signal: RawTransactionV2, signalsMetadata: SignalsMetadata): Promise<DidUpdateInvocation | undefined> {
+  public processSignal(signal: RawTransactionV2, signalsMetadata: SignalsMetadata): Promise<DidUpdatePayload | undefined> {
     throw new Btc1Error('Method not implemented.', `METHOD_NOT_IMPLEMENTED`, {signal, signalsMetadata});
   }
 }

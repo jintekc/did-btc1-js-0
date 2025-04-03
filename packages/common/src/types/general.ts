@@ -10,5 +10,5 @@ export type UtcTimestamp = `${Year}-${Month}-${Day}T${Hours}:${Minutes}:${Second
 export type TzOffset = `${Hours}:${Minutes}`;
 export type DateTimestamp = `${UtcTimestamp}Z` | `${UtcTimestamp}-${TzOffset}`;
 export type CanonicalizableObject = Record<string, any>;
-export type CanonicalizationAlgorithm = 'JCS' | 'RDFC-1.0';
+export type CanonicalizationAlgorithm = 'jcs' | 'rdfc';
 export type UnixTimestamp = number;

@@ -1,4 +1,4 @@
-import { Btc1Error, PatchOperation, PublicKeyBytes } from '@did-btc1/common';
+import { Btc1Error, INVALID_DID_DOCUMENT, Logger, PatchOperation, PublicKeyBytes } from '@did-btc1/common';
 import type { DidResolutionResult, DidVerificationMethod, DidCreateOptions as IDidCreateOptions } from '@web5/dids';
 import {
   Did,
@@ -167,28 +167,33 @@ export class DidBtc1 implements DidMethod {
    */
   public static async resolve(identifier: string, options: DidResolutionOptions = {}): Promise<DidResolutionResult> {
     try {
-      // Parse the identifier into its components
+      // 1. Pass identifier to the did:btc1 Identifier Decoding algorithm, retrieving idType, version, network, and
+      //    genesisBytes.
+      // 2. Set identifierComponents to a map of idType, version, network, and genesisBytes.
       const components = Btc1Appendix.parse(identifier);
 
-      // Set the components in the options
-      options.components = components;
-
-      // Resolve the DID Document based on the hrp
+      // 3. Set initialDocument to the result of running the algorithm in Resolve Initial Document passing in the
+      //    identifier, identifierComponents and resolutionOptions.
       const initialDocument = await Btc1Read.initialDocument({ identifier, components, options });
 
-      // Produce a an XML Datetime UTC to indicate the timestamp of the Create operation.
-      const created = new Date().getUTCDateTime();
+      // 4. Set targetDocument to the result of running the algorithm in Resolve Target Document passing in
+      //    initialDocument and resolutionOptions.
+      const targetDocument = await Btc1Read.targetDocument({ initialDocument, options });
 
-      // Return the DID Resolution Result
-      return {
+      // 5. Return targetDocument.
+      const didResolutionResult: DidResolutionResult = {
         '@context'            : W3C_DID_RESOLUTION_V1,
-        // TODO: Are we using didResolutionMetadata? https://www.w3.org/TR/did-1.0/#did-resolution-metadata
         didResolutionMetadata : { contentType: 'application/did+json' },
-        // TODO: Are we using didDocumentMetadata? https://www.w3.org/TR/did-1.0/#did-document-metadata
-        didDocumentMetadata   : { created },
-        didDocument           : await Btc1Read.targetDocument({ initialDocument, options }) as Btc1DidDocument
-      } as DidResolutionResult;
+        didDocumentMetadata   : { created: new Date().getUTCDateTime() },
+        didDocument           : targetDocument,
+      };
 
+      Logger.warn('// TODO: Are we using the DID Core spec for DidResolutionResult?');
+      Logger.warn('// TODO: Are we using didResolutionMetadata? https://www.w3.org/TR/did-1.0/#did-resolution-metadata');
+      Logger.warn('// TODO: Are we using didDocumentMetadata? https://www.w3.org/TR/did-1.0/#did-document-metadata');
+
+      // Return didResolutionResult;
+      return didResolutionResult;
     } catch (error: any) {
       console.error(error);
       // Rethrow any unexpected errors that are not a `DidError`.
@@ -241,54 +246,53 @@ export class DidBtc1 implements DidMethod {
     verificationMethodId: string;
     beaconIds: string[];
   }): Promise<any> {
-    // Set the error code for invalid DID Document
-    const INVALID_DID_DOCUMENT = DidErrorCode.InvalidDidDocument.toSnakeCaseScreaming();
-
     // Deconstruct the params
-    const { identifier, patch, sourceDocument, sourceVersionId } = params;
+    const { identifier: btc1Identifier, patch, sourceDocument, sourceVersionId } = params;
 
     // 1. Set unsignedUpdate to the result of passing btc1Identifier, sourceDocument, sourceVersionId, and
     //    documentPatch into the Construct DID Update Payload algorithm.
     const unsignedUpdate = await Btc1Update.construct({
-      identifier,
+      btc1Identifier,
       sourceDocument,
       sourceVersionId,
       patch
     });
 
     // Deconstruct the params
-    const { verificationMethodId: vmId, beaconIds } = params;
+    const { verificationMethodId, beaconIds } = params;
 
     // 2. Set verificationMethod to the result of retrieving the verificationMethod from sourceDocument using the verificationMethodId.
-    const vm = Btc1Appendix.getVerificationMethodById({ didDocument: sourceDocument, id: vmId });
+    const verificationMethod = Btc1Appendix.getVerificationMethodById({ didDocument: sourceDocument, id: verificationMethodId });
 
     // Validate the verificationMethod exists in the sourceDocument
-    if (!vm) {
+    if (!verificationMethod) {
       throw new Btc1Error('Verification method not found in did document', INVALID_DID_DOCUMENT, sourceDocument);
     }
 
+    // Deconstruct the verificationMethod
+    const { type, publicKeyMultibase } = verificationMethod;
+
     // 3. Validate the verificationMethod is a Schnorr secp256k1 Multikey:
     //    3.1 verificationMethod.type == Multikey
-    if (vm.type !== 'Multikey') {
-      throw new Btc1Error('Invalid type: must be type "Multikey"', INVALID_DID_DOCUMENT, vm);
+    if (type !== 'Multikey') {
+      throw new Btc1Error('Invalid type: must be type "Multikey"', INVALID_DID_DOCUMENT, verificationMethod);
     }
 
     //    3.2 verificationMethod.publicKeyMultibase[4] == z66P
-    if (vm.publicKeyMultibase?.slice(0, 4) !== 'z66P') {
-      throw new Btc1Error( 'Invalid publicKeyMultibase: must start with "z66p"', INVALID_DID_DOCUMENT, vm);
+    if (publicKeyMultibase?.slice(0, 4) !== 'z66P') {
+      throw new Btc1Error( 'Invalid publicKeyMultibase: must start with "z66p"', INVALID_DID_DOCUMENT, verificationMethod);
     }
 
     // Set vars for convenience
     const didUpdatePayload = unsignedUpdate;
-    const verificationMethod = vm;
 
     // Invoke the update payload and announce the update
-    const didUpdateInvocation = await Btc1Update.invoke({
-      didUpdatePayload,
-      btc1Identifier : identifier,
-      verificationMethod,
-    });
-    return await Btc1Update.announce({ sourceDocument, beaconIds, didUpdatePayload: didUpdateInvocation });
+    const didUpdateInvocation = await Btc1Update.invoke({ didUpdatePayload, btc1Identifier, verificationMethod });
+
+    // Announce the update to the beacons
+    const response = await Btc1Update.announce({ sourceDocument, beaconIds, didUpdatePayload: didUpdateInvocation });
+
+    return response;
   }
 
   /**

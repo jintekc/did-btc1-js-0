@@ -185,6 +185,21 @@ export class Multikey implements IMultikey {
       verificationMethod : this.toVerificationMethod()
     };
   }
+
+  /**
+   * Static convenience method to create a new Multikey instance.
+   * @param {MultikeyParams} params The parameters to create the multikey
+   * @param {string} params.id The id of the multikey (required)
+   * @param {string} params.controller The controller of the multikey (required)
+   * @param {KeyPair} params.keypair The keypair of the multikey (optional, required if no publicKey)
+   * @param {PublicKeyBytes} params.keypair.publicKey The public key of the multikey (optional, required if no privateKey)
+   * @param {PrivateKeyBytes} params.keypair.privateKey The private key of the multikey (optional)
+   * @throws {MultikeyError} if neither a publicKey nor a privateKey is provided
+   * @returns {Multikey} A new Multikey instance
+   */
+  public static initialize({ id, controller, keyPair }: MultikeyParams): Multikey {
+    return new Multikey({ id, controller, keyPair });
+  }
 }
 
 /**
