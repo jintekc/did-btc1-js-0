@@ -1,3 +1,5 @@
+// NOTE: Does not verify due to bad input data!
+
 import { KeyPair } from '@did-btc1/key-pair';
 import { hexToBytes } from '@noble/hashes/utils';
 import { Btc1Appendix } from '../../../method/src/index.js';

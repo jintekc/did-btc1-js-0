@@ -120,10 +120,7 @@ export class SingletonBeacon extends Beacon {
       }
 
       // 5.2 Set updateHashBytes to the result of passing didUpdatePayload to the JSON Canonicalization and Hash algorithm.
-      const updateHashBytes = await JSON.canonicalization.process(didUpdatePayload, {
-        encoding  : 'base58',
-        algorithm : 'jcs'
-      });
+      const updateHashBytes = await JSON.canonicalization.process(didUpdatePayload, 'base58');
 
       // 5.3 If updateHashBytes does not equal hashBytes, MUST throw an invalidSidecarData error.
       if (updateHashBytes !== hashBytes) {
