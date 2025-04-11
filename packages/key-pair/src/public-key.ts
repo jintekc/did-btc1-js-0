@@ -134,9 +134,9 @@ export class PublicKey implements IPublicKey {
     // Decode the public key multibase string
     const multibase = base58btc.decode(this.multibase);
 
-    // If the public key bytes are not 34 bytes, throw an error
-    if(multibase.length !== 34) {
-      throw new PublicKeyError('Invalid argument: must be 34 byte publicKeyMultibase', 'DECODE_PUBLIC_KEY_ERROR');
+    // If the public key bytes are not 35 bytes, throw an error
+    if(multibase.length !== 35) {
+      throw new PublicKeyError('Invalid argument: must be 35 byte publicKeyMultibase', 'DECODE_PUBLIC_KEY_ERROR');
     }
 
     // Grab the prefix bytes
@@ -219,7 +219,7 @@ export class PublicKeyUtils {
    * @param {PrivateKey | PrivateKeyBytes} pk The PrivateKey object or the private key bytes
    * @returns {PublicKey} A new PublicKey object
    */
-  public static fromPrivateKey(pk: PrivateKeyBytes): PublicKey {
+  public static fromPrivateKey(pk: PrivateKey | PrivateKeyBytes): PublicKey {
     // If the private key is a PrivateKey object, get the raw bytes else use the bytes
     const bytes = pk instanceof PrivateKey ? pk.bytes : pk;
 

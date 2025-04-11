@@ -324,7 +324,10 @@ export class Btc1Read {
     const targetBlockHeight = await this.determineTargetBlockHeight({ network, targetTime });
 
     // Get signalsMetadata from sidecarData if it exists
-    const signalsMetadata = (options.sidecarData as SingletonSidecar).signalsMetadata;
+    const signalsMetadata = (options.sidecarData as SingletonSidecar)?.signalsMetadata;
+    if(!signalsMetadata) {
+      return new Btc1DidDocument(initialDocument);
+    }
 
     // Set currentVersionId to 1
     const currentVersionId = 1;
@@ -541,14 +544,14 @@ export class Btc1Read {
           }
 
           // 9.2.5. Set updateHash to the result of passing update into the JSON Canonicalization and Hash algorithm.
-          const updateHash = await JSON.canonicalization.process(update, {encoding: 'base58', algorithm: 'jcs'});
+          const updateHash = await JSON.canonicalization.process(update, 'base58');
 
           // 9.2.6. Push updateHash onto updateHashHistory.
           updateHashHistory.push(updateHash as string);
 
           // 9.2.7. Set contemporaryHash to result of passing contemporaryDIDDocument into the JSON Canonicalization
           //        and Hash algorithm.
-          contemporaryHash = await JSON.canonicalization.process(contemporaryDIDDocument, {encoding: 'base58', algorithm: 'jcs'});
+          contemporaryHash = await JSON.canonicalization.process(contemporaryDIDDocument, 'base58');
 
           //  9.3. If update.targetVersionId is greater than currentVersionId + 1, MUST throw a LatePublishing error.
         } else if (update.targetVersionId > currentVersionId + 1) {
@@ -933,10 +936,7 @@ export class Btc1Read {
     Btc1DidDocument.validate(targetDIDDocument);
 
     // 13. Set targetHash to the SHA256 hash of targetDIDDocument.
-    const targetHash = await JSON.canonicalization.process(targetDIDDocument, {
-      encoding  : 'base58',
-      algorithm : 'jcs'
-    });
+    const targetHash = await JSON.canonicalization.process(targetDIDDocument, 'base58');
 
     // 14. Check that targetHash equals update.targetHash, else raise InvalidDIDUpdate error.
     if (targetHash !== update.targetHash) {

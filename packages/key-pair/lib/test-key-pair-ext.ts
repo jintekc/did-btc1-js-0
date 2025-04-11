@@ -1,9 +1,6 @@
-import { PublicKeyUtils } from '@did-btc1/cryptosuite';
-import { initEccLib, payments } from 'bitcoinjs-lib';
 import * as ecc from 'tiny-secp256k1';
-import { BtcNetworks } from '../../src/types/btc1.js';
-import { KeyPair } from '../src/utils/keypair.js';
-initEccLib(ecc);
+import { KeyPair } from '../src/key-pair.js';
+import { PublicKeyUtils } from '../src/public-key.js';
 
 const privateKey = new Uint8Array([
   189,  38, 143, 201, 181, 132,  46, 71,
@@ -11,11 +8,11 @@ const privateKey = new Uint8Array([
   101, 219, 165,  94, 235, 242, 29, 164,
   176, 161, 99, 193, 209,  97,  23, 158
 ]);
-const keys = new KeyPair(privateKey);
+const keys = new KeyPair({ privateKey });
 const publicKey = keys.publicKey!;
 const network = BtcNetworks.get('mainnet');
 const document = {
-  pubkey               : Array.from(publicKey),
+  publicKey,
   intermediateDocument : {
     '@context' : [
       'https://www.w3.org/ns/did/v1',
@@ -31,7 +28,7 @@ const document = {
       id                 : '#initialKey',
       type               : 'Multikey',
       controller         : 'did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-      publicKeyMultibase : PublicKeyUtils.encode(publicKey.slice(1, 33)),
+      publicKeyMultibase : publicKey.multibase,
     }],
     service : [
       {

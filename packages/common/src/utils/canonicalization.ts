@@ -8,10 +8,6 @@ import { HashBytes } from '../types/crypto.js';
 import { CanonicalizationAlgorithm } from '../types/general.js';
 import { CanonicalizationError } from './errors.js';
 
-interface ProcessOptions {
-  encoding?: string;
-  algorithm?: string
-}
 /**
  * Canonicalization class provides methods for canonicalizing JSON objects
  * and hashing them using SHA-256. It supports different canonicalization
@@ -26,7 +22,7 @@ export class Canonicalization {
    * Initializes the Canonicalization class with the specified algorithm.
    * @param {CanonicalizationAlgorithm} algorithm The canonicalization algorithm to use ('jcs' or 'rdfc').
    */
-  constructor(algorithm: CanonicalizationAlgorithm = 'rdfc') {
+  constructor(algorithm: CanonicalizationAlgorithm = 'jcs') {
     this._algorithm = algorithm;
   }
 
@@ -43,7 +39,7 @@ export class Canonicalization {
       throw new CanonicalizationError(`Unsupported algorithm: ${algorithm}`, 'ALGORITHM_ERROR');
     }
     // Set the algorithm
-    this.algorithm = algorithm;
+    this._algorithm = algorithm;
   }
 
   /**
@@ -64,24 +60,18 @@ export class Canonicalization {
    * Step 1 Canonicalize (JCS/RDFC) → Step 2 Hash (SHA256) → Step 3 Encode (Hex/Base58).
    *
    * @param {JSONObject} object The object to process.
-   * @param {ProcessOptions} options The options for processing.
-   * @param {string} options.encoding The encoding format ('hex' or 'base58').
-   * @param {string} options.algorithm The canonicalization algorithm ('jcs' or 'rdfc').
-   * @returns {Promise<string | HashBytes>} The final SHA-256 hash bytes as a hex string.
+   * @param {string} encoding The encoding format ('hex' or 'base58').
+   * @returns {Promise<string>} The final SHA-256 hash bytes as a hex string.
    */
-  public async process(
-    object: JSONObject,
-    options: ProcessOptions = {
-      encoding  : 'hex',
-      algorithm : 'rdfc '
-    }
-  ): Promise<string | HashBytes> {
+  public async process(object: JSONObject, encoding: string = 'hex'): Promise<string> {
     // Step 1: Canonicalize
     const canonicalized = await this.canonicalize(object);
     // Step 2: Hash
-    const hashBytes = this.hash(canonicalized);
-    // Step 3 (Optional): Encode
-    return options.encoding ? this.encode(hashBytes, options.encoding) : hashBytes;
+    const hashed = this.hash(canonicalized);
+    // Step 3: Encode
+    const encoded = this.encode(hashed, encoding);
+    // Return the encoded string
+    return encoded;
   }
 
   /**
@@ -90,7 +80,7 @@ export class Canonicalization {
    * @returns {Promise<string>} The canonicalized object.
    */
   public async canonicalize(object: JSONObject): Promise<string> {
-    return (this[this.algorithm] as (object: JSONObject) => any)(object);
+    return await (this[this.algorithm] as (object: JSONObject) => any)(object);
   }
 
   /**

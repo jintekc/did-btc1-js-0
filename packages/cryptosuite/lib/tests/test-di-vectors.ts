@@ -1,6 +1,6 @@
 import { KeyPair } from '@did-btc1/key-pair';
 import { base58btc } from 'multiformats/bases/base58';
-import { Cryptosuite, DataIntegrityProof, Multikey } from '../src/index.js';
+import { Cryptosuite, DataIntegrityProof, Multikey } from '../../src/index.js';
 
 const securedDocument = {
   '@context' : [
