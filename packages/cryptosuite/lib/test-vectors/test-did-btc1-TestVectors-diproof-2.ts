@@ -46,8 +46,8 @@ console.log('components:', components);
 const publicKey = hexToBytes(components.genesisBytes).slice(1);
 console.log('publicKey:', publicKey);
 const keyPair = new KeyPair({ publicKey });
-const publicKeyMultibase = keyPair.publicKey.multibase;
-console.log('publicKeyMultibase', publicKeyMultibase);
+const publicKeyJson = keyPair.publicKey.json();
+console.log('publicKeyJson', publicKeyJson);
 const diProof = Multikey.initialize({ id, controller, keyPair })
   .toCryptosuite('bip340-jcs-2025')
   .toDataIntegrityProof();

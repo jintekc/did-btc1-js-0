@@ -2,45 +2,41 @@ import { expect } from 'chai';
 import { PublicKey } from '../src/public-key.js';
 import { PublicKeyError } from '@did-btc1/common';
 
-describe('PublicKey instantiated', () => {
-  const bytes = new Uint8Array([
-    2, 154, 213, 246, 168,  93,  39, 238,
-    105, 177,  51, 174, 210, 115, 180, 242,
-    245, 215,  14, 212, 167,  22, 117,   1,
-    156,  26, 118, 240,  76, 102,  53,  38,
-    239
-  ]);
-  const hex = '029ad5f6a85d27ee69b133aed273b4f2f5d70ed4a71675019c1a76f04c663526ef';
-  const multibase = 'z66PwJnYvwJLhGrVc8vcuUkKs99sKCzYRM2HQ2gDCGTAStHk';
+describe('PublicKey', () => {
+  const hex = '027f87843047622ad7556ed37c981e096a6bf606e7ccfc2ef3db1e9148ccb4cbb9';
+  const multibase = 'zQ3shVzcPKb9Jw46yNjW2AMXe9AhniqSqtPueJNygcLguNZTn';
   const parity = 2;
   const x = new Uint8Array([
-    154, 213, 246, 168,  93,  39, 238, 105,
-    177,  51, 174, 210, 115, 180, 242, 245,
-    215,  14, 212, 167,  22, 117,   1, 156,
-    26, 118, 240,  76, 102,  53,  38, 239
+    127, 135, 132,  48,  71,  98,  42, 215,
+    85, 110, 211, 124, 152,  30,   9, 106,
+    107, 246,   6, 231, 204, 252,  46, 243,
+    219,  30, 145,  72, 204, 180, 203, 185
   ]);
   const y = new Uint8Array([
-    57, 120, 174, 166,  82, 187, 183, 241,
-    7, 118, 238,   5, 196, 240, 218,   1,
-    104,   9, 174,  89,  77, 178, 114,  59,
-    36,  84, 218, 244, 179, 107, 163, 205
+    134, 174, 110, 219, 173, 235,  25, 140,
+    123, 204, 226, 205,  79,  40,  94,   9,
+    12, 249, 146, 238, 209, 222, 148,  92,
+    218, 208, 107, 223,  13, 168, 121,   9
   ]);
   const uncompressed = new Uint8Array([
-    4, 154, 213, 246, 168,  93,  39, 238, 105, 177,  51,
-    174, 210, 115, 180, 242, 245, 215,  14, 212, 167,  22,
-    117,   1, 156,  26, 118, 240,  76, 102,  53,  38, 239,
-    57, 120, 174, 166,  82, 187, 183, 241,   7, 118, 238,
-    5, 196, 240, 218,   1, 104,   9, 174,  89,  77, 178,
-    114,  59,  36,  84, 218, 244, 179, 107, 163, 205
+    4,  127, 135, 132,  48,  71,  98,  42, 215,
+    85, 110, 211, 124, 152,  30,   9, 106,
+    107, 246,   6, 231, 204, 252,  46, 243,
+    219,  30, 145,  72, 204, 180, 203, 185,
+    134, 174, 110, 219, 173, 235,  25, 140,
+    123, 204, 226, 205,  79,  40,  94,   9,
+    12, 249, 146, 238, 209, 222, 148,  92,
+    218, 208, 107, 223,  13, 168, 121,   9
   ]);
-  const prefix = new Uint8Array([225, 74]);
+  const prefix = new Uint8Array([231, 1]);
   const json = { parity, x, y, hex, multibase, prefix };
-  const decoded = new Uint8Array([...prefix, ...x]);
+  const bytes = new Uint8Array([parity, ...x]);
+  const decoded = new Uint8Array([...prefix, ...bytes]);
 
   describe('with invalid bytes', () => {
     it('should throw PublicKeyError if bytes invalid', () => {
       expect(() => new PublicKey(new Uint8Array([0])))
-        .to.throw(PublicKeyError, 'Invalid argument: byte length must be 32 (x-only) or 33 (compressed)');
+        .to.throw(PublicKeyError, 'Invalid argument: byte length must be 33 (compressed)');
     });
   });
 

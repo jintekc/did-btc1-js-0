@@ -1,5 +1,5 @@
 import { KeyPairError, MultikeyError } from '@did-btc1/common';
-import { KeyPair, KeyPairUtils, PrivateKey, PrivateKeyUtils, PublicKey } from '@did-btc1/key-pair';
+import { KeyPair, PrivateKey, PrivateKeyUtils, PublicKey } from '@did-btc1/key-pair';
 import { expect } from 'chai';
 import { Multikey } from '../src/index.js';
 
@@ -11,38 +11,28 @@ import { Multikey } from '../src/index.js';
  * 4. id, controller, privateKey, publicKey → should succeed
  */
 describe('Multikey instantiated', () => {
-  // Crypto Constants
   const privateKeyBytes = new Uint8Array([
-    115, 253, 220, 18, 252, 147, 66, 187,
-    41, 174, 155, 94, 212, 118, 50,  59,
-    220, 105,  58, 17, 110,  54, 81,  36,
-    85, 174, 232, 48, 254, 138, 37, 162
+    69, 112, 198, 176,  14, 103, 100,  73,
+    35, 179, 169,  83,  80, 213, 189, 190,
+    118, 200,   5,  43,  20,  46, 148,  60,
+    109,  37, 134, 164, 162, 174, 185, 201
   ]);
-  /*const publicKeyBytes = new Uint8Array([
-    2, 154, 213, 246, 168,  93,  39, 238,
-    105, 177,  51, 174, 210, 115, 180, 242,
-    245, 215,  14, 212, 167,  22, 117,   1,
-    156,  26, 118, 240,  76, 102,  53,  38,
-    239
-  ]);*/
-  const keyPair = KeyPairUtils.fromPrivateKey(privateKeyBytes);
-  const { publicKey, privateKey } = keyPair;
-
+  const keys = new KeyPair({ privateKey: privateKeyBytes });
+  const publicKey = keys.publicKey;
   // Multikey Constants
   const id = '#initialKey';
-  const type = 'Multikey';
-  const controller = 'did:btc1:k1qvddh3hl7n5czluwhz9ry35tunkhtldhgr66zp907ewg4l7p6u786tz863a';
+  const controller = 'did:btc1:regtest:k1qtwrw6r00e3rh6hv02ak42mweykcg0u7n478vl5ks4ugfppl9dfs7m3gyfg';
   const fullId = `${controller}${id}`;
-  const publicKeyMultibase = 'z66PwJnYvwJLhGrVc8vcuUkKs99sKCzYRM2HQ2gDCGTAStHk';
-  const verificationMethod = { id, type, controller, publicKeyMultibase };
+  const publicKeyMultibase = 'zQ3shcERTF2BZqz4v51hDdPdM4di9xFWNadCakCkQmNEZPdPt';
+  const verificationMethod = { id, type: 'Multikey', controller, publicKeyMultibase };
   const message = Buffer.from('Hello BTC1!');
   const validSignature = new Uint8Array([
-    120, 106, 121,  54, 225,  45, 189, 134,  48,  20, 118,
-    70, 228,  69,  29,  32,  74, 170,  55, 215, 193, 245,
-    54, 220, 220,  20,  69,  11, 192, 138, 137,  85, 121,
-    26, 215,  77, 208, 122, 118,  95,  30,  91,   3, 137,
-    245,   1,  67, 147,  99,  48,  39,  83, 189, 132, 158,
-    65, 114, 110,  48,  39,  91, 142, 117, 138
+    85,  48,  48, 200, 201, 230, 173,  26, 182,  77,  38,
+    134, 190, 167, 208,  58, 190, 165, 243, 187,  71, 193,
+    232, 243,   1, 110, 127,  15, 234, 208,  21, 154, 111,
+    110, 141, 130,  83, 111, 128, 223,  85, 221, 218, 127,
+    240, 108,  12,  95,  69, 101, 185, 118, 100, 215, 127,
+    204,  11, 107,  75, 251, 240, 246,  93, 113
   ]);
   const invalidSignature =  new Uint8Array([
     25, 105, 158, 232,  91,   7,  61,   8,   2, 215, 191,
@@ -56,7 +46,7 @@ describe('Multikey instantiated', () => {
   /**
    * Incomplete parameters
    */
-  describe('without a KeyPair', () => {
+  describe('No KeyPair', () => {
     it('should throw MultikeyError', () => {
       expect(() => new Multikey({ id, controller }))
         .to.throw(MultikeyError, 'Argument missing: "keyPair" required');
@@ -66,8 +56,8 @@ describe('Multikey instantiated', () => {
   /**
    * All parameters
    */
-  describe('with a new KeyPair', () => {
-    const multikey = new Multikey({ id, controller, keyPair });
+  describe('KeyPair', () => {
+    const multikey = new Multikey({ id, controller, keyPair: keys });
 
     it('should successfully construct a new Multikey', () => {
       expect(multikey).to.exist.and.to.be.instanceOf(Multikey);
@@ -78,8 +68,8 @@ describe('Multikey instantiated', () => {
       expect(multikey.controller).to.equal(controller);
       expect(multikey.privateKey).to.exist.and.to.be.instanceOf(PrivateKey);
       expect(multikey.publicKey).to.exist.and.to.be.instanceOf(PublicKey);
-      expect(multikey.privateKey.equals(privateKey)).to.be.true;
-      expect(multikey.publicKey.equals(publicKey)).to.be.true;
+      expect(multikey.privateKey.equals(keys.privateKey)).to.be.true;
+      expect(multikey.publicKey.equals(keys.publicKey)).to.be.true;
     });
 
     it('should create a valid schnorr signature', () => {
@@ -120,15 +110,14 @@ describe('Multikey instantiated', () => {
       expect(multikeyFromVm.id).to.equal(id);
       expect(multikeyFromVm.controller).to.equal(controller);
       expect(multikeyFromVm.publicKey).to.exist.and.to.be.instanceOf(PublicKey);
-      expect(multikeyFromVm.publicKey.equals(publicKey)).to.be.true;
+      expect(multikeyFromVm.publicKey.equals(keys.publicKey)).to.be.true;
     });
-
   });
 
   /**
    * Key Pair with Public Key passed only
    */
-  describe('with a PublicKey-only KeyPair', () => {
+  describe('Verification KeyPair (PublicKey-Only)', () => {
     const keyPair = new KeyPair({ publicKey });
     const multikey = new Multikey({ id, controller, keyPair });
 
@@ -187,8 +176,8 @@ describe('Multikey instantiated', () => {
   /**
    * Key Pair with PrivateKey passed only
    */
-  describe('instantiate by passing only a privateKey to a new KeyPair', () => {
-    const keyPair = new KeyPair({ privateKey });
+  describe('Sign/Verify KeyPair (PrivateKey-PublicKey)', () => {
+    const keyPair = new KeyPair({ privateKey: keys.privateKey });
     const multikey = new Multikey({ id, controller, keyPair });
 
     it('should successfully construct a new Multikey with a keyPair', () => {
@@ -200,8 +189,8 @@ describe('Multikey instantiated', () => {
       expect(multikey.controller).to.equal(controller);
       expect(multikey.publicKey).to.exist.and.to.be.instanceOf(PublicKey);
       expect(multikey.privateKey).to.exist.and.to.be.instanceOf(PrivateKey);
-      expect(multikey.privateKey.equals(privateKey)).to.be.true;
-      expect(multikey.publicKey.equals(publicKey)).to.be.true;
+      expect(multikey.privateKey.equals(keyPair.privateKey)).to.be.true;
+      expect(multikey.publicKey.equals(keyPair.publicKey)).to.be.true;
     });
 
     it('should create a valid schnorr signature', () => {
@@ -247,8 +236,8 @@ describe('Multikey instantiated', () => {
   /**
    * Key Pair from Secret
    */
-  describe('Multikey from KeyPair with PrivateKey fromSecret', () => {
-    const SECRET = 52464508790539176856770556715241483442035423615466097401201513777400180778402n;
+  describe('Sign/Verify KeyPair (PrivateKey.fromSecret)', () => {
+    const SECRET = 31408844715744742771434292216794392628447163656691664006588916258271600228809n;
     const privateKey = PrivateKeyUtils.fromSecret(SECRET);
     const keyPair = new KeyPair({ privateKey });
     const multikey = new Multikey({ id, controller, keyPair });
@@ -305,7 +294,6 @@ describe('Multikey instantiated', () => {
       expect(multikeyFromVm.publicKey).to.exist.and.to.be.instanceOf(PublicKey);
       expect(multikeyFromVm.publicKey.equals(publicKey)).to.be.true;
       expect(() => multikeyFromVm.privateKey.secret).to.throw(KeyPairError, 'Private key not available');
-
     });
   });
 });
