@@ -1,13 +1,14 @@
 {
   "name": "did-btc1-js",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Monorepo for did:btc1 js/ts implementation and supporting packages.",
   "type": "module",
   "workspaces": [
     "packages/common",
-    "packages/cryptosuite",
     "packages/key-pair",
-    "packages/method"
+    "packages/cryptosuite",
+    "packages/method",
+    "packages/cli"
   ],
   "scripts": {
     "cleanup": "pnpm npkill -d $(pwd)/packages -t dist && pnpm npkill -d $(pwd) -t node_modules",
