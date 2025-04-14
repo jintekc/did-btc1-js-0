@@ -1,4 +1,4 @@
-import { canonicalization, DidUpdatePayload, INVALID_SIDECAR_DATA, LATE_PUBLISHING_ERROR, Logger, SingletonBeaconError } from '@did-btc1/common';
+import { DidUpdatePayload, INVALID_SIDECAR_DATA, LATE_PUBLISHING_ERROR, Logger, SingletonBeaconError } from '@did-btc1/common';
 import { base58btc } from 'multiformats/bases/base58';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
 import { Beacon } from '../../interfaces/beacon.js';
@@ -182,7 +182,7 @@ export class SingletonBeacon extends Beacon {
     Logger.warn('// TODO: 3. Ensure bitcoinAddress is funded, if not, fund this address.');
 
     // 4. Set hashBytes to the result of passing didUpdatePayload to the JSON Canonicalization and Hash algorithm.
-    const hashBytes = await canonicalization.process(didUpdatePayload);
+    const hashBytes = await JSON.canonicalization.process(didUpdatePayload);
 
     // 5. Initialize spendTx to a Bitcoin transaction that spends a transaction controlled by the bitcoinAddress and
     //    contains at least one transaction output. This output MUST have the following format
@@ -196,7 +196,6 @@ export class SingletonBeacon extends Beacon {
 
     // 6. Retrieve the cryptographic material, e.g private key or signing capability, associated with the bitcoinAddress
     //    or service. How this is done is left to the implementer.
-    Logger.warn('// TODO: 6. Retrieve the cryptographic material associated with the bitcoinAddress or service.');
 
     // 7. Sign the spendTx.
     const signedRawTx = await rpc.signRawTransaction({ hexstring: spendTx });

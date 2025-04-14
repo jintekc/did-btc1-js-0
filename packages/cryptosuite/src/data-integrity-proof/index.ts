@@ -113,6 +113,9 @@ export class DataIntegrityProof implements IDataIntegrityProof {
     // Add the mediaType to the verification result
     mediaType ??= mt;
 
+    // Add the mediaType to the verification result
+    mediaType ??= mt;
+
     const sansProof = JSON.delete({
       obj : verifiedDocument as Record<string, any>,
       key : 'proof'
