@@ -217,22 +217,22 @@ export class DidBtc1 implements DidMethod {
    *
    * An update to a did:btc1 document is an invoked capability using the ZCAP-LD data format, signed by a
    * verificationMethod that has the authority to make the update as specified in the previous DID document. Capability
-   * invocations for updates MUST be authorized using Data Integrity following the schnorr-secp256k1-jcs-2025
+   * invocations for updates MUST be authorized using Data Integrity following the bip340-jcs-2025
    * cryptosuite with a proofPurpose of capabilityInvocation.
    *
-   * The Update takes as inputs a btc1Identifier, sourceDocument, sourceVersionId, documentPatch, a verificationMethodId
-   * and an array of beaconIds. The sourceDocument is the DID document being updated. The documentPatch is a JSON Patch
-   * object containing a set of transformations to be applied to the sourceDocument. The result of these transformations
-   * MUST produce a DID document conformant to the DID Core specification. The verificationMethodId is an identifier for
-   * a verificationMethod within the sourceDocument. The verificationMethod identified MUST be a Schnorr secp256k1
-   * Multikey. The beaconIds MUST identify service endpoints with one of the three Beacon Types SingletonBeacon,
-   * CIDAggregateBeacon, and SMTAggregateBeacon.
+   * The Update algorithm takes as inputs a btc1Identifier, sourceDocument, sourceVersionId, documentPatch, a
+   * verificationMethodId and an array of beaconIds. The sourceDocument is the DID document being updated. The
+   * documentPatch is a JSON Patch object containing a set of transformations to be applied to the sourceDocument.
+   * The result of these transformations MUST produce a DID document conformant to the DID Core specification. The
+   * verificationMethodId is an identifier for a verificationMethod within the sourceDocument. The verificationMethod
+   * identified MUST be a BIP340 Multikey. The beaconIds MUST identify service endpoints with one of the three Beacon
+   * Types SingletonBeacon, aCIDAggregateBeacon, and SMTAggregateBeacon.
    *
-   * @param {DidUpdateParams} params Required parameters for the update operation
-   * @param {string} params.identifier The DID to be updated
-   * @param {Btc1DidDocument} params.sourceDocument The source document to be updated
-   * @param {string} params.sourceVersionId The versionId of the source document
-   * @param {Btc1DocumentPatch} params.documentPatch The JSON patch to be applied to the source document
+   * @param {DidUpdateParams} params Required parameters for the update operation.
+   * @param {string} params.identifier The btc1 identifier to be updated.
+   * @param {Btc1DidDocument} params.sourceDocument The DID document being updated.
+   * @param {string} params.sourceVersionId The versionId of the source document.
+   * @param {Btc1DocumentPatch} params.documentPatch The JSON patch to be applied to the source document.
    * @param {string} params.verificationMethodId The verificationMethod ID to sign the update
    * @param {string[]} params.beaconIds The beacon IDs to announce the update
    * @returns {Promise<void>} Promise resolving to void
@@ -247,52 +247,66 @@ export class DidBtc1 implements DidMethod {
     beaconIds: string[];
   }): Promise<any> {
     // Deconstruct the params
-    const { identifier: btc1Identifier, patch, sourceDocument, sourceVersionId } = params;
+    const {
+      identifier,
+      sourceDocument,
+      sourceVersionId,
+      patch,
+      verificationMethodId,
+      beaconIds
+    } = params;
 
-    // 1. Set unsignedUpdate to the result of passing btc1Identifier, sourceDocument, sourceVersionId, and
-    //    documentPatch into the Construct DID Update Payload algorithm.
-    const unsignedUpdate = await Btc1Update.construct({
-      btc1Identifier,
+    // 1. Set unsignedUpdate to the result of passing btc1Identifier, sourceDocument,
+    //    sourceVersionId, and documentPatch into the Construct DID Update
+    //    Payload algorithm.
+    const didUpdatePayload = await Btc1Update.construct({
+      identifier,
       sourceDocument,
       sourceVersionId,
       patch
     });
 
-    // Deconstruct the params
-    const { verificationMethodId, beaconIds } = params;
-
-    // 2. Set verificationMethod to the result of retrieving the verificationMethod from sourceDocument using the verificationMethodId.
-    const verificationMethod = Btc1Appendix.getVerificationMethodById({ didDocument: sourceDocument, id: verificationMethodId });
+    // 2. Set verificationMethod to the result of retrieving the verificationMethod
+    //    from sourceDocument using the verificationMethodId.
+    const verificationMethod = Btc1Appendix.getVerificationMethodById({
+      didDocument : sourceDocument,
+      id          : verificationMethodId
+    });
 
     // Validate the verificationMethod exists in the sourceDocument
     if (!verificationMethod) {
       throw new Btc1Error('Verification method not found in did document', INVALID_DID_DOCUMENT, sourceDocument);
     }
 
-    // Deconstruct the verificationMethod
-    const { type, publicKeyMultibase } = verificationMethod;
-
-    // 3. Validate the verificationMethod is a Schnorr secp256k1 Multikey:
+    // 3. Validate the verificationMethod is a BIP340 Multikey:
     //    3.1 verificationMethod.type == Multikey
-    if (type !== 'Multikey') {
+    if (verificationMethod.type !== 'Multikey') {
       throw new Btc1Error('Invalid type: must be type "Multikey"', INVALID_DID_DOCUMENT, verificationMethod);
     }
 
-    //    3.2 verificationMethod.publicKeyMultibase[4] == z66P
-    if (publicKeyMultibase?.slice(0, 4) !== 'z66P') {
-      throw new Btc1Error( 'Invalid publicKeyMultibase: must start with "z66p"', INVALID_DID_DOCUMENT, verificationMethod);
+    //    3.2 verificationMethod.publicKeyMultibase[4] == zQ3s
+    if (verificationMethod.publicKeyMultibase?.slice(0, 4) !== 'zQ3s') {
+      throw new Btc1Error('Invalid publicKeyMultibase: must start with "zQ3s"', INVALID_DID_DOCUMENT, verificationMethod);
     }
 
-    // Set vars for convenience
-    const didUpdatePayload = unsignedUpdate;
+    // 4. Set didUpdateInvocation to the result of passing btc1Identifier, unsignedUpdate as didUpdatePayload, and
+    //    verificationMethod to the Invoke DID Update Payload algorithm.
+    const didUpdateInvocation = await Btc1Update.invoke({
+      identifier,
+      verificationMethod,
+      didUpdatePayload,
+    });
 
-    // Invoke the update payload and announce the update
-    const didUpdateInvocation = await Btc1Update.invoke({ didUpdatePayload, btc1Identifier, verificationMethod });
+    // 5. Set signalsMetadata to the result of passing btc1Identifier, sourceDocument, beaconIds and didUpdateInvocation
+    //    to the Announce DID Update algorithm.
+    const signalsMetadata = await Btc1Update.announce({
+      sourceDocument,
+      beaconIds,
+      didUpdateInvocation
+    });
 
-    // Announce the update to the beacons
-    const response = await Btc1Update.announce({ sourceDocument, beaconIds, didUpdatePayload: didUpdateInvocation });
-
-    return response;
+    // 6. Return signalsMetadata. It is up to implementations to ensure that the signalsMetadata is persisted.
+    return signalsMetadata;
   }
 
   /**
