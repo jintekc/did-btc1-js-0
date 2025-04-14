@@ -1,8 +1,4 @@
-import { varint } from 'multiformats/basics';
-
 export const ID_PLACEHOLDER_VALUE = 'did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
-export const MULTIKEY_HEADER = 0x2561;
-export const SECP256K1_XONLY_PUBLIC_KEY_PREFIX = varint.encodeTo(MULTIKEY_HEADER, new Uint8Array());
 export const OP_RETURN = 0x6a;
 export const OP_PUSH32 = 0x20;
 export const VALID_HRP = ['k', 'x'];
@@ -20,7 +16,7 @@ export const CONTEXT_URL_MAP = {
   w3c : {
     did           : { v1: W3C_DID_V1,},
     didresolution : { v1: W3C_DID_RESOLUTION_V1,},
-    dataintegrity : { v1: W3C_DATA_INTEGRITY_V1,v2: W3C_DATA_INTEGRITY_V2 },
+    dataintegrity : { v1: W3C_DATA_INTEGRITY_V1, v2: W3C_DATA_INTEGRITY_V2 },
     zcap          : { v1: W3C_ZCAP_V1,},
     jsonldpatch   : { v1: W3C_JSONLD_PATCH_V1,},
     multikey      : { v1: W3C_MULTIKEY_V1,},
@@ -43,5 +39,6 @@ export const BTC1_MULTIKEY_CONTEXT = [
 export const BTC1_DID_UPDATE_PAYLOAD_CONTEXT = [
   CONTEXT_URL_MAP.w3c.zcap.v1,
   CONTEXT_URL_MAP.w3c.dataintegrity.v2,
-  CONTEXT_URL_MAP.w3c.jsonldpatch.v1, CONTEXT_URL_MAP.btc1.diddocument.v1
+  CONTEXT_URL_MAP.w3c.jsonldpatch.v1,
+  CONTEXT_URL_MAP.btc1.diddocument.v1
 ];
