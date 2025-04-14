@@ -86,8 +86,15 @@ export class Multikey implements IMultikey {
    * @param {('bip340-jcs-2025' | 'bip340-rdfc-2025')} [cryptosuite='bip340-rdfc-2025']
    * @returns {Cryptosuite}
    */
-  public toCryptosuite(cryptosuite: 'bip340-jcs-2025' | 'bip340-rdfc-2025' = 'bip340-jcs-2025'): Cryptosuite {
-    return new Cryptosuite({ cryptosuite, multikey: this });
+  public toCryptosuite(cryptosuite: 'bip340-jcs-2025' | 'bip340-rdfc-2025' = 'bip340-rdfc-2025'): Cryptosuite {
+    return new Cryptosuite({
+      cryptosuite,
+      multikey : new Multikey({
+        id         : this.id,
+        controller : this.controller,
+        keyPair    : this.keyPair
+      })
+    });
   }
 
   /** @see IMultikey.sign */
