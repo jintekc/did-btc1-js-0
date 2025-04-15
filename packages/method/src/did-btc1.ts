@@ -1,5 +1,17 @@
-import { Btc1Error, INVALID_DID_DOCUMENT, Logger, PatchOperation, PublicKeyBytes } from '@did-btc1/common';
-import type { DidResolutionResult, DidVerificationMethod, DidCreateOptions as IDidCreateOptions } from '@web5/dids';
+import {
+  Btc1Error,
+  INVALID_DID,
+  INVALID_DID_DOCUMENT,
+  Logger,
+  PatchOperation,
+  PublicKeyBytes,
+  W3C_DID_RESOLUTION_V1
+} from '@did-btc1/common';
+import type {
+  DidResolutionResult,
+  DidVerificationMethod,
+  DidCreateOptions as IDidCreateOptions
+} from '@web5/dids';
 import {
   Did,
   DidError,
@@ -15,9 +27,9 @@ import { Btc1Update } from './btc1/crud/update.js';
 import { Btc1KeyManager } from './btc1/key-manager/index.js';
 import { DidResolutionOptions, IntermediateDocument } from './interfaces/crud.js';
 import { Btc1Networks, DidBtc1IdTypes, RecoveryOptions } from './types/crud.js';
-import { Btc1Appendix } from './utils/btc1/appendix.js';
-import { W3C_DID_RESOLUTION_V1 } from './utils/btc1/constants.js';
-import { Btc1DidDocument } from './utils/btc1/did-document.js';
+import { Btc1Appendix } from './utils/appendix.js';
+import { Btc1DidDocument } from './utils/did-document.js';
+import { Btc1Identifier } from './utils/identifier.js';
 
 /** Initialize tiny secp256k1 */
 initEccLib(tinysecp);
@@ -25,7 +37,7 @@ initEccLib(tinysecp);
 export type IdType = 'key' | 'external';
 export interface DidCreateOptions extends IDidCreateOptions<Btc1KeyManager> {
   /** DID BTC1 Version Number */
-  version?: string;
+  version?: number;
   /** Bitcoin Network */
   network?: string;
 }
@@ -72,33 +84,31 @@ export class DidBtc1 implements DidMethod {
    * @param {PublicKeyBytes} params.pubKeyBytes Public key byte array used to create a btc1 "key" identifier.
    * @param {IntermediateDocument} params.intermediateDocument DID Document used to create a btc1 "external" identifier.
    * @param {DidCreateOptions} params.options See {@link DidCreateOptions} for create options.
-   * @param {string} params.options.version Version number of the btc1 method.
+   * @param {number} params.options.version Version number of the btc1 method.
    * @param {string} params.options.network Bitcoin network name (mainnet, testnet, signet, regtest).
    * @returns {Promise<CreateResponse>} Promise resolving to a CreateResponse object.
    * @throws {DidBtc1Error} if any of the checks fail
    */
   public static async create(params: DidCreateParams): Promise<DidCreateResponse> {
-    const type = 'BTC1_CREATE_ERROR';
     // Deconstruct the idType and options from the params
     const { idType, options = {} } = params;
 
     // Validate that the idType is set to either key or external
     if (!(idType in DidBtc1IdTypes)) {
-      throw new Btc1Error('Invalid idType: expected "key" or "external"', type, params);
+      throw new Btc1Error('Invalid idType: expected "key" or "external"', INVALID_DID, params);
     }
 
     // Deconstruct options and set the default values
-    const { version = '1', network = 'mainnet' } = options;
+    const { version = 1, network = 'mainnet' } = options;
 
     // Validate network in Btc1Networks
     if (!(network in Btc1Networks)) {
-      throw new Btc1Error('Invalid network: must be one of valid bitcoin network', type, options);
+      throw new Btc1Error('Invalid network: must be one of valid bitcoin network', INVALID_DID, options);
     }
 
     // Validate version as number > 0
-    const versionNumber = Number(version);
-    if (isNaN(versionNumber) || versionNumber <= 0) {
-      throw new Btc1Error('Invalid version: must be be convertable to a number > 0', type, options);
+    if (isNaN(version) || version <= 0 || version > 1) {
+      throw new Btc1Error('Invalid version: must be be convertable to a 0 < number < 1', INVALID_DID, options);
     }
 
     // If idType is key, call Btc1Create.deterministic
@@ -108,21 +118,16 @@ export class DidBtc1 implements DidMethod {
 
       // Validate pubKeybytes exists if idType = key
       if (!pubKeyBytes) {
-        throw new Btc1Error('Invalid pubKeyBytes: cannot be null', type, params);
+        throw new Btc1Error('Invalid pubKeyBytes: cannot be null', INVALID_DID, params);
       }
 
       // Validate pubKeyBytes is 32 or 33 bytes
-      if(pubKeyBytes && ![32, 33].includes(pubKeyBytes.length)) {
-        throw new Btc1Error('Invalid pubKeyBytes: must be 32 byte x-only or 33 byte compressed', type, params);
+      if(pubKeyBytes && pubKeyBytes.length !== 33) {
+        throw new Btc1Error('Invalid pubKeyBytes: byte length must be 33 (compressed)', INVALID_DID, params);
       }
 
-      // Convert 32 byte public key to 33 byte with 0x02 parity
-      const publicKey = pubKeyBytes.length === 32
-        ? new Uint8Array([0x02, ...pubKeyBytes])
-        : pubKeyBytes;
-
       // Return call to Btc1Create.deterministic
-      return Btc1Create.deterministic({ version, network, publicKey });
+      return Btc1Create.deterministic({ version, network, publicKey: pubKeyBytes });
     }
 
     // If idType is external, call Btc1Create.external
@@ -132,7 +137,7 @@ export class DidBtc1 implements DidMethod {
 
       // Validate intermediateDocument exists if idType = external
       if (!intermediateDocument) {
-        throw new Btc1Error('Invalid intermediateDocument: cannot be null', type, params);
+        throw new Btc1Error('Invalid intermediateDocument: cannot be null', INVALID_DID, params);
       }
 
       // Return call to Btc1Create.external
@@ -141,7 +146,7 @@ export class DidBtc1 implements DidMethod {
 
 
     // Throw error if idType is not key or external
-    throw new Btc1Error('Invalid idType: expected "key" or "external"', type, params);
+    throw new Btc1Error('Invalid idType: expected "key" or "external"', INVALID_DID, params);
   }
 
   /**
@@ -170,7 +175,7 @@ export class DidBtc1 implements DidMethod {
       // 1. Pass identifier to the did:btc1 Identifier Decoding algorithm, retrieving idType, version, network, and
       //    genesisBytes.
       // 2. Set identifierComponents to a map of idType, version, network, and genesisBytes.
-      const components = Btc1Appendix.parse(identifier);
+      const components = Btc1Identifier.decode(identifier);
 
       // 3. Set initialDocument to the result of running the algorithm in Resolve Initial Document passing in the
       //    identifier, identifierComponents and resolutionOptions.

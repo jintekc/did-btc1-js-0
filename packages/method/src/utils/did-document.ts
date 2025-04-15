@@ -1,10 +1,9 @@
-import { DidDocumentError, INVALID_DID_DOCUMENT } from '@did-btc1/common';
+import { BTC1_DID_DOCUMENT_CONTEXT, DidDocumentError, INVALID_DID_DOCUMENT } from '@did-btc1/common';
 import { DidService, DidVerificationMethod, DidDocument as IDidDocument } from '@web5/dids';
-import { DidBtc1Identifier } from '../../btc1/crud/create.js';
-import { BeaconService } from '../../interfaces/ibeacon.js';
+import { BeaconService } from '../interfaces/ibeacon.js';
 import { Btc1Appendix } from './appendix.js';
-import { BeaconUtils } from './beacon-utils.js';
-import { BTC1_DID_DOCUMENT_CONTEXT } from './constants.js';
+import { BeaconUtils } from './beacons.js';
+import { Btc1Identifier } from './identifier.js';
 
 /**
  * DID BTC1 Verification Method extends the DidVerificationMethod class adding helper methods and properties
@@ -122,9 +121,9 @@ export class Btc1DidDocument implements IBtc1DidDocument {
    * Validates that the DID Document has a valid id.
    * @private
    */
-  private static isValidId(id: DidBtc1Identifier): boolean {
+  private static isValidId(id: string): boolean {
     try {
-      Btc1Appendix.parse(id);
+      Btc1Identifier.decode(id);
       return true;
     } catch {
       return false;

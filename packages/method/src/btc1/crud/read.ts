@@ -2,20 +2,20 @@ import {
   BitcoinNetworkNames,
   Btc1Error,
   Btc1ReadError,
-  canonicalization,
   DidUpdatePayload,
+  ID_PLACEHOLDER_VALUE,
   INVALID_DID_DOCUMENT,
   INVALID_DID_UPDATE,
   LATE_PUBLISHING_ERROR,
   Logger,
-  UnixTimestamp
+  UnixTimestamp,
+  VALID_HRP
 } from '@did-btc1/common';
 import { Cryptosuite, DataIntegrityProof, Multikey } from '@did-btc1/cryptosuite';
 import { KeyPair, PublicKey } from '@did-btc1/key-pair';
 import { hexToBytes } from '@noble/hashes/utils';
 import type { DidVerificationMethod } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
-import { base58btc } from 'multiformats/bases/base58';
 import { DEFAULT_BLOCK_CONFIRMATIONS, GENESIS_TX_ID, TXIN_WITNESS_COINBASE } from '../../bitcoin/constants.js';
 import { getNetwork } from '../../bitcoin/network.js';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
@@ -23,11 +23,10 @@ import { DidResolutionOptions } from '../../interfaces/crud.js';
 import { BeaconServiceAddress, BeaconSignal, Signal } from '../../interfaces/ibeacon.js';
 import { BlockHeight, BlockV3, RawTransactionV2 } from '../../types/bitcoin.js';
 import { CIDAggregateSidecar, SidecarData, SignalsMetadata, SingletonSidecar, SMTAggregateSidecar } from '../../types/crud.js';
-import { Btc1Appendix, DidComponents } from '../../utils/btc1/appendix.js';
-import { BeaconUtils } from '../../utils/btc1/beacon-utils.js';
-import { ID_PLACEHOLDER_VALUE, VALID_HRP } from '../../utils/btc1/constants.js';
-import { Btc1DidDocument } from '../../utils/btc1/did-document.js';
-import JsonPatch from '../../utils/json-patch.js';
+import { Btc1Appendix, DidComponents } from '../../utils/appendix.js';
+import { BeaconUtils } from '../../utils/beacons.js';
+import { Btc1DidDocument } from '../../utils/did-document.js';
+import { Btc1Identifier } from '../../utils/identifier.js';
 import { BeaconFactory } from '../beacons/factory.js';
 
 export type NetworkVersion = {
@@ -482,9 +481,9 @@ export class Btc1Read {
   }): Promise<Btc1DidDocument> {
     // 1. Set contemporaryHash to the SHA256 hash of the contemporaryDIDDocument
     // TODO: NEED TO DEAL WITH CANONICALIZATION
-    const canonicalDocument = await canonicalization.canonicalize(contemporaryDIDDocument);
-    const canonicalHash = canonicalization.hash(canonicalDocument);
-    let contemporaryHash: any = base58btc.encode(canonicalHash).slice(1);
+    const canonicalDocument = await JSON.canonicalization.canonicalize(contemporaryDIDDocument);
+    const canonicalHash = JSON.canonicalization.hash(canonicalDocument);
+    let contemporaryHash: any = JSON.canonicalization.encode(canonicalHash, 'base58');
 
     // 3. For each beacon in beacons convert the beacon.serviceEndpoint to a Bitcoin address following BIP21.
     //    Set beacon.address to the Bitcoin address.
@@ -892,7 +891,7 @@ export class Btc1Read {
     const { id, controller } = contemporaryDIDDocument.verificationMethod[0];
 
     // Get the genesisBytes from the DID Document id.
-    const { genesisBytes } = Btc1Appendix.parse(contemporaryDIDDocument.id);
+    const { genesisBytes } = Btc1Identifier.decode(contemporaryDIDDocument.id);
     const publicKey = hexToBytes(genesisBytes);
 
     // Construct a new KeyPair.
@@ -930,7 +929,7 @@ export class Btc1Read {
     let targetDIDDocument = contemporaryDIDDocument;
 
     // 11. Use JSON Patch to apply the update.patch to the targetDIDDOcument.
-    targetDIDDocument = JsonPatch.apply(targetDIDDocument, update.patch);
+    targetDIDDocument = JSON.patch.apply(targetDIDDocument, update.patch) as Btc1DidDocument;
 
     // 12. Verify that targetDIDDocument is conformant with the data model specified by the DID Core specification.
     Btc1DidDocument.validate(targetDIDDocument);

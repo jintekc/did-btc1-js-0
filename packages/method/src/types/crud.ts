@@ -1,7 +1,6 @@
 import { DidUpdatePayload, PrivateKeyBytes, ProofBytes, PublicKeyBytes } from '@did-btc1/common';
-import { DidBtc1Identifier } from '../btc1/crud/create.js';
 import { BeaconService } from '../interfaces/ibeacon.js';
-import { Btc1DidDocument } from '../utils/btc1/did-document.js';
+import { Btc1DidDocument } from '../utils/did-document.js';
 import { BlockV3 } from './bitcoin.js';
 
 export type DidPlaceholder = 'did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
@@ -29,7 +28,7 @@ export type KeyPairType = {
 };
 
 export interface Btc1SidecarData {
-  did: DidBtc1Identifier;
+  did: string;
 };
 export type Metadata = {
   updatePayload: DidUpdatePayload;
@@ -57,10 +56,11 @@ export enum DidBtc1IdTypes {
     external = 'external'
 }
 export enum Btc1Networks {
-    mainnet = 'mainnet',
-    testnet = 'testnet',
-    signet = 'signet',
-    regtest = 'regtest'
+    bitcoin = 0,
+    signet = 1,
+    regtest = 2,
+    testnet3 = 3,
+    testnet4 = 4
 }
 
 /** Alias type for a publicKeyMultbase encoded as a Bip340 Multikey (z + base58btc(bip340Header + publicKey) */

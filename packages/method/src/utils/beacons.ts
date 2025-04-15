@@ -1,9 +1,8 @@
+import { DidBtc1Error, Maybe, PublicKeyBytes } from '@did-btc1/common';
 import { DidDocument, DidService } from '@web5/dids';
 import { networks, payments } from 'bitcoinjs-lib';
-import { Maybe } from '@did-btc1/common';
-import { BeaconFactory } from '../../btc1/beacons/factory.js';
-import { BeaconService, BeaconServiceAddress } from '../../interfaces/ibeacon.js';
-import { PublicKeyBytes, DidBtc1Error } from '@did-btc1/common';
+import { BeaconFactory } from '../btc1/beacons/factory.js';
+import { BeaconService, BeaconServiceAddress } from '../interfaces/ibeacon.js';
 import { Btc1Appendix } from './appendix.js';
 
 /**
@@ -141,7 +140,7 @@ export class BeaconUtils {
    * @param {string} params.serviceId The type of service being created (#initialP2PKH, #initialP2WPKH, #initialP2TR).
    * @param {string} params.beaconType The type of beacon service being created (SingletonBeacon, SMTAggregatorBeacon).
    * @param {BitcoinAddress} params.bitcoinAddress The bitcoin address to use for the service endpoint.
-   * @returns {DidService} One DidService object.
+   * @returns {BeaconService} One BeaconService object.
    */
   public static generateBeaconService(params: BeaconService): BeaconService {
     return BeaconFactory.establish(params).service;
