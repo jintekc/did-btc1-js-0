@@ -1,4 +1,4 @@
-import { BTC1_DID_DOCUMENT_CONTEXT, DidDocumentError, INVALID_DID_DOCUMENT } from '@did-btc1/common';
+import { BTC1_DID_DOCUMENT_CONTEXT, Btc1Error, DidDocumentError, INVALID_DID_DOCUMENT, Logger } from '@did-btc1/common';
 import { DidService, DidVerificationMethod, DidDocument as IDidDocument } from '@web5/dids';
 import { BeaconService } from '../interfaces/ibeacon.js';
 import { Btc1Appendix } from './appendix.js';
@@ -125,7 +125,8 @@ export class Btc1DidDocument implements IBtc1DidDocument {
     try {
       Btc1Identifier.decode(id);
       return true;
-    } catch {
+    } catch (error: any) {
+      Logger.error('Invalid DID Document ID', error);
       return false;
     }
   }

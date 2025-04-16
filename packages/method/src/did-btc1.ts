@@ -1,4 +1,6 @@
 import {
+  BitcoinNetworkNames,
+  Btc1CreateIdTypes,
   Btc1Error,
   INVALID_DID,
   INVALID_DID_DOCUMENT,
@@ -26,7 +28,6 @@ import { Btc1Read } from './btc1/crud/read.js';
 import { Btc1Update } from './btc1/crud/update.js';
 import { Btc1KeyManager } from './btc1/key-manager/index.js';
 import { DidResolutionOptions, IntermediateDocument } from './interfaces/crud.js';
-import { Btc1Networks, DidBtc1IdTypes, RecoveryOptions } from './types/crud.js';
 import { Btc1Appendix } from './utils/appendix.js';
 import { Btc1DidDocument } from './utils/did-document.js';
 import { Btc1Identifier } from './utils/identifier.js';
@@ -54,7 +55,6 @@ export interface ConstructPayloadParams {
 export interface DidUpdateParams extends ConstructPayloadParams {
     verificationMethodId: string;
     beaconIds: string[];
-    options: RecoveryOptions;
 }
 /**
  * Implements {@link https://dcdpr.github.io/did-btc1 | did:btc1 DID Method Specification}.
@@ -94,15 +94,15 @@ export class DidBtc1 implements DidMethod {
     const { idType, options = {} } = params;
 
     // Validate that the idType is set to either key or external
-    if (!(idType in DidBtc1IdTypes)) {
+    if (!(idType in Btc1CreateIdTypes)) {
       throw new Btc1Error('Invalid idType: expected "key" or "external"', INVALID_DID, params);
     }
 
     // Deconstruct options and set the default values
     const { version = 1, network = 'mainnet' } = options;
 
-    // Validate network in Btc1Networks
-    if (!(network in Btc1Networks)) {
+    // Validate network in BitcoinNetworkNames
+    if (!(network in BitcoinNetworkNames)) {
       throw new Btc1Error('Invalid network: must be one of valid bitcoin network', INVALID_DID, options);
     }
 
