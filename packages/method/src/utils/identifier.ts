@@ -1,9 +1,8 @@
-import { Btc1Error, BitcoinNetworkNames, Btc1CreateIdTypes, INVALID_DID, Logger, METHOD_NOT_SUPPORTED } from '@did-btc1/common';
+import { BitcoinNetworkNames, Btc1Error, INVALID_DID, Logger, METHOD_NOT_SUPPORTED } from '@did-btc1/common';
 import { bech32m } from '@scure/base';
 import { DidComponents } from './appendix.js';
+import { secp256k1 } from '@noble/curves/secp256k1';
 
-type IdType = keyof typeof Btc1CreateIdTypes;
-type BitcoinNetworkName = keyof typeof BitcoinNetworkNames;
 export class Btc1Identifier {
   /**
    * Implements {@link https://dcdpr.github.io/did-btc1/#didbtc1-identifier-encoding | 3.2 did:btc1 Identifier Encoding}.
@@ -23,9 +22,9 @@ export class Btc1Identifier {
    * @returns {string} The new did:btc1 identifier.
    */
   public static encode({ idType, version, network, genesisBytes }: {
-    idType: IdType;
+    idType: string;
     version: number;
-    network: BitcoinNetworkName;
+    network: string | number;
     genesisBytes: Uint8Array;
   }): string {
     // 1. If idType is not a valid value per above, raise invalidDid error.
@@ -37,37 +36,21 @@ export class Btc1Identifier {
     // 6. Map idType to hrp from the following:
     //   6.1 “key” - “k”
     //   6.2 “external” - “x”
-    const hrp = Btc1CreateIdTypes[idType];
+    const hrp = idType === 'KEY' ? 'k' : 'x';
 
     // 7. Create an empty nibbles numeric array.
     const nibbles: Array<number> = [];
 
     // 8. Set fCount equal to (version - 1) / 15, rounded down.
     const fCount = Math.floor((version - 1) / 15);
-    Logger.debug(
-      'btc1:encode',
-      '8. Set fCount equal to (version - 1) / 15, rounded down',
-      'fCount=', fCount
-    );
 
     // 9. Append hexadecimal F (decimal 15) to nibbles fCount times.
     for (let i = 0; i < fCount; i++) {
       nibbles.push(15);
     }
 
-    Logger.debug(
-      'btc1:encode',
-      '9. Append hexadecimal F (decimal 15) to nibbles fCount times',
-      'nibbles=', nibbles
-    );
-
     // 10. Append (version - 1) mod 15 to nibbles.
     nibbles.push((version - 1) % 15);
-    Logger.debug(
-      'btc1:encode',
-      '10. Append (version - 1) mod 15 to nibbles',
-      'nibbles=', nibbles
-    );
 
     // 11. If network is a string, append the numeric value from the following map to nibbles:
     //     “bitcoin” - 0
@@ -75,24 +58,15 @@ export class Btc1Identifier {
     //     “regtest” - 2
     //     “testnet3” - 3
     //     “testnet4” - 4
-    const networkNum = BitcoinNetworkNames[network];
+    const networkNum = typeof network === 'string'
+      ? BitcoinNetworkNames[network as keyof typeof BitcoinNetworkNames]
+      : network;
     nibbles.push(networkNum);
-    Logger.debug(
-      'btc1:encode',
-      '11. If network is a string, append the numeric value from the following map to nibbles',
-      'networkNum=', networkNum,
-      'nibbles=', nibbles
-    );
 
     // 13. If the number of entries in nibbles is odd, append 0.
     if (nibbles.length % 2 !== 0) {
       nibbles.push(0);
     }
-    Logger.debug(
-      'btc1:encode',
-      '13. If the number of entries in nibbles is odd, append 0.',
-      'nibbles=', nibbles
-    );
 
     // 14. Create a dataBytes byte array from nibbles, where index is from 0 to nibbles.length / 2 - 1 and
     //     encodingBytes[index] = (nibbles[2 * index] << 4) | nibbles[2 * index + 1].
@@ -144,12 +118,12 @@ export class Btc1Identifier {
 
     // 4. If components[1] is not “btc1”, raise methodNotSupported error.
     if (!method || method !== 'btc1') {
-      throw new Btc1Error(`Did Method not supported: ${method}`, METHOD_NOT_SUPPORTED, { identifier });
+      throw new Btc1Error(`Invalid did method: ${method}`, METHOD_NOT_SUPPORTED, { identifier });
     }
 
     // 5. Set encodedString to components[2].
     if (!idBech32) {
-      throw new Btc1Error(`Invalid Did: ${identifier}`, INVALID_DID, { identifier });
+      throw new Btc1Error(`Invalid method-specific id: ${identifier}`, INVALID_DID, { identifier });
     }
 
     // 6. Pass encodedString to the Bech32m Decoding algorithm, retrieving hrp and dataBytes.
@@ -162,7 +136,11 @@ export class Btc1Identifier {
     //    “x” - “external”
     //    other - raise invalidDid error
     if (!['x', 'k'].includes(hrp) || !dataBytes) {
-      throw new Btc1Error(`Invalid Did: ${identifier}`, INVALID_DID, { identifier });
+      throw new Btc1Error(`Invalid hrp: ${hrp}`, INVALID_DID, { identifier });
+    }
+
+    if (!dataBytes) {
+      throw new Btc1Error(`Failed to decode id: ${idBech32}`, INVALID_DID, { identifier });
     }
 
     // 9. Set version to 1.
@@ -175,59 +153,75 @@ export class Btc1Identifier {
       network      : 'bitcoin',
       genesisBytes : dataBytes
     } as DidComponents;
+    Logger.debug('btc1:decode', 'dataBytes:', dataBytes);
 
     // 10. If at any point in the remaining steps there are not enough nibbles to complete the process, raise invalidDid
     //     error.
-    for (let i = 0; i < dataBytes.length; i++) {
+    const versionNibble = dataBytes[0];
+    let nibble = 4;
+    for(nibble; nibble >= 0; nibble--) {
       // 11. Start with the first nibble (the higher nibble of the first byte) of dataBytes.
-      const nibble = dataBytes[i];
-      Logger.debug('btc1:decode', 'nibble:', nibble);
+      const currentNibble = (versionNibble >> nibble);
+      Logger.debug('btc1:decode', 'currentNibble:', currentNibble);
 
       // 12. Add the value of the current nibble to version.
-      version += nibble;
+      version += currentNibble;
       Logger.debug('btc1:decode', 'version:', version);
+      Logger.debug('btc1:decode', 'currentNibble === 0xF:', currentNibble === 0xF);
 
       // 13. If the value of the nibble is hexadecimal F (decimal 15), advance to the next nibble (the lower nibble of
       //     the current byte or the higher nibble of the next byte) and return to the previous step.
-      if (nibble === 15) {
-        continue;
+      if(currentNibble !== 0xF) {
+        break;
       }
+      nibble--;
 
       // 14. If version is greater than 1, raise invalidDid error.
-      if (version > 1) {
-        throw new Btc1Error('Invalid version: cannot be > 1', INVALID_DID, { identifier });
+      if(version > 1) {
+        throw new Btc1Error(`Invalid version: ${version}`, INVALID_DID, { identifier });
       }
-
-      // 15. Advance to the next nibble and set networkValue to its value.
-      // 16. Map networkValue to network from the following:
-      //     0 - “bitcoin”
-      //     1 - “signet”
-      //     2 - “regtest”
-      //     3 - “testnet3”
-      //     4 - “testnet4”
-      //     5-7 - raise invalidDid error
-      //     8-F - networkValue - 7
-
-      let nextnibble = i + 1;
-      const netnibble = dataBytes[nextnibble].toString();
-      identifierComponents.network = Btc1Networks[netnibble as keyof typeof Btc1Networks] as unknown as string;
-
-      // 17. If the number of nibbles consumed is odd:
-      //     17.1 Advance to the next nibble and set fillerNibble to its value.
-      //     17.2 If fillerNibble is not 0, raise invalidDid error.
-      if (nextnibble % 2 !== 0) {
-        nextnibble += 1;
-        const fillerNibble = dataBytes[nextnibble];
-        if (fillerNibble !== 0) {
-          throw new Btc1Error(`Invalid Did: ${identifier} `, INVALID_DID, { identifier });
-        }
-      }
-
-      // 18. Set genesisBytes to the remaining dataBytes.
-      identifierComponents.genesisBytes = dataBytes.slice(nextnibble);
     }
 
+    // 15. Advance to the next nibble and set networkValue to its value.
+    const networkNumber = Number(versionNibble >> nibble);
+    Logger.debug('btc1:decode', 'networkNumber:', networkNumber);
+    let networkValue = BitcoinNetworkNames[networkNumber];
+    Logger.debug('btc1:decode', 'networkValue:', networkValue);
+
+    // 16. Map networkValue to network from the following:
+    //     0 - “bitcoin”
+    //     1 - “signet”
+    //     2 - “regtest”
+    //     3 - “testnet3”
+    //     4 - “testnet4”
+    //     5-7 - raise invalidDid error
+    //     8-F - networkValue - 7
+    if(networkNumber > 4 && networkNumber < 8) {
+      throw new Btc1Error(`Invalid network: ${networkNumber}`, INVALID_DID, { identifier });
+    } else if (networkNumber >= 8 && networkNumber <= 15) {
+      networkValue = BitcoinNetworkNames[networkNumber - 7];
+    }
+
+    // 17. If the number of nibbles consumed is odd:
+    if(nibble % 2 === 1) {
+      //     17.1 Advance to the next nibble and set fillerNibble to its value.
+      nibble--;
+      const fillerNibble = dataBytes[nibble];
+      //     17.2 If fillerNibble is not 0, raise invalidDid error.
+      if (fillerNibble !== 0) {
+        throw new Btc1Error('Invalid did: too many nibbles consumed', INVALID_DID, { identifier });
+      }
+    }
+    // 18. Set genesisBytes to the remaining dataBytes.
+    identifierComponents.genesisBytes = dataBytes.slice(1);
+    // Set network value.
+    identifierComponents.network = networkValue;
+
     // 19. If idType is “key” and genesisBytes is not a valid compressed secp256k1 public key, raise invalidDid error.
+    const genesisBytes = identifierComponents.genesisBytes;
+    if(genesisBytes.length !== 33) {
+      throw new Btc1Error(`Invalid public key bytes: ${genesisBytes}`, INVALID_DID, { identifier });
+    }
 
     // 20. Return idType, version, network, and genesisBytes.
     return identifierComponents;

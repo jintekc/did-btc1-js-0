@@ -35,7 +35,6 @@ import { Btc1Identifier } from './utils/identifier.js';
 /** Initialize tiny secp256k1 */
 initEccLib(tinysecp);
 
-export type IdType = 'key' | 'external';
 export interface DidCreateOptions extends IDidCreateOptions<Btc1KeyManager> {
   /** DID BTC1 Version Number */
   version?: number;
@@ -43,8 +42,8 @@ export interface DidCreateOptions extends IDidCreateOptions<Btc1KeyManager> {
   network?: string;
 }
 export type DidCreateParams =
-  | { idType: 'key'; pubKeyBytes: PublicKeyBytes; options?: DidCreateOptions }
-  | { idType: 'external'; intermediateDocument: IntermediateDocument; options?: DidCreateOptions };
+  | { idType: 'KEY'; pubKeyBytes: PublicKeyBytes; options?: DidCreateOptions }
+  | { idType: 'EXTERNAL'; intermediateDocument: IntermediateDocument; options?: DidCreateOptions };
 
 export interface ConstructPayloadParams {
     identifier: string;
