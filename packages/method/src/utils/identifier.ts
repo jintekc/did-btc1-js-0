@@ -107,7 +107,7 @@ export class Btc1Identifier {
   /**
    * Implements {@link https://dcdpr.github.io/did-btc1/#didbtc1-identifier-decoding | 3.3 did:btc1 Identifier Decoding}.
    * @param {string} identifier The BTC1 DID to be parsed
-   * @returns {DidComponents} The parsed identifier components
+   * @returns {DidComponents} The parsed identifier components. See {@link DidComponents} for details.
    * @throws {DidError} if an error occurs while parsing the identifier
    * @throws {DidErrorCode.InvalidDid} if identifier is invalid
    * @throws {DidErrorCode.MethodNotSupported} if the method is not supported

@@ -5,6 +5,7 @@ import {
   INVALID_DID,
   INVALID_DID_DOCUMENT,
   Logger,
+  METHOD_NOT_SUPPORTED,
   PatchOperation,
   PublicKeyBytes,
   W3C_DID_RESOLUTION_V1
@@ -192,7 +193,6 @@ export class DidBtc1 implements DidMethod {
   }
 
   /**
-   * TODO #1: Finish implementing per spec
    * Entry point for section {@link https://dcdpr.github.io/did-btc1/#update | 4.3 Update}.
    * See {@link Btc1Update} for implementation details.
    *
@@ -249,7 +249,7 @@ export class DidBtc1 implements DidMethod {
 
     // 2. Set verificationMethod to the result of retrieving the verificationMethod
     //    from sourceDocument using the verificationMethodId.
-    const verificationMethod = await this.getSigningMethod({ didDocument: sourceDocument, methodId, });
+    const verificationMethod = this.getSigningMethod({ didDocument: sourceDocument, methodId, });
 
     // Validate the verificationMethod exists in the sourceDocument
     if (!verificationMethod) {
@@ -289,20 +289,20 @@ export class DidBtc1 implements DidMethod {
    * @param {{ didDocument: Btc1DidDocument; methodId?: string; }} params Parameters for the `getSigningMethod` method.
    * @param {DidDocument} params.didDocument DID Document to get the verification method from.
    * @param {string} params.methodId Optional ID of the verification method to use for signing.
-   * @returns {DidVerificationMethod} Promise resolving to the verification method used for signing.
+   * @returns {DidVerificationMethod} Promise resolving to the {@link DidVerificationMethod} object used for signing.
    * @throws {DidError} if the parsed did method does not match `btc1` or signing method could not be determined.
    */
   public static getSigningMethod({ didDocument, methodId }: {
     didDocument: Btc1DidDocument;
     methodId?: string;
-  }): Promise<DidVerificationMethod> {
+  }): DidVerificationMethod {
     // Set the default methodId to the first assertionMethod if not given
     methodId ??= '#initialKey';
 
     // Verify the DID method is supported.
-    const parsedDid = Btc1Identifier.decode(didDocument.id);
+    const parsedDid = Did.parse(didDocument.id);
     if (parsedDid && parsedDid.method !== this.methodName) {
-      throw new DidError(DidErrorCode.MethodNotSupported, `Method not supported: ${parsedDid.method} `);
+      throw new Btc1Error(`Method not supported: ${parsedDid.method}`, METHOD_NOT_SUPPORTED, { identifier: didDocument.id });
     }
 
     // Attempt to find a verification method that matches the given method ID, or if not given,
