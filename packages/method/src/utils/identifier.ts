@@ -1,7 +1,6 @@
-import { BitcoinNetworkNames, Btc1CreateIdTypes, Btc1Error, INVALID_DID, Logger, METHOD_NOT_SUPPORTED } from '@did-btc1/common';
+import { BitcoinNetworkNames, Btc1CreateIdTypes, Btc1Error, INVALID_DID, METHOD_NOT_SUPPORTED } from '@did-btc1/common';
 import { bech32m } from '@scure/base';
 import { DidComponents } from './appendix.js';
-import { secp256k1 } from '@noble/curves/secp256k1';
 
 export class Btc1Identifier {
   /**
