@@ -8,10 +8,12 @@ export * from './btc1/beacons/cid-aggregate.js';
 export * from './btc1/beacons/factory.js';
 export * from './btc1/beacons/singleton.js';
 export * from './btc1/beacons/smt-aggregate.js';
+
 export * from './btc1/crud/create.js';
 export * from './btc1/crud/deactivate.js';
 export * from './btc1/crud/read.js';
 export * from './btc1/crud/update.js';
+
 export * from './btc1/key-manager/index.js';
 export * from './btc1/key-manager/interface.js';
 

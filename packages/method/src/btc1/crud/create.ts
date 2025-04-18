@@ -1,30 +1,11 @@
-import { Btc1CreateIdTypes, Btc1Error, DocumentBytes, ID_PLACEHOLDER_VALUE, INVALID_DID_DOCUMENT, PublicKeyBytes } from '@did-btc1/common';
+import { Btc1CreateIdTypes, Btc1Error, ID_PLACEHOLDER_VALUE, INVALID_DID_DOCUMENT, PublicKeyBytes } from '@did-btc1/common';
 import { PublicKey } from '@did-btc1/key-pair';
-import { DidVerificationMethod, IntermediateDocument } from '../../interfaces/crud.js';
+import { Btc1CreateResponse } from '../../did-btc1.js';
 import { Btc1Appendix } from '../../utils/appendix.js';
 import { BeaconUtils } from '../../utils/beacons.js';
-import { Btc1DidDocument } from '../../utils/did-document.js';
+import { Btc1DidDocument, Btc1VerificationMethod, IntermediateDidDocument } from '../../utils/did-document.js';
 import { Btc1Identifier } from '../../utils/identifier.js';
 
-export type Btc1CreateKeyParams = {
-  version: string;
-  network: string;
-  pubKeyBytes: PublicKeyBytes;
-};
-export type Btc1CreateExternalParams = {
-  version: string;
-  network: string;
-  documentBytes: DocumentBytes;
-};
-export interface CreateIdentifierParams {
-  genesisBytes: Uint8Array;
-  newtork?: string;
-  version?: string;
-}
-export type Btc1CreateResponse = {
-  did: string;
-  initialDocument: Btc1DidDocument;
-};
 /**
  * Implements section {@link https://dcdpr.github.io/did-btc1/#create | 4.1 Create}.
  *
@@ -110,7 +91,7 @@ export class Btc1Create {
   public static async external({ network, version, intermediateDocument }: {
     version: number;
     network: string;
-    intermediateDocument: IntermediateDocument;
+    intermediateDocument: IntermediateDidDocument;
   }): Promise<Btc1CreateResponse> {
     // Deconstruct vm and service from intermediateDocument
     const { verificationMethod, service } = intermediateDocument ?? {};
@@ -142,7 +123,7 @@ export class Btc1Create {
 
     /** Set the document.verificationMethod[i].controller to {@link ID_PLACEHOLDER_VALUE} */
     intermediateDocument.verificationMethod = verificationMethod.map(
-      (vm: DidVerificationMethod) => ({ ...vm, controller: intermediateDocument.id })
+      (vm: Btc1VerificationMethod) => ({ ...vm, controller: intermediateDocument.id })
     );
 
     // 4. Set genesisBytes to the result of passing intermediateDocument into the JSON Canonicalization and Hash
@@ -152,16 +133,16 @@ export class Btc1Create {
     // Set did to result of createIdentifier
     const did = Btc1Identifier.encode({ idType: Btc1CreateIdTypes.EXTERNAL, genesisBytes, version, network });
 
-    // Create copy of intermediateDocument initialDocument as DidDocument
-    const initialDocument = intermediateDocument as Btc1DidDocument;
-
     // Set initialDocument id to did.
-    initialDocument.id = did;
+    intermediateDocument.id = did;
 
     // Set verificationMethod.controller to did.
-    initialDocument.verificationMethod = verificationMethod.map(
-      (vm: DidVerificationMethod) => ({ ...vm, controller: intermediateDocument.id })
+    intermediateDocument.verificationMethod = verificationMethod.map(
+      (vm: Btc1VerificationMethod) => ({ ...vm, controller: intermediateDocument.id })
     );
+
+    // Convert intermediateDocument to Btc1DidDocument
+    const initialDocument = new Btc1DidDocument(intermediateDocument);
 
     // Return DID & DID Document.
     return { did, initialDocument };

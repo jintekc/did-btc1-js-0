@@ -1,5 +1,4 @@
 import {
-  BitcoinNetworkNames,
   Btc1CreateIdTypes,
   Btc1Error,
   INVALID_DID,
@@ -24,13 +23,13 @@ import {
 } from '@web5/dids';
 import { initEccLib } from 'bitcoinjs-lib';
 import * as tinysecp from 'tiny-secp256k1';
-import { Btc1Create, DidCreateResponse } from './btc1/crud/create.js';
+import { Btc1Create } from './btc1/crud/create.js';
 import { Btc1Read } from './btc1/crud/read.js';
 import { Btc1Update } from './btc1/crud/update.js';
 import { Btc1KeyManager } from './btc1/key-manager/index.js';
-import { DidResolutionOptions, IntermediateDocument } from './interfaces/crud.js';
+import { DidResolutionOptions } from './interfaces/crud.js';
 import { Btc1Appendix } from './utils/appendix.js';
-import { Btc1DidDocument } from './utils/did-document.js';
+import { Btc1DidDocument, Btc1VerificationMethod, IntermediateDidDocument } from './utils/did-document.js';
 import { Btc1Identifier } from './utils/identifier.js';
 
 /** Initialize tiny secp256k1 */
@@ -49,11 +48,19 @@ export type Btc1CreateKeyParams = {
 };
 export type Btc1CreateExternalParams = {
   idType: 'EXTERNAL';
-  intermediateDocument: IntermediateDocument;
+  intermediateDocument: IntermediateDidDocument;
   options?: DidCreateOptions;
 };
 export type Btc1CreateParams = Btc1CreateKeyParams | Btc1CreateExternalParams;
-
+export interface CreateIdentifierParams {
+  genesisBytes: Uint8Array;
+  newtork?: string;
+  version?: string;
+}
+export type Btc1CreateResponse = {
+  did: string;
+  initialDocument: Btc1DidDocument;
+};
 export interface Btc1UpdateConstructParams {
     identifier: string;
     sourceDocument: Btc1DidDocument;
@@ -97,7 +104,7 @@ export class DidBtc1 implements DidMethod {
    * @returns {Promise<CreateResponse>} Promise resolving to a CreateResponse object.
    * @throws {DidBtc1Error} if any of the checks fail
    */
-  public static async create(params: Btc1CreateParams): Promise<DidCreateResponse> {
+  public static async create(params: Btc1CreateParams): Promise<Btc1CreateResponse> {
     // Deconstruct the idType and options from the params
     const { idType, options = {} } = params;
 
@@ -289,13 +296,13 @@ export class DidBtc1 implements DidMethod {
    * @param {{ didDocument: Btc1DidDocument; methodId?: string; }} params Parameters for the `getSigningMethod` method.
    * @param {DidDocument} params.didDocument DID Document to get the verification method from.
    * @param {string} params.methodId Optional ID of the verification method to use for signing.
-   * @returns {DidVerificationMethod} Promise resolving to the {@link DidVerificationMethod} object used for signing.
+   * @returns {Btc1VerificationMethod} Promise resolving to the {@link Btc1VerificationMethod} object used for signing.
    * @throws {DidError} if the parsed did method does not match `btc1` or signing method could not be determined.
    */
   public static getSigningMethod({ didDocument, methodId }: {
     didDocument: Btc1DidDocument;
     methodId?: string;
-  }): DidVerificationMethod {
+  }): Btc1VerificationMethod {
     // Set the default methodId to the first assertionMethod if not given
     methodId ??= '#initialKey';
 
@@ -319,6 +326,6 @@ export class DidBtc1 implements DidMethod {
         'A verification method intended for signing could not be determined from the DID Document'
       );
     }
-    return verificationMethod;
+    return verificationMethod as Btc1VerificationMethod;
   }
 }

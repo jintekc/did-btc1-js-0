@@ -12,6 +12,7 @@ import { createHelia } from 'helia';
 import { CID } from 'multiformats';
 import { create as createDigest } from 'multiformats/hashes/digest';
 import { Btc1RootCapability } from '../interfaces/crud.js';
+import { Btc1VerificationMethod } from './did-document.js';
 
 export interface DidComponents {
     hrp: string;
@@ -79,7 +80,7 @@ export class Btc1Appendix {
    * @returns {DidVerificationMethod[]} An array of DidVerificationMethod objects
    * @throws {TypeError} if the didDocument is not provided
    */
-  public static getVerificationMethods({ didDocument }: { didDocument: DidDocument; }): DidVerificationMethod[] {
+  public static getVerificationMethods({ didDocument }: { didDocument: DidDocument; }): Btc1VerificationMethod[] {
     if (!didDocument) throw new TypeError(`Required parameter missing: 'didDocument'`);
     const verificationMethods: DidVerificationMethod[] = [];
     // Check the 'verificationMethod' array.
@@ -91,7 +92,7 @@ export class Btc1Appendix {
           ?.filter(Btc1Appendix.isDidVerificationMethod) ?? []
       );
     });
-    return verificationMethods;
+    return verificationMethods as Btc1VerificationMethod[];
   }
 
 
