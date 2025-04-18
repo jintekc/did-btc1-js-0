@@ -80,17 +80,17 @@ export class Btc1Appendix {
    * @public
    * @param {{ didDocument: DidDocument; id: string; }} params The parameters for the function.
    * @param {DidDocument} params.didDocument The DID Document to search in.
-   * @param {string} params.id The ID of the verification method to retrieve.
+   * @param {string} params.verificationMethodId The ID of the verification method to retrieve.
    * @returns {(DidVerificationMethod | undefined)} The verification method with the specified ID, or undefined if not found.
    */
-  public static getVerificationMethodById({ didDocument, id }: {
-    didDocument: DidDocument;
-    id: string;
+  public static getVerificationMethodById({ sourceDocument, verificationMethodId }: {
+    sourceDocument: DidDocument;
+    verificationMethodId: string;
   }): DidVerificationMethod | undefined {
     // Get the verification methods from the DID Document
-    const vms = Btc1Appendix.getVerificationMethods({ didDocument });
+    const vms = Btc1Appendix.getVerificationMethods({ didDocument: sourceDocument });
     // Find the verification method with the matching ID
-    return vms.find((method) => method.id === id);
+    return vms.find((method) => method.id === verificationMethodId);
   }
 
   /**

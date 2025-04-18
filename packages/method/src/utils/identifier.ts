@@ -115,10 +115,8 @@ export class Btc1Identifier {
    */
   public static decode(identifier: string): DidComponents {
     // 1. Split identifier into an array of components at the colon : character.
-    // Logger.debug('btc1:decode', 'Decoding identifier:', identifier);
 
     const components = identifier.split(':') ?? [];
-    // Logger.debug('btc1:decode', 'components:', components);
 
     // 2. If the length of the components array is not 3, raise invalidDid error.
     if (components.length !== 3) {
@@ -128,7 +126,6 @@ export class Btc1Identifier {
     // Deconstruct the components of the identifier: scheme, method, fields
     // possible values in `fields`: [id], [{version|network}, id], [version, network, id]
     const [scheme, method, idBech32] = components;
-    // Logger.debug('btc1:decode', 'scheme, method, idBech32:', scheme, method, idBech32);
 
     // 3. If components[0] is not “did”, raise invalidDid error.
     if (!scheme || scheme !== 'did') {
@@ -147,7 +144,6 @@ export class Btc1Identifier {
 
     // 6. Pass encodedString to the Bech32m Decoding algorithm, retrieving hrp and dataBytes.
     const { prefix: hrp, bytes: dataBytes } = bech32m.decodeToBytes(idBech32);
-    // Logger.debug('btc1:decode', 'hrp, dataBytes:', hrp, dataBytes);
 
     // 7. If the Bech32m decoding algorithm fails, raise invalidDid error.
     // 8. Map hrp to idType from the following:
@@ -172,7 +168,6 @@ export class Btc1Identifier {
       network      : 'bitcoin',
       genesisBytes : dataBytes
     } as DidComponents;
-    // Logger.debug('btc1:decode', 'dataBytes:', dataBytes);
 
     // 10. If at any point in the remaining steps there are not enough nibbles to complete the process, raise invalidDid
     //     error.
@@ -181,12 +176,9 @@ export class Btc1Identifier {
     for(nibble; nibble >= 0; nibble--) {
       // 11. Start with the first nibble (the higher nibble of the first byte) of dataBytes.
       const currentNibble = (versionNibble >> nibble);
-      // Logger.debug('btc1:decode', 'currentNibble:', currentNibble);
 
       // 12. Add the value of the current nibble to version.
       version += currentNibble;
-      // Logger.debug('btc1:decode', 'version:', version);
-      // Logger.debug('btc1:decode', 'currentNibble === 0xF:', currentNibble === 0xF);
 
       // If currentNibble is not 0xF, break.
       if(currentNibble < 0xF) {
@@ -208,9 +200,7 @@ export class Btc1Identifier {
 
     // 15. Advance to the next nibble and set networkValue to its value.
     const networkNumber = Number(versionNibble);
-    // Logger.debug('btc1:decode', 'networkNumber:', networkNumber);
     let networkValue = BitcoinNetworkNames[networkNumber];
-    // Logger.debug('btc1:decode', 'networkValue:', networkValue);
 
     // 16. Map networkValue to network from the following:
     //     0 - “bitcoin”

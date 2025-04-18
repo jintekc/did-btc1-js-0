@@ -108,18 +108,8 @@ export class DidBtc1 implements DidMethod {
       // Deconstruct the pubKeyBytes from the params
       const { pubKeyBytes } = params;
 
-      // Validate pubKeybytes exists if idType = key
-      if (!pubKeyBytes) {
-        throw new Btc1Error('Invalid pubKeyBytes: cannot be null', INVALID_DID, params);
-      }
-
-      // Validate pubKeyBytes is 32 or 33 bytes
-      if(pubKeyBytes && pubKeyBytes.length !== 33) {
-        throw new Btc1Error('Invalid pubKeyBytes: byte length must be 33 (compressed)', INVALID_DID, params);
-      }
-
-      // Return call to Btc1Create.deterministic
-      return Btc1Create.key({ version, network, pubKeyBytes });
+      // Return call to Btc1Create.key
+      return Btc1Create.key({ version, network, pubKeyBytes, });
     }
 
     // If idType is external, call Btc1Create.external
@@ -127,18 +117,12 @@ export class DidBtc1 implements DidMethod {
       // Deconstruct the intermediateDocument from the params
       const { intermediateDocument } = params;
 
-      // Validate intermediateDocument exists if idType = external
-      if (!intermediateDocument) {
-        throw new Btc1Error('Invalid intermediateDocument: cannot be null', INVALID_DID, params);
-      }
-
       // Return call to Btc1Create.external
       return await Btc1Create.external({ network, version, intermediateDocument });
     }
 
-
     // Throw error if idType is not key or external
-    throw new Btc1Error('Invalid idType: expected "key" or "external"', INVALID_DID, params);
+    throw new Btc1Error('Invalid idType: expected "KEY" or "EXTERNAL"', INVALID_DID, params);
   }
 
   /**
@@ -249,8 +233,8 @@ export class DidBtc1 implements DidMethod {
       sourceDocument,
       sourceVersionId,
       patch,
-      verificationMethodId,
-      beaconIds
+      verificationMethodId: methodId,
+      beaconIds,
     } = params;
 
     // 1. Set unsignedUpdate to the result of passing btc1Identifier, sourceDocument,
@@ -260,15 +244,12 @@ export class DidBtc1 implements DidMethod {
       identifier,
       sourceDocument,
       sourceVersionId,
-      patch
+      patch,
     });
 
     // 2. Set verificationMethod to the result of retrieving the verificationMethod
     //    from sourceDocument using the verificationMethodId.
-    const verificationMethod = Btc1Appendix.getVerificationMethodById({
-      didDocument : sourceDocument,
-      id          : verificationMethodId
-    });
+    const verificationMethod = await this.getSigningMethod({ didDocument: sourceDocument, methodId, });
 
     // Validate the verificationMethod exists in the sourceDocument
     if (!verificationMethod) {
@@ -282,25 +263,18 @@ export class DidBtc1 implements DidMethod {
     }
 
     //    3.2 verificationMethod.publicKeyMultibase[4] == zQ3s
-    if (verificationMethod.publicKeyMultibase?.slice(0, 4) !== 'zQ3s') {
-      throw new Btc1Error('Invalid publicKeyMultibase: must start with "zQ3s"', INVALID_DID_DOCUMENT, verificationMethod);
+    const mbasePrefix = verificationMethod.publicKeyMultibase?.slice(0, 4);
+    if (mbasePrefix !== 'zQ3s') {
+      throw new Btc1Error(`Invalid publicKeyMultibase prefix ${mbasePrefix}`, INVALID_DID_DOCUMENT, verificationMethod);
     }
 
     // 4. Set didUpdateInvocation to the result of passing btc1Identifier, unsignedUpdate as didUpdatePayload, and
     //    verificationMethod to the Invoke DID Update Payload algorithm.
-    const didUpdateInvocation = await Btc1Update.invoke({
-      identifier,
-      verificationMethod,
-      didUpdatePayload,
-    });
+    const didUpdateInvocation = await Btc1Update.invoke({ identifier, verificationMethod, didUpdatePayload, });
 
     // 5. Set signalsMetadata to the result of passing btc1Identifier, sourceDocument, beaconIds and didUpdateInvocation
     //    to the Announce DID Update algorithm.
-    const signalsMetadata = await Btc1Update.announce({
-      sourceDocument,
-      beaconIds,
-      didUpdateInvocation
-    });
+    const signalsMetadata = await Btc1Update.announce({ sourceDocument, beaconIds, didUpdateInvocation, });
 
     // 6. Return signalsMetadata. It is up to implementations to ensure that the signalsMetadata is persisted.
     return signalsMetadata;
@@ -318,7 +292,7 @@ export class DidBtc1 implements DidMethod {
    * @returns {DidVerificationMethod} Promise resolving to the verification method used for signing.
    * @throws {DidError} if the parsed did method does not match `btc1` or signing method could not be determined.
    */
-  public static async getSigningMethod({ didDocument, methodId }: {
+  public static getSigningMethod({ didDocument, methodId }: {
     didDocument: Btc1DidDocument;
     methodId?: string;
   }): Promise<DidVerificationMethod> {
@@ -326,7 +300,7 @@ export class DidBtc1 implements DidMethod {
     methodId ??= '#initialKey';
 
     // Verify the DID method is supported.
-    const parsedDid = Did.parse(didDocument.id);
+    const parsedDid = Btc1Identifier.decode(didDocument.id);
     if (parsedDid && parsedDid.method !== this.methodName) {
       throw new DidError(DidErrorCode.MethodNotSupported, `Method not supported: ${parsedDid.method} `);
     }
