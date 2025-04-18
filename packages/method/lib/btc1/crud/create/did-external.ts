@@ -1,7 +1,12 @@
-import { IntermediateDocument } from '../../src/btc1/crud/interface.js';
-import { DidBtc1 } from '../../../../src/did-btc1.js';
-import { idTypes, networks, versions } from '../../tests/test-data.js';
-const idType = idTypes.external as 'external';
+import { DidBtc1, IntermediateDocument } from '../../../../src/index.js';
+
+// const pubKeyBytes = new Uint8Array([
+//   3, 147,  88, 104, 169, 222, 126,
+//   240, 163,  35, 114, 143, 194, 209,  28,
+//   255,  72, 250, 175, 176, 247, 124, 245,
+//   215,  91, 220, 129, 191,  13,  20,  58,
+//   47,  32
+// ]);
 const intermediateDocument = {
   '@context' : [
     'https://www.w3.org/ns/did/v1',
@@ -26,35 +31,31 @@ const intermediateDocument = {
       'id'                 : '#initialKey',
       'type'               : 'Multikey',
       'controller'         : 'did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-      'publicKeyMultibase' : 'z4jKbyg1bUG6fJwYh4swsUt4YKK2oAd5MJg2tN7je1GtjX2qc'
+      'publicKeyMultibase' : 'zQ3shpZHFLt431a2Wwuz8E4X5MHEHcEiWcJYL56pWE3Qdk6PR'
     }
   ],
   'service' : [
     {
       'id'              : '#initialP2PKH',
       'type'            : 'SingletonBeacon',
-      'serviceEndpoint' : 'bitcoin:13Yy4wKBrJbnQWD7ddVW8hhgCm8o6xvp9n'
+      'serviceEndpoint' : 'bitcoin:mydQ4tayp5vRsmzBC2ok4pm4N4CgyJCNHx'
     },
     {
       'id'              : '#initialP2WPKH',
       'type'            : 'SingletonBeacon',
-      'serviceEndpoint' : 'bitcoin:bc1qr0alxy2upt2y5e46zeaayrw04uyzsvrmrkrwa3'
+      'serviceEndpoint' : 'bitcoin:bcrt1qc64yvtfhvw0la3snqsjtadl0z33jdrradwxn2x'
     },
     {
       'id'              : '#initialP2TR',
       'type'            : 'SingletonBeacon',
-      'serviceEndpoint' : 'bitcoin:bc1pvq4q6u937m8qx4fv4ldsc5wyykw9784y89p9xvdza28q9r3wlepq54nwvg'
+      'serviceEndpoint' : 'bitcoin:bcrt1phs8emctdn8j6hwthx8m7ns0v2kpu22psplyvcf0kqpexrd2raj6quyjahs'
     }
   ]
 } as IntermediateDocument;
-const results = await Promise.all(
-  versions
-    .flatMap(version => networks.map(network => [version, network]))
-    .map(async ([version, network]) =>
-      await DidBtc1.create({
-        idType,
-        intermediateDocument,
-        options : { version, network },
-      }))
-);
-results.map(result => console.log(JSON.stringify(result, null, 2)));
+const response = await DidBtc1.create({
+  idType  : 'EXTERNAL',
+  intermediateDocument,
+  options : { version: 1, network: 'bitcoin' },
+});
+
+console.log('Created BTC1 Identifier and Initial Document:', JSON.stringify(response, null, 4));

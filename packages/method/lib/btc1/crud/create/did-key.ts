@@ -8,12 +8,13 @@ const privateKey = new Uint8Array([
   193, 30, 226, 128, 175, 38, 57, 74
 ]);
 const keyPair = new KeyPair({ privateKey });
+console.log('keyPair.publicKey.bytes', keyPair.publicKey.bytes);
 console.log('Creating BTC1 Identifier with keyPair:', keyPair);
 
 const response = await DidBtc1.create({
-  idType      : 'key',
+  idType      : 'KEY',
   pubKeyBytes : keyPair.publicKey.bytes,
-  options     : { network: 'regtest', version: 1 }
+  options     : { network: 'bitcoin', version: 1 }
 });
 
 const data = JSON.stringify(response, null, 4);

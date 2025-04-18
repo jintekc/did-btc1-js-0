@@ -15,8 +15,8 @@ export type Controller = Btc1Identifier;
 export type Id = 'initialKey';
 export type FullId = `${Controller}#${Id}`;
 export enum Btc1CreateIdTypes {
-    KEY = 'k',
-    EXTERNAL = 'x'
+    KEY = 'KEY',
+    EXTERNAL = 'EXTERNAL'
 }
 export enum BitcoinNetworkNames {
     bitcoin = 0,

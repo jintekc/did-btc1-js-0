@@ -1,4 +1,4 @@
-import { BitcoinNetworkNames, Btc1Error, INVALID_DID, Logger, METHOD_NOT_SUPPORTED } from '@did-btc1/common';
+import { BitcoinNetworkNames, Btc1CreateIdTypes, Btc1Error, INVALID_DID, Logger, METHOD_NOT_SUPPORTED } from '@did-btc1/common';
 import { bech32m } from '@scure/base';
 import { DidComponents } from './appendix.js';
 import { secp256k1 } from '@noble/curves/secp256k1';
@@ -28,9 +28,26 @@ export class Btc1Identifier {
     genesisBytes: Uint8Array;
   }): string {
     // 1. If idType is not a valid value per above, raise invalidDid error.
+    if (!(idType in Btc1CreateIdTypes)) {
+      throw new Btc1Error('Expected "idType" to be "KEY" or "EXTERNAL"', INVALID_DID, {idType});
+    }
+
     // 2. If version is greater than 1, raise invalidDid error.
-    // 3. If network is not a valid value per above, raise invalidDid error.
+    if (isNaN(version) || version > 1) {
+      throw new Btc1Error('Expected "version" to be 1', INVALID_DID, {version});
+    }
+
+    // 3. If network is not a valid value (bitcoin|signet|regtest|testnet3|testnet4|number), raise invalidDid error.
+    if (typeof network === 'string' && !(network in BitcoinNetworkNames)) {
+      throw new Btc1Error('Invalid "network" name', INVALID_DID, {network});
+    }
+
     // 4. If network is a number and is outside the range of 1-8, raise invalidDid error.
+    if(typeof network === 'number' && (network < 0 || network > 8)) {
+      throw new Btc1Error('Invalid "network" number', INVALID_DID, {network});
+    }
+
+
     // 5. If idType is “key” and genesisBytes is not a valid compressed secp256k1 public key, raise invalidDid error.
 
     // 6. Map idType to hrp from the following:
@@ -58,10 +75,12 @@ export class Btc1Identifier {
     //     “regtest” - 2
     //     “testnet3” - 3
     //     “testnet4” - 4
-    const networkNum = typeof network === 'string'
-      ? BitcoinNetworkNames[network as keyof typeof BitcoinNetworkNames]
-      : network;
-    nibbles.push(networkNum);
+    if(typeof network === 'string') {
+      nibbles.push(BitcoinNetworkNames[network as keyof typeof BitcoinNetworkNames]);
+    } else if (typeof network === 'number') {
+      // 12. If network is a number, append network + 7 to nibbles.
+      nibbles.push(network + 7);
+    }
 
     // 13. If the number of entries in nibbles is odd, append 0.
     if (nibbles.length % 2 !== 0) {
@@ -96,10 +115,10 @@ export class Btc1Identifier {
    */
   public static decode(identifier: string): DidComponents {
     // 1. Split identifier into an array of components at the colon : character.
-    Logger.debug('btc1:decode', 'Decoding identifier:', identifier);
+    // Logger.debug('btc1:decode', 'Decoding identifier:', identifier);
 
     const components = identifier.split(':') ?? [];
-    Logger.debug('btc1:decode', 'components:', components);
+    // Logger.debug('btc1:decode', 'components:', components);
 
     // 2. If the length of the components array is not 3, raise invalidDid error.
     if (components.length !== 3) {
@@ -109,7 +128,7 @@ export class Btc1Identifier {
     // Deconstruct the components of the identifier: scheme, method, fields
     // possible values in `fields`: [id], [{version|network}, id], [version, network, id]
     const [scheme, method, idBech32] = components;
-    Logger.debug('btc1:decode', 'scheme, method, idBech32:', scheme, method, idBech32);
+    // Logger.debug('btc1:decode', 'scheme, method, idBech32:', scheme, method, idBech32);
 
     // 3. If components[0] is not “did”, raise invalidDid error.
     if (!scheme || scheme !== 'did') {
@@ -128,7 +147,7 @@ export class Btc1Identifier {
 
     // 6. Pass encodedString to the Bech32m Decoding algorithm, retrieving hrp and dataBytes.
     const { prefix: hrp, bytes: dataBytes } = bech32m.decodeToBytes(idBech32);
-    Logger.debug('btc1:decode', 'hrp, dataBytes:', hrp, dataBytes);
+    // Logger.debug('btc1:decode', 'hrp, dataBytes:', hrp, dataBytes);
 
     // 7. If the Bech32m decoding algorithm fails, raise invalidDid error.
     // 8. Map hrp to idType from the following:
@@ -153,7 +172,7 @@ export class Btc1Identifier {
       network      : 'bitcoin',
       genesisBytes : dataBytes
     } as DidComponents;
-    Logger.debug('btc1:decode', 'dataBytes:', dataBytes);
+    // Logger.debug('btc1:decode', 'dataBytes:', dataBytes);
 
     // 10. If at any point in the remaining steps there are not enough nibbles to complete the process, raise invalidDid
     //     error.
@@ -162,19 +181,24 @@ export class Btc1Identifier {
     for(nibble; nibble >= 0; nibble--) {
       // 11. Start with the first nibble (the higher nibble of the first byte) of dataBytes.
       const currentNibble = (versionNibble >> nibble);
-      Logger.debug('btc1:decode', 'currentNibble:', currentNibble);
+      // Logger.debug('btc1:decode', 'currentNibble:', currentNibble);
 
       // 12. Add the value of the current nibble to version.
       version += currentNibble;
-      Logger.debug('btc1:decode', 'version:', version);
-      Logger.debug('btc1:decode', 'currentNibble === 0xF:', currentNibble === 0xF);
+      // Logger.debug('btc1:decode', 'version:', version);
+      // Logger.debug('btc1:decode', 'currentNibble === 0xF:', currentNibble === 0xF);
+
+      // If currentNibble is not 0xF, break.
+      if(currentNibble < 0xF) {
+        break;
+      }
 
       // 13. If the value of the nibble is hexadecimal F (decimal 15), advance to the next nibble (the lower nibble of
       //     the current byte or the higher nibble of the next byte) and return to the previous step.
-      if(currentNibble !== 0xF) {
-        break;
+      if(currentNibble === 0xF) {
+        nibble--;
+        continue;
       }
-      nibble--;
 
       // 14. If version is greater than 1, raise invalidDid error.
       if(version > 1) {
@@ -183,10 +207,10 @@ export class Btc1Identifier {
     }
 
     // 15. Advance to the next nibble and set networkValue to its value.
-    const networkNumber = Number(versionNibble >> nibble);
-    Logger.debug('btc1:decode', 'networkNumber:', networkNumber);
+    const networkNumber = Number(versionNibble);
+    // Logger.debug('btc1:decode', 'networkNumber:', networkNumber);
     let networkValue = BitcoinNetworkNames[networkNumber];
-    Logger.debug('btc1:decode', 'networkValue:', networkValue);
+    // Logger.debug('btc1:decode', 'networkValue:', networkValue);
 
     // 16. Map networkValue to network from the following:
     //     0 - “bitcoin”
@@ -219,7 +243,7 @@ export class Btc1Identifier {
 
     // 19. If idType is “key” and genesisBytes is not a valid compressed secp256k1 public key, raise invalidDid error.
     const genesisBytes = identifierComponents.genesisBytes;
-    if(genesisBytes.length !== 33) {
+    if(hrp === 'k' && genesisBytes.length !== 33) {
       throw new Btc1Error(`Invalid public key bytes: ${genesisBytes}`, INVALID_DID, { identifier });
     }
 

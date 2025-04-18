@@ -41,17 +41,25 @@ export interface DidCreateOptions extends IDidCreateOptions<Btc1KeyManager> {
   /** Bitcoin Network */
   network?: string;
 }
-export type DidCreateParams =
-  | { idType: 'KEY'; pubKeyBytes: PublicKeyBytes; options?: DidCreateOptions }
-  | { idType: 'EXTERNAL'; intermediateDocument: IntermediateDocument; options?: DidCreateOptions };
+export type Btc1CreateKeyParams = {
+  idType: 'KEY';
+  pubKeyBytes: PublicKeyBytes;
+  options?: DidCreateOptions;
+};
+export type Btc1CreateExternalParams = {
+  idType: 'EXTERNAL';
+  intermediateDocument: IntermediateDocument;
+  options?: DidCreateOptions;
+};
+export type Btc1CreateParams = Btc1CreateKeyParams | Btc1CreateExternalParams;
 
-export interface ConstructPayloadParams {
+export interface Btc1UpdateConstructParams {
     identifier: string;
     sourceDocument: Btc1DidDocument;
     sourceVersionId: number;
     patch: PatchOperation[];
 }
-export interface DidUpdateParams extends ConstructPayloadParams {
+export interface Btc1UpdateParams extends Btc1UpdateConstructParams {
     verificationMethodId: string;
     beaconIds: string[];
 }
@@ -78,7 +86,7 @@ export class DidBtc1 implements DidMethod {
    * seed, or it can be created from an arbitrary genesis intermediate DID document representation. In both cases,
    * DID creation can be undertaken in an offline manner, i.e., the DID controller does not need to interact with the
    * Bitcoin network to create their DID.
-   * @param {DidCreateParams} params See {@link DidCreateParams} for details.
+   * @param {Btc1CreateParams} params See {@link Btc1CreateParams} for details.
    * @param {IdType} params.idType Type of identifier to create (key or external).
    * @param {PublicKeyBytes} params.pubKeyBytes Public key byte array used to create a btc1 "key" identifier.
    * @param {IntermediateDocument} params.intermediateDocument DID Document used to create a btc1 "external" identifier.
@@ -88,30 +96,15 @@ export class DidBtc1 implements DidMethod {
    * @returns {Promise<CreateResponse>} Promise resolving to a CreateResponse object.
    * @throws {DidBtc1Error} if any of the checks fail
    */
-  public static async create(params: DidCreateParams): Promise<DidCreateResponse> {
+  public static async create(params: Btc1CreateParams): Promise<DidCreateResponse> {
     // Deconstruct the idType and options from the params
     const { idType, options = {} } = params;
 
-    // Validate that the idType is set to either key or external
-    if (!(idType in Btc1CreateIdTypes)) {
-      throw new Btc1Error('Invalid idType: expected "key" or "external"', INVALID_DID, params);
-    }
-
     // Deconstruct options and set the default values
-    const { version = 1, network = 'mainnet' } = options;
-
-    // Validate network in BitcoinNetworkNames
-    if (!(network in BitcoinNetworkNames)) {
-      throw new Btc1Error('Invalid network: must be one of valid bitcoin network', INVALID_DID, options);
-    }
-
-    // Validate version as number > 0
-    if (isNaN(version) || version <= 0 || version > 1) {
-      throw new Btc1Error('Invalid version: must be be convertable to a 0 < number < 1', INVALID_DID, options);
-    }
+    const { version = 1, network = 'bitcoin' } = options;
 
     // If idType is key, call Btc1Create.deterministic
-    if(idType === 'key') {
+    if(idType === Btc1CreateIdTypes.KEY) {
       // Deconstruct the pubKeyBytes from the params
       const { pubKeyBytes } = params;
 
@@ -126,11 +119,11 @@ export class DidBtc1 implements DidMethod {
       }
 
       // Return call to Btc1Create.deterministic
-      return Btc1Create.deterministic({ version, network, publicKey: pubKeyBytes });
+      return Btc1Create.key({ version, network, pubKeyBytes });
     }
 
     // If idType is external, call Btc1Create.external
-    if(idType === 'external') {
+    if(idType === Btc1CreateIdTypes.EXTERNAL) {
       // Deconstruct the intermediateDocument from the params
       const { intermediateDocument } = params;
 
@@ -232,7 +225,7 @@ export class DidBtc1 implements DidMethod {
    * identified MUST be a BIP340 Multikey. The beaconIds MUST identify service endpoints with one of the three Beacon
    * Types SingletonBeacon, aCIDAggregateBeacon, and SMTAggregateBeacon.
    *
-   * @param {DidUpdateParams} params Required parameters for the update operation.
+   * @param {Btc1UpdateParams} params Required parameters for the update operation.
    * @param {string} params.identifier The btc1 identifier to be updated.
    * @param {Btc1DidDocument} params.sourceDocument The DID document being updated.
    * @param {string} params.sourceVersionId The versionId of the source document.
