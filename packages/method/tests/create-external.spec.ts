@@ -9,12 +9,17 @@ import { BeaconUtils, Btc1DidDocument, IntermediateDidDocument } from '../src/in
  * idType=external, intermediateDocument
  * idType=external, intermediateDocument, version
  * idType=external, intermediateDocument, network
- * idType=external, intermediateDocument, version, network
  */
 describe('DidBtc1 Create External', () => {
   const version = 1;
-  const networks = ['bitcoin', 'signet', 'regtest', 'testnet3', 'testnet4' ];
-  const did = 'did:btc1:x1qryscfzk5eqpjegser84gyg3rz5rkpprk8wlhz5l8u894vl0ddpx6z42p4y';
+  const expectedDidMap = new Map<string, string>([
+    ['bitcoin', 'did:btc1:x1qryscfzk5eqpjegser84gyg3rz5rkpprk8wlhz5l8u894vl0ddpx6z42p4y'],
+    ['signet', 'did:btc1:x1q8yscfzk5eqpjegser84gyg3rz5rkpprk8wlhz5l8u894vl0ddpx6c2l7kn'],
+    ['regtest', 'did:btc1:x1qtyscfzk5eqpjegser84gyg3rz5rkpprk8wlhz5l8u894vl0ddpx6lzfknr'],
+    ['testnet3', 'did:btc1:x1q0yscfzk5eqpjegser84gyg3rz5rkpprk8wlhz5l8u894vl0ddpx69aufs5'],
+    ['testnet4', 'did:btc1:x1qnyscfzk5eqpjegser84gyg3rz5rkpprk8wlhz5l8u894vl0ddpx63jvxe2']
+  ]);
+  const networkDidEntries = Object.entries(expectedDidMap);
   const idType = 'EXTERNAL';
   const pubKeyBytes = new Uint8Array([
     3, 147,  88, 104, 169, 222, 126,
@@ -38,59 +43,63 @@ describe('DidBtc1 Create External', () => {
       publicKeyMultibase
     }
   ];
-  const intermediateDocument = new IntermediateDidDocument({ id: ID_PLACEHOLDER_VALUE, verificationMethod, service });
 
   it('should create external identifier and DID document',
     async () => {
-      const result = await DidBtc1.create({ idType, intermediateDocument });
-      expect(result.did).to.equal(did);
-      expect(result.initialDocument).to.exist.and.to.be.instanceOf(Btc1DidDocument);
-      expect(result.initialDocument.verificationMethod[0].id).to.equals(intermediateDocument.verificationMethod[0].id);
-      expect(result.initialDocument.verificationMethod[0].type).to.equals(intermediateDocument.verificationMethod[0].type);
-      expect(result.initialDocument.verificationMethod[0].controller).to.not.equal(intermediateDocument.verificationMethod[0].controller);
-      expect(result.initialDocument.verificationMethod[0].publicKeyMultibase).to.equals(intermediateDocument.verificationMethod[0].publicKeyMultibase);
-      expect(result.initialDocument.service[0].id).to.equals(intermediateDocument.service[0].id);
-      expect(result.initialDocument.service[0].type).to.equals(intermediateDocument.service[0].type);
-      expect(result.initialDocument.service[0].serviceEndpoint).to.equals(intermediateDocument.service[0].serviceEndpoint);
+      const intermediateDocument = new IntermediateDidDocument({ id: ID_PLACEHOLDER_VALUE, verificationMethod, service });
+      const {did, initialDocument} = await DidBtc1.create({ idType, intermediateDocument });
+
+      expect(did).to.equal(expectedDidMap.get('bitcoin'));
+      expect(initialDocument).to.be.instanceOf(Btc1DidDocument);
+
+      expect(initialDocument.verificationMethod[0].id).to.equal(intermediateDocument.verificationMethod[0].id);
+      expect(initialDocument.verificationMethod[0].type).to.equal(intermediateDocument.verificationMethod[0].type);
+      expect(initialDocument.verificationMethod[0].controller).to.equal(intermediateDocument.verificationMethod[0].controller);
+      expect(initialDocument.verificationMethod[0].publicKeyMultibase).to.equal(intermediateDocument.verificationMethod[0].publicKeyMultibase);
+
+      expect(initialDocument.service[0].id).to.equal(intermediateDocument.service[0].id);
+      expect(initialDocument.service[0].type).to.equal(intermediateDocument.service[0].type);
+      expect(initialDocument.service[0].serviceEndpoint).to.equal(intermediateDocument.service[0].serviceEndpoint);
     }
   );
 
   it('should create new DID and BTC1 DID Document using version and intermediateDocument',
     async () => {
-      const result = await DidBtc1.create({ idType, intermediateDocument, options: { version }});
-      expect(result.did).to.equal(did);
-      expect(result.initialDocument).to.exist.and.to.be.instanceOf(Btc1DidDocument);
-      expect(result.initialDocument).to.exist.and.to.be.instanceOf(Btc1DidDocument);
-      expect(result.initialDocument.verificationMethod[0].id).to.equals(intermediateDocument.verificationMethod[0].id);
-      expect(result.initialDocument.verificationMethod[0].type).to.equals(intermediateDocument.verificationMethod[0].type);
-      expect(result.initialDocument.verificationMethod[0].controller).to.not.equal(intermediateDocument.verificationMethod[0].controller);
-      expect(result.initialDocument.verificationMethod[0].publicKeyMultibase).to.equals(intermediateDocument.verificationMethod[0].publicKeyMultibase);
-      expect(result.initialDocument.service[0].id).to.equals(intermediateDocument.service[0].id);
-      expect(result.initialDocument.service[0].type).to.equals(intermediateDocument.service[0].type);
-      expect(result.initialDocument.service[0].serviceEndpoint).to.equals(intermediateDocument.service[0].serviceEndpoint);
+      const intermediateDocument = new IntermediateDidDocument({ id: ID_PLACEHOLDER_VALUE, verificationMethod, service });
+      const {did, initialDocument} = await DidBtc1.create({ idType, intermediateDocument, options: { version }});
+
+      expect(did).to.equal(did);
+      expect(initialDocument).to.be.instanceOf(Btc1DidDocument);
+
+      expect(initialDocument.verificationMethod[0].id).to.equal(intermediateDocument.verificationMethod[0].id);
+      expect(initialDocument.verificationMethod[0].type).to.equal(intermediateDocument.verificationMethod[0].type);
+      expect(initialDocument.verificationMethod[0].controller).to.equal(intermediateDocument.verificationMethod[0].controller);
+      expect(initialDocument.verificationMethod[0].publicKeyMultibase).to.equal(intermediateDocument.verificationMethod[0].publicKeyMultibase);
+
+      expect(initialDocument.service[0].id).to.equal(intermediateDocument.service[0].id);
+      expect(initialDocument.service[0].type).to.equal(intermediateDocument.service[0].type);
+      expect(initialDocument.service[0].serviceEndpoint).to.equal(intermediateDocument.service[0].serviceEndpoint);
     }
   );
 
   it('should create new DID and BTC1 DID Document using network and intermediateDocument',
     async () => {
-      const results = await Promise.all(
-        networks.map(async (network: string) =>
-          await DidBtc1.create({ idType, intermediateDocument, options: { network } })
-        )
+      await Promise.all(
+        networkDidEntries.map(
+          async ([network, didExpected]) => {
+            const intermediateDocument = new IntermediateDidDocument({ id: ID_PLACEHOLDER_VALUE, verificationMethod, service });
+            const {did, initialDocument} = await DidBtc1.create({ idType, intermediateDocument, options: { network } });
+
+            expect(did).to.equal(didExpected);
+            expect(initialDocument).to.be.instanceOf(Btc1DidDocument);
+            expect(initialDocument.verificationMethod[0].id).to.equal(intermediateDocument.verificationMethod[0].id);
+            expect(initialDocument.verificationMethod[0].type).to.equal(intermediateDocument.verificationMethod[0].type);
+            expect(initialDocument.verificationMethod[0].controller).to.equal(intermediateDocument.verificationMethod[0].controller);
+            expect(initialDocument.verificationMethod[0].publicKeyMultibase).to.equal(intermediateDocument.verificationMethod[0].publicKeyMultibase);
+            expect(initialDocument.service[0].id).to.equal(intermediateDocument.service[0].id);
+            expect(initialDocument.service[0].type).to.equal(intermediateDocument.service[0].type);
+            expect(initialDocument.service[0].serviceEndpoint).to.equal(intermediateDocument.service[0].serviceEndpoint);
+          })
       );
-      results.map(result => {
-        expect(result.did).to.equal(did);
-        expect(result.initialDocument).to.exist.and.to.be.instanceOf(Btc1DidDocument);
-        expect(result.initialDocument).to.exist.and.to.be.instanceOf(Btc1DidDocument);
-        expect(result.initialDocument).to.exist.and.to.be.instanceOf(Btc1DidDocument);
-        expect(result.initialDocument.verificationMethod[0].id).to.equals(intermediateDocument.verificationMethod[0].id);
-        expect(result.initialDocument.verificationMethod[0].type).to.equals(intermediateDocument.verificationMethod[0].type);
-        expect(result.initialDocument.verificationMethod[0].controller).to.not.equal(intermediateDocument.verificationMethod[0].controller);
-        expect(result.initialDocument.verificationMethod[0].publicKeyMultibase).to.equals(intermediateDocument.verificationMethod[0].publicKeyMultibase);
-        expect(result.initialDocument.service[0].id).to.equals(intermediateDocument.service[0].id);
-        expect(result.initialDocument.service[0].type).to.equals(intermediateDocument.service[0].type);
-        expect(result.initialDocument.service[0].serviceEndpoint).to.equals(intermediateDocument.service[0].serviceEndpoint);
-      });
-    }
-  );
+    });
 });
