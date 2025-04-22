@@ -16,10 +16,16 @@ did:btc1 is created for those who wish to have it all:
 
 To learn more about did:btc1 method, visit the specification at [dcdpr.github.io/did-btc1](https://dcdpr.github.io/did-btc1/).
 
-To learn more about the implementation, including in-depth usage documentation and examples and the supporting packages,
-visit the documentation website at [docs.btc1.tools](https://docs.btc1.tools/).
+To learn more about the implementation, visit the documentation:
 
-To see a demo using did:btc1, check out the demo website at [demo.btc1.tools](https://demo.btc1.tools/).
+* [@did-btc1/common](https://btc1.tools/common/)
+* [@did-btc1/key-pair](https://btc1.tools/key-pair/)
+* [@did-btc1/cryptosuite](https://btc1.tools/cryptosuite/)
+* [@did-btc1/method](https://btc1.tools/method/)
+* [@did-btc1/cli](https://btc1.tools/cli/)
+* [@did-btc1/smt](https://btc1.tools/smt/)
+
+<!-- To see a demo using did:btc1, check out the demo website at [demo.btc1.tools](https://demo.btc1.tools/). -->
 
 ## Contributing
 
