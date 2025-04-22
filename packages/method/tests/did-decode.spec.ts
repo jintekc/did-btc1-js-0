@@ -1,7 +1,6 @@
 import { bytesToHex } from '@noble/hashes/utils';
 import { expect } from 'chai';
 import { Btc1Identifier } from '../src/index.js';
-import { BitcoinNetworkNames } from '@did-btc1/common';
 
 describe('Btc1Identifier Encode', () => {
   const vectors = [

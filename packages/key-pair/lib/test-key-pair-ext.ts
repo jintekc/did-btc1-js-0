@@ -1,6 +1,4 @@
-import * as ecc from 'tiny-secp256k1';
 import { KeyPair } from '../src/key-pair.js';
-import { PublicKeyUtils } from '../src/public-key.js';
 
 const privateKey = new Uint8Array([
   189,  38, 143, 201, 181, 132,  46, 71,
