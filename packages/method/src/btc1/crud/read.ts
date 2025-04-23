@@ -482,7 +482,7 @@ export class Btc1Read {
     network: BitcoinNetworkNames;
   }): Promise<Btc1DidDocument> {
     // 1. Set contemporaryHash to the SHA256 hash of the contemporaryDIDDocument
-    let contemporaryHash = await JSON.canonicalization.process(contemporaryDIDDocument, 'base58');
+    let contemporaryHash = (await JSON.canonicalization.process(contemporaryDIDDocument, 'base58')).slice(1);
 
     // 2. Find all beacons in contemporaryDIDDocument: All service in contemporaryDIDDocument.services where
     //    service.type equals one of SingletonBeacon, CIDAggregateBeacon and SMTAggregateBeacon Beacon.
@@ -495,7 +495,6 @@ export class Btc1Read {
     const contemporaryBlock = await BitcoinRpc.connect().getBlock({ height: contemporaryBlockHeight }) as BlockV3;
 
     while(contemporaryBlock.time <= targetTime) {
-
       // 4. Set nextSignals to the result of calling algorithm Find Next Signals passing in contemporaryBlockheight and
       //    beacons.
       const nextSignals = await this.findNextSignals({ contemporaryBlockHeight, beacons, network });
@@ -527,7 +526,7 @@ export class Btc1Read {
             throw new Btc1ReadError(
               `Hash mismatch: update.sourceHash ${update.sourceHash} !== contemporaryHash ${contemporaryHash}`,
               LATE_PUBLISHING_ERROR,
-              { update, contemporaryHash }
+              { sourceHash: update.sourceHash, contemporaryHash }
             );
           }
 
