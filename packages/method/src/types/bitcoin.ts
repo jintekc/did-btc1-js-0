@@ -1,4 +1,4 @@
-import { Hex, UnixTimestamp } from '@did-btc1/common';
+import { BitcoinNetworkNames, Hex, UnixTimestamp } from '@did-btc1/common';
 import BitcoinRpc from '../bitcoin/rpc-client.js';
 
 export interface ReturnFormatOptions {
@@ -22,6 +22,7 @@ export interface IClientConfig {
 }
 
 export class RpcClientConfig implements IClientConfig {
+  network?: BitcoinNetworkNames;
   headers?: Record<string, string>;
   host?: string;
   logger?: any;

@@ -1,6 +1,7 @@
 import {
   BitcoinNetworkNames,
   Btc1Error,
+  Btc1IdentifierHrp,
   Btc1ReadError,
   DidUpdatePayload,
   ID_PLACEHOLDER_VALUE,
@@ -8,16 +9,16 @@ import {
   INVALID_DID_UPDATE,
   LATE_PUBLISHING_ERROR,
   Logger,
-  UnixTimestamp,
-  Btc1IdentifierHrp
+  UnixTimestamp
 } from '@did-btc1/common';
 import { Cryptosuite, DataIntegrityProof, Multikey } from '@did-btc1/cryptosuite';
 import { KeyPair, PublicKey } from '@did-btc1/key-pair';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { DEFAULT_BLOCK_CONFIRMATIONS, GENESIS_TX_ID, TXIN_WITNESS_COINBASE } from '../../bitcoin/constants.js';
+import BitcoinRestClient, { RestClientConfig } from '../../bitcoin/rest-client.js';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
 import { DidResolutionOptions } from '../../interfaces/crud.js';
-import { BeaconServiceAddress, BeaconSignal, Signal } from '../../interfaces/ibeacon.js';
+import { BeaconServiceAddress, BeaconSignal } from '../../interfaces/ibeacon.js';
 import { BlockHeight, BlockV3, RawTransactionV2, RpcClientConfig } from '../../types/bitcoin.js';
 import {
   CIDAggregateSidecar,
@@ -31,7 +32,6 @@ import { BeaconUtils } from '../../utils/beacons.js';
 import { Btc1DidDocument, Btc1VerificationMethod } from '../../utils/did-document.js';
 import { Btc1Identifier } from '../../utils/identifier.js';
 import { BeaconFactory } from '../beacons/factory.js';
-import BitcoinRestClient, { RestClientConfig } from '../../bitcoin/rest-client.js';
 
 export type NetworkVersion = {
   version?: string;
@@ -488,83 +488,73 @@ export class Btc1Read {
       BeaconUtils.getBeaconServices({ didDocument: contemporaryDIDDocument })
     );
 
-    const contemporaryBlock = await BitcoinRpc.connect().getBlock({ height: contemporaryBlockHeight }) as BlockV3;
+    // 4. Set nextSignals to the result of calling algorithm Find Next Signals passing in contemporaryBlockheight and
+    //    beacons.
+    const nextSignals = await this.findNextSignals({ contemporaryBlockHeight, targetTime, beacons, network });
 
-    while(contemporaryBlock.time <= targetTime) {
+    // 7. Set updates to the result of calling algorithm Process Beacon Signals passing in signals and sidecarData.
+    // 8. Set orderedUpdates to the list of updates ordered by the targetVersionId property.
+    const orderedUpdates = (
+      await Promise.all(
+        nextSignals.map(
+          async signal => await this.processBeaconSignal(signal, signalsMetadata)
+        )
+      )
+    ).sort((a, b) => a.targetVersionId - b.targetVersionId);
 
-      // 4. Set nextSignals to the result of calling algorithm Find Next Signals passing in contemporaryBlockheight and
-      //    beacons.
-      const nextSignals = await this.findNextSignals({ contemporaryBlockHeight, targetTime, beacons, network });
+    // 9. For update in orderedUpdates:
+    for (let update of orderedUpdates) {
 
-      // 5. Set contemporaryBlockHeight to nextSignals.blockheight.
-      contemporaryBlockHeight = nextSignals.blockheight;
+      // 9.1. If update.targetVersionId is less than or equal to currentVersionId, run Algorithm Confirm Duplicate
+      //      Update passing in update, documentHistory, and contemporaryHash.
+      if (update.targetVersionId <= currentVersionId) {
+        await this.confirmDuplicateUpdate({ update, updateHashHistory });
 
-      // 6. Set signals to nextSignals.signals.
-      const signals = nextSignals.signals;
-
-      // 7. Set updates to the result of calling algorithm Process Beacon Signals passing in signals and sidecarData.
-      const updates = await this.processBeaconSignals(signals, signalsMetadata);
-
-      // 8. Set orderedUpdates to the list of updates ordered by the targetVersionId property.
-      const orderedUpdates = updates.sort((a, b) => a.targetVersionId - b.targetVersionId);
-
-      // 9. For update in orderedUpdates:
-      for (let update of orderedUpdates) {
-
-        // 9.1. If update.targetVersionId is less than or equal to currentVersionId, run Algorithm Confirm Duplicate
-        //      Update passing in update, documentHistory, and contemporaryHash.
-        if (update.targetVersionId <= currentVersionId) {
-          await this.confirmDuplicateUpdate({ update, updateHashHistory });
-
-          //  9.2. If update.targetVersionId equals currentVersionId + 1:
-        } else if(update.targetVersionId === currentVersionId + 1) {
-          //  9.2.1. Check that update.sourceHash equals contemporaryHash, else MUST raise latePublishing error.
-          if(update.sourceHash !== contemporaryHash.slice(1)) {
-            throw new Btc1ReadError(
-              `Hash mismatch: update.sourceHash ${update.sourceHash} !== contemporaryHash ${contemporaryHash}`,
-              LATE_PUBLISHING_ERROR,
-              { update, contemporaryHash }
-            );
-          }
-
-          // 9.2.2. Set contemporaryDIDDocument to the result of calling Apply DID Update algorithm passing in
-          //        contemporaryDIDDocument, update.
-          contemporaryDIDDocument = await this.applyDidUpdate({ contemporaryDIDDocument, update });
-
-          // 9.2.3. Increment currentVersionId.
-          currentVersionId++;
-
-          // 9.2.4. If currentVersionId equals targetVersionId return contemporaryDIDDocument.
-          if(currentVersionId === targetVersionId) {
-            return new Btc1DidDocument(contemporaryDIDDocument);
-          }
-
-          // 9.2.5. Set updateHash to the result of passing update into the JSON Canonicalization and Hash algorithm.
-          const updateHash = await JSON.canonicalization.process(update, 'base58');
-
-          // 9.2.6. Push updateHash onto updateHashHistory.
-          updateHashHistory.push(updateHash as string);
-
-          // 9.2.7. Set contemporaryHash to result of passing contemporaryDIDDocument into the JSON Canonicalization
-          //        and Hash algorithm.
-          contemporaryHash = await JSON.canonicalization.process(contemporaryDIDDocument, 'base58');
-
-          //  9.3. If update.targetVersionId is greater than currentVersionId + 1, MUST throw a LatePublishing error.
-        } else if (update.targetVersionId > currentVersionId + 1) {
+        //  9.2. If update.targetVersionId equals currentVersionId + 1:
+      } else if(update.targetVersionId === currentVersionId + 1) {
+        //  9.2.1. Check that update.sourceHash equals contemporaryHash, else MUST raise latePublishing error.
+        if(update.sourceHash !== contemporaryHash.slice(1)) {
           throw new Btc1ReadError(
-            `Version Id Mismatch: target ${update.targetVersionId} cannot be > current+1 ${currentVersionId + 1}`,
-            'LATE_PUBLISHING_ERROR'
+            `Hash mismatch: update.sourceHash ${update.sourceHash} !== contemporaryHash ${contemporaryHash}`,
+            LATE_PUBLISHING_ERROR,
+            { update, contemporaryHash }
           );
         }
-      }
 
-      // 10. If contemporaryBlockheight equals targetBlockheight, return contemporaryDIDDocument.
-      if(contemporaryBlockHeight === targetTime) {
-        return new Btc1DidDocument(contemporaryDIDDocument);
-      }
+        // 9.2.2. Set contemporaryDIDDocument to the result of calling Apply DID Update algorithm passing in
+        //        contemporaryDIDDocument, update.
+        contemporaryDIDDocument = await this.applyDidUpdate({ contemporaryDIDDocument, update });
 
-      // 11. Increment the blockheight.
-      contemporaryBlockHeight++;
+        // 9.2.3. Increment currentVersionId.
+        currentVersionId++;
+
+        // 9.2.4. If currentVersionId equals targetVersionId return contemporaryDIDDocument.
+        if(currentVersionId === targetVersionId) {
+          return new Btc1DidDocument(contemporaryDIDDocument);
+        }
+
+        // 9.2.5. Set updateHash to the result of passing update into the JSON Canonicalization and Hash algorithm.
+        const updateHash = await JSON.canonicalization.process(update, 'base58');
+
+        // 9.2.6. Push updateHash onto updateHashHistory.
+        updateHashHistory.push(updateHash as string);
+
+        // 9.2.7. Set contemporaryHash to result of passing contemporaryDIDDocument into the JSON Canonicalization
+        //        and Hash algorithm.
+        contemporaryHash = await JSON.canonicalization.process(contemporaryDIDDocument, 'base58');
+
+        //  9.3. If update.targetVersionId is greater than currentVersionId + 1, MUST throw a LatePublishing error.
+      } else if (update.targetVersionId > currentVersionId + 1) {
+        throw new Btc1ReadError(
+          `Version Id Mismatch: target ${update.targetVersionId} cannot be > current+1 ${currentVersionId + 1}`,
+          'LATE_PUBLISHING_ERROR'
+        );
+      }
+    }
+
+    // 10. If contemporaryBlockheight equals targetBlockheight, return contemporaryDIDDocument.
+    if(contemporaryBlockHeight === targetTime) {
+      return new Btc1DidDocument(contemporaryDIDDocument);
     }
 
     // 13. Return contemporaryDIDDocument.
@@ -604,15 +594,14 @@ export class Btc1Read {
    * @param {number} params.blockheight The blockheight to start looking for beacon signals.
    * @param {Array<BeaconService>} params.target The target blockheight at which to stop finding signals.
    * @param {Array<BeaconService>} params.beacons The beacons to look for in the block.
-   * @returns {Promise<BeaconSignal[]>} An array of BeaconSignal objects with blockHeight and signals.
+   * @returns {Promise<Array<BeaconSignal>>} An array of BeaconSignal objects with blockHeight and signals.
    */
   public static async findNextSignals({ contemporaryBlockHeight: height, targetTime, beacons, network }: {
     contemporaryBlockHeight: number;
     targetTime: UnixTimestamp;
     beacons: Array<BeaconServiceAddress>;
     network: BitcoinNetworkNames;
-  }): Promise<BeaconSignal>{
-    // Logger.warn('// TODO: findNextSignals - Use `network` to connect to the correct bitcoin node', network);
+  }): Promise<Array<BeaconSignal>>{
     /**
      * Convert serviceEndpoint to bitcoin address and create mapping of address to beaconService object
      * E.g.
@@ -629,19 +618,19 @@ export class Btc1Read {
 
     //  TODO: Need to determine how to connect to a bitcoin node
     // Connect to the bitcoin node
-    const bitcoinCredentials = process.env.BITCOIN_CREDENTIALS;
-    if(!bitcoinCredentials) {
+    const connectionConfig = process.env.BITCOIN_CONNECTION_CONFIG;
+    if(!connectionConfig) {
       throw new Btc1Error(
         'Credentials not found: must provide a way to connect to a bitcoin node',
         'INVALID_BITCOIN_CREDENTIALS',
-        { bitcoinCredentials }
+        { connectionConfig }
       );
     }
-    if(!JSON.parsable(bitcoinCredentials)) {
+    if(!JSON.parsable(connectionConfig)) {
       throw new Btc1Error(
         'Credentials malformed: mustbe a stringified object',
         'INVALID_BITCOIN_CREDENTIALS',
-        { bitcoinCredentials }
+        { connectionConfig }
       );
     }
     const connectionType = process.env.BITCOIN_CONNECTION?.toLowerCase();
@@ -652,25 +641,21 @@ export class Btc1Read {
         { connectionType }
       );
     }
-    const credentials = JSON.parse(bitcoinCredentials);
+
+    const config = JSON.parse(connectionConfig);
+    config.network = network;
     const connection = connectionType === 'rpc'
-      ? new BitcoinRpc(new RpcClientConfig(credentials))
-      : new BitcoinRestClient(new RestClientConfig(credentials));
+      ? new BitcoinRpc(new RpcClientConfig(config))
+      : new BitcoinRestClient(new RestClientConfig(config));
 
     // Get the block data at the blockhash
-    let block = await connection.getBlock({ height }) as BlockV3 | undefined;
+    let block = await connection.getBlock({ height }) as BlockV3;
 
-    // Create an empty array for beaconSignals
-    const beaconSignal: BeaconSignal = {
-      blockheight : height ?? block?.height,
-      signals     : new Array<Signal>()
-    };
-
-    // If the block is null, return an empty beaconSignal
-    if (!block) {
-      // or: return beaconSignal;  // Possibly an empty or “no signals” result
-      return beaconSignal;
-    }
+    // Create an default beaconSignal and beaconSignals array
+    const beaconSignals: Array<Partial<BeaconSignal>> = [{
+      blockheight : block?.height,
+      blocktime   : block?.time,
+    }];
 
     while(block.time <= targetTime) {
       // Iterate over each transaction in the block
@@ -704,7 +689,7 @@ export class Btc1Read {
           }
 
           // Get the previous output transaction data
-          const prevout = await rpc.getRawTransaction(vin.txid, 2) as RawTransactionV2;
+          const prevout = await connection.getRawTransaction(vin.txid, 2) as RawTransactionV2;
 
           // If the previous output vout at the vin.vout index is undefined, continue ...
           if (!prevout.vout[vin.vout]) {
@@ -728,23 +713,23 @@ export class Btc1Read {
           // Log the found txid and beacon
           Logger.info(`Tx ${tx.txid} contains beacon address ${scriptPubKey.address}!`, tx);
 
-          // Set the blockheight to the block height
-          beaconSignal.blockheight = block.height;
 
           // Push the signal object to to signals array
-          beaconSignal.signals.push({
+          beaconSignals.push({
             beaconId      : beacon.id,
             beaconType    : beacon.type,
             beaconAddress : beacon.address,
-            tx
+            tx,
+            blockheight   : block.height,
+            blocktime     : block.time
           });
-
-          break;
         };
       }
+
+      block = await connection.getBlock({ height: ++height }) as BlockV3;
     }
 
-    return beaconSignal;
+    return beaconSignals as Array<BeaconSignal>;
   }
 
   /**
@@ -771,77 +756,71 @@ export class Btc1Read {
    * @param {SignalsMetadata} signalsMetadata The sidecar data for the DID Document.
    * @returns {DidUpdatePayload[]} The updated DID Document object.
    */
-  public static async processBeaconSignals(signals: Array<Signal>, signalsMetadata: SignalsMetadata): Promise<DidUpdatePayload[]> {
+  public static async processBeaconSignal(signal: BeaconSignal, signalsMetadata: SignalsMetadata): Promise<DidUpdatePayload> {
     // 1. Set updates to an empty array.
     const updates = new Array<DidUpdatePayload>();
 
     // 2. For beaconSignal in beaconSignals:
-    return await Promise.all(
-      signals.map(
-        async (signal) => {
-          // 2.1 Set type to beaconSignal.beaconType.
-          // 2.2 Set signalTx to beaconSignal.tx.
-          // 2.3 Set signalId to signalTx.id.
-          const {
-            beaconId: id,
-            beaconType: type,
-            beaconAddress: address,
-            tx
-          } = signal;
+    // 2.1 Set type to beaconSignal.beaconType.
+    // 2.2 Set signalTx to beaconSignal.tx.
+    // 2.3 Set signalId to signalTx.id.
+    const {
+      beaconId: id,
+      beaconType: type,
+      beaconAddress: address,
+      tx
+    } = signal;
 
-          // 2.4 Set signalSidecarData to signalsMetadata[signalId]. TODO: formalize structure of sidecarData
-          const signalSidecarData = new Map(Object.entries(signalsMetadata)).get(id)!;
-          Logger.warn('// TODO: processBeaconSignals - formalize structure of sidecarData', signalSidecarData);
-          // 2.6 If type == SingletonBeacon:
-          //     2.6.1 Set didUpdatePayload to the result of passing signalTx and signalSidecarData to Process Singleton Beacon Signal algorithm.
-          // 2.7 If type == CIDAggregateBeacon:
-          //     2.7.1 Set didUpdatePayload to the result of passing signalTx and signalSidecarData to the Process CIDAggregate Beacon Signal algorithm.
-          // 2.8 If type == SMTAggregateBeacon:
-          //     2.8.1 Set didUpdatePayload to the result of passing signalTx and signalSidecarData to the Process SMTAggregate Beacon Signal algorithm.
+    // 2.4 Set signalSidecarData to signalsMetadata[signalId]. TODO: formalize structure of sidecarData
+    const signalSidecarData = new Map(Object.entries(signalsMetadata)).get(id)!;
+    Logger.warn('// TODO: processBeaconSignals - formalize structure of sidecarData', signalSidecarData);
+    // 2.6 If type == SingletonBeacon:
+    //     2.6.1 Set didUpdatePayload to the result of passing signalTx and signalSidecarData to Process Singleton Beacon Signal algorithm.
+    // 2.7 If type == CIDAggregateBeacon:
+    //     2.7.1 Set didUpdatePayload to the result of passing signalTx and signalSidecarData to the Process CIDAggregate Beacon Signal algorithm.
+    // 2.8 If type == SMTAggregateBeacon:
+    //     2.8.1 Set didUpdatePayload to the result of passing signalTx and signalSidecarData to the Process SMTAggregate Beacon Signal algorithm.
 
-          Logger.warn('// TODO: processBeaconSignals - where/how to convert signalsMetadata to diff sidecars');
-          let sidecar: SidecarData;
-          switch (type) {
-            case 'SingletonBeacon': {
-              sidecar = { signalsMetadata } as SingletonSidecar;
-              break;
-            }
-            case 'CIDAggregateBeacon': {
-              sidecar = {} as CIDAggregateSidecar;
-              break;
-            }
-            case 'SMTAggregateBeacon': {
-              sidecar = {} as SMTAggregateSidecar;
-              break;
-            }
-            default: {
-              throw new Btc1Error('Invalid beacon type', 'INVALID_BEACON_TYPE', { type });
-            }
-          }
+    Logger.warn('// TODO: processBeaconSignals - where/how to convert signalsMetadata to diff sidecars');
+    let sidecar: SidecarData;
+    switch (type) {
+      case 'SingletonBeacon': {
+        sidecar = { signalsMetadata } as SingletonSidecar;
+        break;
+      }
+      case 'CIDAggregateBeacon': {
+        sidecar = {} as CIDAggregateSidecar;
+        break;
+      }
+      case 'SMTAggregateBeacon': {
+        sidecar = {} as SMTAggregateSidecar;
+        break;
+      }
+      default: {
+        throw new Btc1Error('Invalid beacon type', 'INVALID_BEACON_TYPE', { type });
+      }
+    }
 
-          // Construct a service object from the beaconId and type
-          // and set the serviceEndpoint to the BIP21 URI for the Bitcoin address.
-          const service = { id, type, serviceEndpoint: `bitcoin:${address}` };
+    // Construct a service object from the beaconId and type
+    // and set the serviceEndpoint to the BIP21 URI for the Bitcoin address.
+    const service = { id, type, serviceEndpoint: `bitcoin:${address}` };
 
-          // Establish a Beacon instance using the service and sidecar
-          const beacon = BeaconFactory.establish(service, sidecar);
+    // Establish a Beacon instance using the service and sidecar
+    const beacon = BeaconFactory.establish(service, sidecar);
 
-          // 2.5 Set didUpdatePayload to null.
-          const didUpdatePayload = await beacon.processSignal(tx, signalsMetadata) ?? null;
+    // 2.5 Set didUpdatePayload to null.
+    const didUpdatePayload = await beacon.processSignal(tx, signalsMetadata) ?? null;
 
-          // If the updates is null, throw an error
-          if (!didUpdatePayload) {
-            throw new Btc1Error('No didUpdatePayload for beacon', 'PROCESS_BEACON_SIGNALS_ERROR', { tx, signalsMetadata });
-          }
+    // If the updates is null, throw an error
+    if (!didUpdatePayload) {
+      throw new Btc1Error('No didUpdatePayload for beacon', 'PROCESS_BEACON_SIGNALS_ERROR', { tx, signalsMetadata });
+    }
 
-          // 2.9 If didUpdatePayload is not null, push didUpdatePayload to updates.
-          updates.push(didUpdatePayload);
+    // 2.9 If didUpdatePayload is not null, push didUpdatePayload to updates.
+    updates.push(didUpdatePayload);
 
-          // 3. Return updates.
-          return didUpdatePayload;
-        }
-      )
-    );
+    // 3. Return updates.
+    return didUpdatePayload;
   }
 
   /**

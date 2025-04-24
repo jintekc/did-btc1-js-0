@@ -1,4 +1,4 @@
-import { DidUpdatePayload } from '@did-btc1/common';
+import { DidUpdatePayload, UnixTimestamp } from '@did-btc1/common';
 import { DidServiceEndpoint, DidService as IDidService } from '@web5/dids';
 import { RawTransactionV2 } from '../types/bitcoin.js';
 import { SignalsMetadata } from '../types/crud.js';
@@ -65,13 +65,11 @@ export interface BeaconService extends IDidService {
 export interface BeaconServiceAddress extends BeaconService {
     address: string;
 }
-export interface Signal {
+export interface BeaconSignal {
   beaconId: string;
   beaconType: string;
   beaconAddress: string;
   tx: RawTransactionV2;
-}
-export interface BeaconSignal {
   blockheight: number;
-  signals: Array<Signal>;
+  blocktime: UnixTimestamp;
 }

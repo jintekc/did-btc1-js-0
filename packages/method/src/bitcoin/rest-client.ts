@@ -1,5 +1,17 @@
-import { BitcoinRpcError, Btc1Error } from '@did-btc1/common';
-import { BlockResponse, BlockV0, BlockV1, BlockV2, BlockV3, GetBlockParams, RawTransactionResponse, RawTransactionV0, RawTransactionV1, RawTransactionV2, VerbosityLevel } from '../types/bitcoin.js';
+import { BitcoinNetworkNames, BitcoinRpcError, Btc1Error } from '@did-btc1/common';
+import {
+  BlockResponse,
+  BlockV0,
+  BlockV1,
+  BlockV2,
+  BlockV3,
+  GetBlockParams,
+  RawTransactionResponse,
+  RawTransactionV0,
+  RawTransactionV1,
+  RawTransactionV2,
+  VerbosityLevel
+} from '../types/bitcoin.js';
 
 export interface RestClientConfigParams {
   host: string;
@@ -8,6 +20,7 @@ export interface RestClientConfigParams {
 }
 
 export class RestClientConfig {
+  network?: BitcoinNetworkNames;
   host: string;
   port: number;
   headers?: { [key: string]: string };
@@ -30,7 +43,7 @@ export interface ApiCallParams {
  * @class BitcoinRest
  * @type {BitcoinRest}
  */
-export default class BitcoinRestClient {
+export default class BitcoinRest {
   /**
    * The encapsulated {@link RestClientConfig} object.
    * @private
