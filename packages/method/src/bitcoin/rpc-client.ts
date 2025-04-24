@@ -71,7 +71,7 @@ import { IBitcoinRpc } from './interface.js';
  */
 export default class BitcoinRpc implements IBitcoinRpc {
   /**
-   * The encapsulated {@link RpcClientConfig} object.
+   * The encapsulated {@link RpcClient} object.
    * @private
    * @type {RpcClient} An instance of the Client class from {@link https://www.npmjs.com/package/bitcoin-core | `bitcoin-core`}.
    * See {@link https://github.com/ruimarinho/bitcoin-core/blob/master/src/index.d.ts#L64 | `Client`} for more information.
@@ -88,16 +88,16 @@ export default class BitcoinRpc implements IBitcoinRpc {
 
   /**
    * Constructs a new {@link BitcoinRpc} instance from a new {@link RpcClient | RpcClient}.
-   * @param {RpcClient} client The bitcoin-core client instance.
+   * @param {RpcClientConfig} config The bitcoin-core client instance.
    * @example
    * ```
    *  import BitcoinRpc from '@did-btc1/method';
    *  const bob = BitcoinRpc.connect(); // To use default polar config, pass no args. Polar must run locally.
    * ```
    */
-  constructor(client: RpcClient) {
-    this._client = client;
-    this._config = new RpcClientConfig(this._client);
+  constructor(config: RpcClientConfig) {
+    this._config = new RpcClientConfig(config);
+    this._client = new RpcClient(this._config);
   }
 
   /**

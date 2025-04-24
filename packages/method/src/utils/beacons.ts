@@ -125,13 +125,11 @@ export class BeaconUtils {
     beaconType: string;
   }): Array<BeaconService> {
     return this.generateBitcoinAddrs({ network: getNetwork(network), publicKey })
-      .map(([id, address]) =>
-        this.generateBeaconService({
-          id              : id,
-          type            : beaconType,
-          serviceEndpoint : `bitcoin:${address}`,
-        })
-      );
+      .map(([id, address]) => this.generateBeaconService({
+        id              : id,
+        type            : beaconType,
+        serviceEndpoint : `bitcoin:${address}`,
+      }));
   }
 
   /**

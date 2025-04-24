@@ -18,6 +18,10 @@ export enum Btc1CreateIdTypes {
     KEY = 'KEY',
     EXTERNAL = 'EXTERNAL'
 }
+export enum Btc1IdentifierHrp {
+    k = 'k',
+    x = 'x'
+}
 export enum BitcoinNetworkNames {
     bitcoin = 0,
     signet = 1,
