@@ -1,6 +1,6 @@
 import { Btc1Identifier, Btc1Read, DidResolutionOptions } from '../../../../src/index.js';
 import resolutionOptions from '../../../in/external/resolutionOptions.json' with { type: 'json' };
-import initialDocument from '../../../in/external/initialDidDocument.json' with { type: 'json' };
+import initialDocument from '../../../in/external/initialDidDoc.json' with { type: 'json' };
 const options = resolutionOptions as DidResolutionOptions;
 options.versionTime = 1736430590;
 
