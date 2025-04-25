@@ -2,6 +2,7 @@ import { DidUpdatePayload, UnixTimestamp } from '@did-btc1/common';
 import { DidServiceEndpoint, DidService as IDidService } from '@web5/dids';
 import { RawTransactionV2 } from '../types/bitcoin.js';
 import { SignalsMetadata } from '../types/crud.js';
+import { RawTransactionRest } from '../bitcoin/rest-client.js';
 
 /**
  * Beacon interface
@@ -66,10 +67,10 @@ export interface BeaconServiceAddress extends BeaconService {
     address: string;
 }
 export interface BeaconSignal {
-  beaconId: string;
-  beaconType: string;
-  beaconAddress: string;
-  tx: RawTransactionV2;
+  beaconId?: string;
+  beaconType?: string;
+  beaconAddress?: string;
+  tx?: RawTransactionRest | RawTransactionV2;
   blockheight: number;
   blocktime: UnixTimestamp;
 }

@@ -427,19 +427,20 @@ export type TxIn = {
     txinwitness?: string[];
     sequence: number;
 };
+export type TxInPrevout = {
+    generated: boolean;
+    height: number;
+    value: number;
+    scriptPubKey?: {
+        asm: string;
+        desc: string;
+        hex: string;
+        address?: string;
+        type: string;
+    };
+}
 export interface TxInExt extends TxIn {
-    prevout: {
-        generated: boolean;
-        height: number;
-        value: number;
-        scriptPubKey?: {
-            asm: string;
-            desc: string;
-            hex: string;
-            address?: string;
-            type: string;
-        }
-    }
+    prevout: TxInPrevout;
 }
 export type TxOut = {
     value: number;

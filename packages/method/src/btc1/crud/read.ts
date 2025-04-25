@@ -5,6 +5,7 @@ import {
   Btc1ReadError,
   DidUpdatePayload,
   ID_PLACEHOLDER_VALUE,
+  INVALID_DID,
   INVALID_DID_DOCUMENT,
   INVALID_DID_UPDATE,
   LATE_PUBLISHING_ERROR,
@@ -14,11 +15,11 @@ import {
 import { Cryptosuite, DataIntegrityProof, Multikey } from '@did-btc1/cryptosuite';
 import { KeyPair, PublicKey } from '@did-btc1/key-pair';
 import { DidError, DidErrorCode } from '@web5/dids';
-import { DEFAULT_BLOCK_CONFIRMATIONS, GENESIS_TX_ID, TXIN_WITNESS_COINBASE } from '../../bitcoin/constants.js';
-import BitcoinRestClient, { RestClientConfig } from '../../bitcoin/rest-client.js';
+import { DEFAULT_BLOCK_CONFIRMATIONS, DEFAULT_RPC_CLIENT_CONFIG, GENESIS_TX_ID, TXIN_WITNESS_COINBASE } from '../../bitcoin/constants.js';
+import BitcoinRest, { RestClientConfig } from '../../bitcoin/rest-client.js';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
 import { DidResolutionOptions } from '../../interfaces/crud.js';
-import { BeaconServiceAddress, BeaconSignal } from '../../interfaces/ibeacon.js';
+import { BeaconService, BeaconServiceAddress, BeaconSignal } from '../../interfaces/ibeacon.js';
 import { BlockHeight, BlockV3, RawTransactionV2, RpcClientConfig } from '../../types/bitcoin.js';
 import {
   CIDAggregateSidecar,
@@ -32,6 +33,16 @@ import { BeaconUtils } from '../../utils/beacons.js';
 import { Btc1DidDocument, Btc1VerificationMethod } from '../../utils/did-document.js';
 import { Btc1Identifier } from '../../utils/identifier.js';
 import { BeaconFactory } from '../beacons/factory.js';
+import { bytesToHex } from '@noble/hashes/utils';
+
+export type FindNextSignalsRestParams = {
+  connection: BitcoinRest;
+  beaconSignals: Array<BeaconSignal>;
+  block: BlockV3;
+  beacons: Array<BeaconServiceAddress>;
+}
+export type BeaconSignals = Array<BeaconSignal>;
+export type BitcoinConnection = BitcoinRpc | BitcoinRest;
 
 export type NetworkVersion = {
   version?: string;
@@ -125,11 +136,11 @@ export class Btc1Read {
     const service = BeaconUtils.generateBeaconServices({ network, beaconType, publicKey });
 
     return new Btc1DidDocument({
-      id                   : identifier,
-      verificationMethod   : [{
-        id                 : '#initialKey',
-        type               : 'Multikey',
-        controller         : identifier,
+      id                 : identifier,
+      verificationMethod : [{
+        id         : '#initialKey',
+        type       : 'Multikey',
+        controller : identifier,
         // Encode the public key to publicKeyMultibase
         publicKeyMultibase
       }],
@@ -195,22 +206,24 @@ export class Btc1Read {
    * @throws {DidError} InvalidDidDocument if genesisBytes !== initialDocument hashBytes
    */
   public static async sidecar({ components, initialDocument }: Btc1ReadSidecar): Promise<Btc1DidDocument> {
-    // Set intermediateDocument to a copy of initialDocument
-    const intermediateDocument = initialDocument;
+    // 5. Replace the placeholder did with the identifier throughout the initialDocument.
+    const intermediateDocument = JSON.parse(
+      JSON.stringify(initialDocument).replaceAll(initialDocument.id, ID_PLACEHOLDER_VALUE)
+    );
 
     /** Set the document.id to {@link ID_PLACEHOLDER_VALUE} */
-    intermediateDocument.id = ID_PLACEHOLDER_VALUE;
+    // intermediateDocument.id = ID_PLACEHOLDER_VALUE;
 
     /** Set the document.verificationMethod[i].controller to {@link ID_PLACEHOLDER_VALUE} */
-    intermediateDocument.verificationMethod =
-          Btc1Appendix.getVerificationMethods({ didDocument: intermediateDocument })
-            .map((vm: Btc1VerificationMethod) => ({ ...vm, controller: intermediateDocument.id }));
+    // intermediateDocument.verificationMethod =
+    //   Btc1Appendix.getVerificationMethods({ didDocument: intermediateDocument })
+    //     .map((vm: Btc1VerificationMethod) => ({ ...vm, controller: intermediateDocument.id }));
 
     // Canonicalize and sha256 hash the intermediateDocument
-    const hashBytes = JSON.canonicalization.hash(JSON.stringify(intermediateDocument));
+    const hashBytes = await JSON.canonicalization.process(intermediateDocument, 'hex');
 
     // Compare the genesisBytes to the hashBytes
-    const genesisBytes = components.genesisBytes;
+    const genesisBytes = bytesToHex(components.genesisBytes);
 
     // If the genesisBytes do not match the hashBytes, throw an error
     if (genesisBytes !== hashBytes) {
@@ -274,21 +287,21 @@ export class Btc1Read {
    * @throws {DidError} if the DID hrp is invalid, no sidecarData passed and hrp = "x".
    */
   public static async initialDocument({ identifier, components, options }: {
-      identifier: string;
-      components: DidComponents;
-      options: DidResolutionOptions
-    }): Promise<Btc1DidDocument> {
+    identifier: string;
+    components: DidComponents;
+    options: DidResolutionOptions
+  }): Promise<Btc1DidDocument> {
     // Deconstruct the hrp from the components
     const hrp = components.hrp;
 
     // Validate the hrp is either 'k' or 'x'
-    if(!(hrp in Btc1IdentifierHrp)) {
-      throw new DidError(DidErrorCode.InvalidDid, `Invalid DID hrp ${hrp}`);
+    if (!(hrp in Btc1IdentifierHrp)) {
+      throw new Btc1Error(`Invalid DID hrp ${hrp}`, INVALID_DID, { hrp });
     }
 
     //  Make sure options.sidecarData is not null if hrp === x
     if (hrp === Btc1IdentifierHrp.x && !options.sidecarData) {
-      throw new DidError(DidErrorCode.InvalidDid, 'External resolution required for non-deterministic DIDs');
+      throw new Btc1Error('External resolution requires sidecar data', INVALID_DID, options);
     }
 
     return hrp === Btc1IdentifierHrp.k
@@ -322,9 +335,6 @@ export class Btc1Read {
 
     // If options.versionTime is not null, set targetTime to options.versionTime
     const targetTime = options.versionTime ?? -1;
-    if(!targetTime || targetTime < 0) {
-      throw new Btc1ReadError('Must provide a valid targetTime', 'INVALID_TARGET_TIME', { targetTime });
-    }
 
     // Set the targetBlockheight to the result of passing targetTime to the algorithm Determine Target Blockheight
     // const targetBlockHeight = await this.determineTargetBlockHeight({ network, targetTime });
@@ -336,10 +346,13 @@ export class Btc1Read {
     const currentVersionId = 1;
 
     // 6. If the targetVersionId equals currentVersionId, return initialDocument
-    if(targetVersionId === currentVersionId ) {
+    if (targetVersionId === currentVersionId) {
       return new Btc1DidDocument(initialDocument);
     }
 
+    if (!targetTime || targetTime < 0) {
+      throw new Btc1ReadError('Must provide a valid targetTime', 'INVALID_TARGET_TIME', { targetTime });
+    }
     // 10. Set targetDocument to the result of calling the Traverse Blockchain History algorithm passing in
     //     contemporaryDIDDocument, contemporaryBlockheight, currentVersionId, targetVersionId, targetTime,
     //     updateHashHistory, signalsMetadata, and network.
@@ -391,11 +404,11 @@ export class Btc1Read {
     let target = 0;
 
     // 1. If targetTime, find the Bitcoin block height where timestamp < targetTime.
-    if(targetTime) {
+    if (targetTime) {
       // Use a binary search algorithm to find the block height
       // Loop until the genesis index is less than or equal to the tip
       while (genesis <= tip) {
-      // Set the mid index
+        // Set the mid index
         const mid = Math.floor((genesis + tip) / 2);
 
         // Get the block data at "mid" height
@@ -408,7 +421,7 @@ export class Btc1Read {
           // Reset genesis to mid + 1
           genesis = mid + 1;
         } else {
-        // Reset tip to mid - 1 going lower
+          // Reset tip to mid - 1 going lower
           tip = mid - 1;
         }
       }
@@ -491,6 +504,10 @@ export class Btc1Read {
     // 4. Set nextSignals to the result of calling algorithm Find Next Signals passing in contemporaryBlockheight and
     //    beacons.
     const nextSignals = await this.findNextSignals({ contemporaryBlockHeight, targetTime, beacons, network });
+    if (!nextSignals || nextSignals.length === 0) {
+      // 5. If nextSignals is null or empty, return contemporaryDIDDocument.
+      return new Btc1DidDocument(contemporaryDIDDocument);
+    }
 
     // 7. Set updates to the result of calling algorithm Process Beacon Signals passing in signals and sidecarData.
     // 8. Set orderedUpdates to the list of updates ordered by the targetVersionId property.
@@ -511,9 +528,9 @@ export class Btc1Read {
         await this.confirmDuplicateUpdate({ update, updateHashHistory });
 
         //  9.2. If update.targetVersionId equals currentVersionId + 1:
-      } else if(update.targetVersionId === currentVersionId + 1) {
+      } else if (update.targetVersionId === currentVersionId + 1) {
         //  9.2.1. Check that update.sourceHash equals contemporaryHash, else MUST raise latePublishing error.
-        if(update.sourceHash !== contemporaryHash.slice(1)) {
+        if (update.sourceHash !== contemporaryHash.slice(1)) {
           throw new Btc1ReadError(
             `Hash mismatch: update.sourceHash ${update.sourceHash} !== contemporaryHash ${contemporaryHash}`,
             LATE_PUBLISHING_ERROR,
@@ -529,7 +546,7 @@ export class Btc1Read {
         currentVersionId++;
 
         // 9.2.4. If currentVersionId equals targetVersionId return contemporaryDIDDocument.
-        if(currentVersionId === targetVersionId) {
+        if (currentVersionId === targetVersionId) {
           return new Btc1DidDocument(contemporaryDIDDocument);
         }
 
@@ -553,7 +570,7 @@ export class Btc1Read {
     }
 
     // 10. If contemporaryBlockheight equals targetBlockheight, return contemporaryDIDDocument.
-    if(contemporaryBlockHeight === targetTime) {
+    if (contemporaryBlockHeight === targetTime) {
       return new Btc1DidDocument(contemporaryDIDDocument);
     }
 
@@ -601,7 +618,56 @@ export class Btc1Read {
     targetTime: UnixTimestamp;
     beacons: Array<BeaconServiceAddress>;
     network: BitcoinNetworkNames;
-  }): Promise<Array<BeaconSignal>>{
+  }): Promise<Array<BeaconSignal>> {
+    // Determine bitcoin node connection type
+    const connectionType = process.env.BITCOIN_CONNECTION?.toLowerCase() ?? 'rpc';
+    if (!connectionType || !['rpc', 'rest'].includes(connectionType)) {
+      throw new Btc1Error(
+        'Connection type invalid: must be "rpc" or "rest"',
+        'INVALID_BITCOIN_CREDENTIALS',
+        { connectionType }
+      );
+    }
+    // Grab the connection configuration from the environment variable or default to the rpc config
+    // TODO: Make the default config a 3rd party Esplora node (e.g. https://blockstream.info or btc01.gl1.dcdpr.com)
+    const connectionConfig = process.env.BITCOIN_CONNECTION_CONFIG ?? JSON.stringify(DEFAULT_RPC_CLIENT_CONFIG);
+    if (!connectionConfig) {
+      throw new Btc1Error(
+        'Credentials not found: must provide a way to connect to a bitcoin node',
+        'INVALID_BITCOIN_CREDENTIALS',
+        { connectionConfig }
+      );
+    }
+    if (!JSON.parsable(connectionConfig)) {
+      throw new Btc1Error(
+        'Credentials malformed: mustbe a stringified object',
+        'INVALID_BITCOIN_CREDENTIALS',
+        { connectionConfig }
+      );
+    }
+
+    // Parse the connection config and set the network
+    const config = JSON.parse(connectionConfig);
+    config.network = network;
+
+    // Toggle RPC or REST connection based on the connection type
+    const connection: BitcoinConnection = connectionType === 'rpc'
+      ? new BitcoinRpc(new RpcClientConfig(config))
+      : new BitcoinRest(new RestClientConfig(config));
+
+    // Use connection to get the block data at the blockhash
+    let block = await connection.getBlock({ height }) as BlockV3;
+
+    // Create an default beaconSignal and beaconSignals array
+    const beaconSignals = [];
+
+    if (connectionType === 'rest') {
+      const nextSignalsRest = await this.findSignalsRest({ connection: connection as BitcoinRest, beacons });
+      if (!nextSignalsRest || nextSignalsRest.length === 0) {
+        return beaconSignals;
+      }
+    }
+
     /**
      * Convert serviceEndpoint to bitcoin address and create mapping of address to beaconService object
      * E.g.
@@ -615,53 +681,11 @@ export class Btc1Read {
      * }
      */
     const beaconAddresses = BeaconUtils.getBeaconServiceAddressMap(beacons);
-
-    //  TODO: Need to determine how to connect to a bitcoin node
-    // Connect to the bitcoin node
-    const connectionConfig = process.env.BITCOIN_CONNECTION_CONFIG;
-    if(!connectionConfig) {
-      throw new Btc1Error(
-        'Credentials not found: must provide a way to connect to a bitcoin node',
-        'INVALID_BITCOIN_CREDENTIALS',
-        { connectionConfig }
-      );
-    }
-    if(!JSON.parsable(connectionConfig)) {
-      throw new Btc1Error(
-        'Credentials malformed: mustbe a stringified object',
-        'INVALID_BITCOIN_CREDENTIALS',
-        { connectionConfig }
-      );
-    }
-    const connectionType = process.env.BITCOIN_CONNECTION?.toLowerCase();
-    if(!connectionType || !['rpc', 'rest'].includes(connectionType)) {
-      throw new Btc1Error(
-        'Connection type invalid: must be "rpc" or "rest"',
-        'INVALID_BITCOIN_CREDENTIALS',
-        { connectionType }
-      );
-    }
-
-    const config = JSON.parse(connectionConfig);
-    config.network = network;
-    const connection = connectionType === 'rpc'
-      ? new BitcoinRpc(new RpcClientConfig(config))
-      : new BitcoinRestClient(new RestClientConfig(config));
-
-    // Get the block data at the blockhash
-    let block = await connection.getBlock({ height }) as BlockV3;
-
-    // Create an default beaconSignal and beaconSignals array
-    const beaconSignals: Array<Partial<BeaconSignal>> = [{
-      blockheight : block?.height,
-      blocktime   : block?.time,
-    }];
-
-    while(block.time <= targetTime) {
+    while (block.time <= targetTime) {
       // Iterate over each transaction in the block
       for (const tx of block.tx) {
-      // If the txid is a coinbase, continue ...
-        if(tx.txid === GENESIS_TX_ID) {
+        // If the txid is a coinbase, continue ...
+        if (tx.txid === GENESIS_TX_ID) {
           continue;
         }
 
@@ -674,7 +698,7 @@ export class Btc1Read {
           }
 
           // If the vin txinwitness contains a coinbase identifier, continue ...
-          if(vin.txinwitness && vin.txinwitness.length === 1 && vin.txinwitness[0] === TXIN_WITNESS_COINBASE) {
+          if (vin.txinwitness && vin.txinwitness.length === 1 && vin.txinwitness[0] === TXIN_WITNESS_COINBASE) {
             continue;
           }
 
@@ -700,7 +724,7 @@ export class Btc1Read {
           const scriptPubKey = prevout.vout[vin.vout].scriptPubKey;
 
           // If the beaconAddress is undefined, continue ...
-          if(!scriptPubKey.address) {
+          if (!scriptPubKey.address) {
             continue;
           }
 
@@ -729,7 +753,52 @@ export class Btc1Read {
       block = await connection.getBlock({ height: ++height }) as BlockV3;
     }
 
-    return beaconSignals as Array<BeaconSignal>;
+    return beaconSignals;
+  }
+
+  /**
+   * Helper method for the {@link findNextSignals | Find Next Signals} algorithm.
+   *
+   * @param params See {@link FindNextSignalsRestParams} for details.
+   * @param {BitcoinConnection} params.connection The bitcoin connection to use.
+   * @param {Array<BeaconSignal>} params.beaconSignals The beacon signals to process.
+   * @param {BlockV3} params.block The block to process.
+   * @param {Array<BeaconService>} params.beacons The beacons to process.
+   * @returns {Promise<Array<BeaconSignal>>} The beacon signals found in the block.
+   */
+  public static async findSignalsRest({ connection, beacons }: {
+    connection: BitcoinRest;
+    beacons: Array<BeaconService>;
+  }): Promise<Array<BeaconSignal>> {
+    // Empty array of beaconSignals
+    const beaconSignals = new Array<BeaconSignal>();
+
+    // Iterate over each beacon
+    for (let beacon of beacons) {
+
+      // Get the transactions for the beacon address via REST
+      const transactions = await connection.getAddressTransactions(beacon.beaconAddress);
+
+      // If no transactions are found, continue
+      if (!transactions || transactions.length === 0) {
+        continue;
+      }
+
+      // Iterate over each transaction and push a beaconSignal
+      for (let tx of transactions) {
+        beaconSignals.push({
+          beaconId      : beacon.id,
+          beaconType    : beacon.type,
+          beaconAddress : beacon.address,
+          tx,
+          blockheight   : tx.status.block_height,
+          blocktime     : tx.status.block_time,
+        });
+      }
+    }
+
+    // Return the beaconSignals
+    return beaconSignals;
   }
 
   /**
@@ -752,7 +821,7 @@ export class Btc1Read {
    * It returns an array of {@link https://dcdpr.github.io/did-btc1/#def-did-update-payload | DID Update Payloads}.
    *
    * @public
-   * @param {Array<Signal>} signals The beacon signals to process.
+   * @param {BeaconSignal} signal The beacon signals to process.
    * @param {SignalsMetadata} signalsMetadata The sidecar data for the DID Document.
    * @returns {DidUpdatePayload[]} The updated DID Document object.
    */
@@ -878,7 +947,7 @@ export class Btc1Read {
   }): Promise<Btc1DidDocument> {
     // 1. Set capabilityId to update.proof.capability.
     const capabilityId = update.proof?.capability;
-    if(!capabilityId) {
+    if (!capabilityId) {
       throw new Btc1ReadError('No capabilityId found in update', INVALID_DID_UPDATE);
     }
 
@@ -925,7 +994,7 @@ export class Btc1Read {
     const verificationResult = await diProof.verifyProof({ document: documentBytes, expectedPurpose });
 
     // 9. If verificationResult.verified equals False, MUST raise a invalidUpdateProof exception.
-    if(!verificationResult.verified) {
+    if (!verificationResult.verified) {
       throw new Btc1Error('Invalid update: proof not verified', INVALID_DID_UPDATE, verificationResult);
     }
 

@@ -177,9 +177,9 @@ export class DidBtc1 implements DidMethod {
         didDocument           : targetDocument,
       };
 
-      Logger.warn('// TODO: Are we using the DID Core spec for DidResolutionResult?');
-      Logger.warn('// TODO: Are we using didResolutionMetadata? https://www.w3.org/TR/did-1.0/#did-resolution-metadata');
-      Logger.warn('// TODO: Are we using didDocumentMetadata? https://www.w3.org/TR/did-1.0/#did-document-metadata');
+      // Logger.warn('// TODO: Are we using the DID Core spec for DidResolutionResult?');
+      // Logger.warn('// TODO: Are we using didResolutionMetadata? https://www.w3.org/TR/did-1.0/#did-resolution-metadata');
+      // Logger.warn('// TODO: Are we using didDocumentMetadata? https://www.w3.org/TR/did-1.0/#did-document-metadata');
 
       // Return didResolutionResult;
       return didResolutionResult;
