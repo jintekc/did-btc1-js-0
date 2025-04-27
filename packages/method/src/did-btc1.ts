@@ -3,7 +3,6 @@ import {
   Btc1Error,
   INVALID_DID,
   INVALID_DID_DOCUMENT,
-  Logger,
   METHOD_NOT_SUPPORTED,
   PatchOperation,
   PublicKeyBytes,
