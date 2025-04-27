@@ -14,7 +14,7 @@ import {
 } from '@did-btc1/common';
 import { Cryptosuite, DataIntegrityProof, Multikey } from '@did-btc1/cryptosuite';
 import { KeyPair, PublicKey } from '@did-btc1/key-pair';
-import { DidError, DidErrorCode } from '@web5/dids';
+import { bytesToHex } from '@noble/hashes/utils';
 import { DEFAULT_BLOCK_CONFIRMATIONS, DEFAULT_RPC_CLIENT_CONFIG, GENESIS_TX_ID, TXIN_WITNESS_COINBASE } from '../../bitcoin/constants.js';
 import BitcoinRest, { RestClientConfig } from '../../bitcoin/rest-client.js';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
@@ -30,10 +30,9 @@ import {
 } from '../../types/crud.js';
 import { Btc1Appendix, DidComponents } from '../../utils/appendix.js';
 import { BeaconUtils } from '../../utils/beacons.js';
-import { Btc1DidDocument, Btc1VerificationMethod } from '../../utils/did-document.js';
+import { Btc1DidDocument } from '../../utils/did-document.js';
 import { Btc1Identifier } from '../../utils/identifier.js';
 import { BeaconFactory } from '../beacons/factory.js';
-import { bytesToHex } from '@noble/hashes/utils';
 
 export type FindNextSignalsRestParams = {
   connection: BitcoinRest;
@@ -619,7 +618,7 @@ export class Btc1Read {
     beacons: Array<BeaconServiceAddress>;
     network: BitcoinNetworkNames;
   }): Promise<Array<BeaconSignal>> {
-    // Determine bitcoin node connection type
+    // Determine bitcoin node connection type from the environment variable
     const connectionType = process.env.BITCOIN_CONNECTION?.toLowerCase() ?? 'rpc';
     if (!connectionType || !['rpc', 'rest'].includes(connectionType)) {
       throw new Btc1Error(
@@ -628,6 +627,7 @@ export class Btc1Read {
         { connectionType }
       );
     }
+
     // Grab the connection configuration from the environment variable or default to the rpc config
     // TODO: Make the default config a 3rd party Esplora node (e.g. https://blockstream.info or btc01.gl1.dcdpr.com)
     const connectionConfig = process.env.BITCOIN_CONNECTION_CONFIG ?? JSON.stringify(DEFAULT_RPC_CLIENT_CONFIG);
@@ -638,6 +638,8 @@ export class Btc1Read {
         { connectionConfig }
       );
     }
+
+    // Ensure the connection config is a stringified object
     if (!JSON.parsable(connectionConfig)) {
       throw new Btc1Error(
         'Credentials malformed: mustbe a stringified object',
@@ -655,11 +657,8 @@ export class Btc1Read {
       ? new BitcoinRpc(new RpcClientConfig(config))
       : new BitcoinRest(new RestClientConfig(config));
 
-    // Use connection to get the block data at the blockhash
-    let block = await connection.getBlock({ height }) as BlockV3;
-
     // Create an default beaconSignal and beaconSignals array
-    const beaconSignals = [];
+    const beaconSignals: BeaconSignals = [];
 
     if (connectionType === 'rest') {
       const nextSignalsRest = await this.findSignalsRest({ connection: connection as BitcoinRest, beacons });
@@ -668,19 +667,9 @@ export class Btc1Read {
       }
     }
 
-    /**
-     * Convert serviceEndpoint to bitcoin address and create mapping of address to beaconService object
-     * E.g.
-     * Map(1) {
-     * '174EZ9haVAZRoScHMAhSUBiDPdByTFKEyU' => {
-     *    id: '#initialP2PKH',
-     *    type: 'SingletonBeacon',
-     *    serviceEndpoint: 'bitcoin:174EZ9haVAZRoScHMAhSUBiDPdByTFKEyU',
-     *    address: '174EZ9haVAZRoScHMAhSUBiDPdByTFKEyU'
-     *  }
-     * }
-     */
-    const beaconAddresses = BeaconUtils.getBeaconServiceAddressMap(beacons);
+    // Use connection to get the block data at the blockhash
+    let block = await connection.getBlock({ height }) as BlockV3;
+
     while (block.time <= targetTime) {
       // Iterate over each transaction in the block
       for (const tx of block.tx) {
@@ -729,6 +718,7 @@ export class Btc1Read {
           }
 
           // If the beaconAddress from prevvout scriptPubKey is not a beacon service endpoint address, continue ...
+          const beaconAddresses = BeaconUtils.getBeaconServiceAddressMap(beacons);
           const beacon = (beaconAddresses.get(scriptPubKey.address) ?? {}) as BeaconServiceAddress;
           if (!beacon || !(beacon.id && beacon.type)) {
             continue;
@@ -750,7 +740,10 @@ export class Btc1Read {
         };
       }
 
-      block = await connection.getBlock({ height: ++height }) as BlockV3;
+      height += 1;
+      console.log(`Searching for signals in block ${height}...`);
+      // Reset the block to the next block
+      block = await connection.getBlock({ height }) as BlockV3;
     }
 
     return beaconSignals;
@@ -839,6 +832,7 @@ export class Btc1Read {
       beaconAddress: address,
       tx
     } = signal;
+    const signalTx = tx as RawTransactionV2;
 
     // 2.4 Set signalSidecarData to signalsMetadata[signalId]. TODO: formalize structure of sidecarData
     const signalSidecarData = new Map(Object.entries(signalsMetadata)).get(id)!;
@@ -878,7 +872,7 @@ export class Btc1Read {
     const beacon = BeaconFactory.establish(service, sidecar);
 
     // 2.5 Set didUpdatePayload to null.
-    const didUpdatePayload = await beacon.processSignal(tx, signalsMetadata) ?? null;
+    const didUpdatePayload = await beacon.processSignal(signalTx, signalsMetadata) ?? null;
 
     // If the updates is null, throw an error
     if (!didUpdatePayload) {

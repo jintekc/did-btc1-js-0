@@ -16,6 +16,7 @@ import { Btc1VerificationMethod } from './did-document.js';
 
 export interface DidComponents {
     hrp: string;
+    idType: string;
     version: number;
     network: string;
     genesisBytes: Bytes;

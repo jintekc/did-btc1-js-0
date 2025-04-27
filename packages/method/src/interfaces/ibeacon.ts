@@ -67,10 +67,10 @@ export interface BeaconServiceAddress extends BeaconService {
     address: string;
 }
 export interface BeaconSignal {
-  beaconId?: string;
+  beaconId: string;
   beaconType?: string;
   beaconAddress?: string;
-  tx?: RawTransactionRest | RawTransactionV2;
+  tx: RawTransactionRest | RawTransactionV2;
   blockheight: number;
   blocktime: UnixTimestamp;
 }
