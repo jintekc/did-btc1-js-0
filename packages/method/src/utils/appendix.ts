@@ -12,7 +12,7 @@ import { createHelia } from 'helia';
 import { CID } from 'multiformats';
 import { create as createDigest } from 'multiformats/hashes/digest';
 import { Btc1RootCapability } from '../interfaces/crud.js';
-import { Btc1VerificationMethod } from './did-document.js';
+import { Btc1VerificationMethod } from './did-document/index.js';
 
 export interface DidComponents {
     hrp: string;

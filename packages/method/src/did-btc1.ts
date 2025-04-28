@@ -28,7 +28,7 @@ import { Btc1Update } from './btc1/crud/update.js';
 import { Btc1KeyManager } from './btc1/key-manager/index.js';
 import { DidResolutionOptions } from './interfaces/crud.js';
 import { Btc1Appendix } from './utils/appendix.js';
-import { Btc1DidDocument, Btc1VerificationMethod, IntermediateDidDocument } from './utils/did-document.js';
+import { Btc1DidDocument, Btc1VerificationMethod, IntermediateDidDocument } from './utils/did-document/index.js';
 import { Btc1Identifier } from './utils/identifier.js';
 
 /** Initialize tiny secp256k1 */

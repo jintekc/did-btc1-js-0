@@ -1,15 +1,17 @@
-import { Btc1Identifier, Btc1Read, DidResolutionOptions } from '../../../../src/index.js';
+import { Btc1Identifier, Btc1Read, DidBtc1, DidResolutionOptions } from '../../../../src/index.js';
 import resolutionOptions from '../../../in/key/resolutionOptions.json' with { type: 'json' };
-import initialDocument from '../../../in/key/initialDidDocument.json' with { type: 'json' };
 const options =  resolutionOptions as DidResolutionOptions;
-options.versionTime = 1736430590;
+options.versionTime = Date.now();
 
-const identifier = 'did:btc1:x1qtdr376lhfvyxe466n67kyl2hzdxeh59z3axv4ud5jsxul75xac0yyrwykt';
+const identifier = 'did:btc1:k1qgpzs6takyvuhv3dy8epaqhwee6eamxttprpn4k48ft4xyvw5sp3mvqqavunt';
 const components = Btc1Identifier.decode(identifier);
 console.log('components:', components);
 
-// const initialDocument = await Btc1Read.initialDocument({ identifier, components, options });
-// console.log('initialDocument:', initialDocument);
+const initialDocument = await Btc1Read.initialDocument({ identifier, components, options });
+console.log('initialDocument:', initialDocument);
 
 const targetDocument = await Btc1Read.targetDocument({ initialDocument, options });
 console.log('targetDocument:', targetDocument);
+
+const resolution = await DidBtc1.resolve(identifier, options);
+console.log('resolution:', resolution);

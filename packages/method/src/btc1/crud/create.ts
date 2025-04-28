@@ -3,8 +3,9 @@ import { PublicKey } from '@did-btc1/key-pair';
 import { Btc1CreateResponse } from '../../did-btc1.js';
 import { Btc1Appendix } from '../../utils/appendix.js';
 import { BeaconUtils } from '../../utils/beacons.js';
-import { Btc1DidDocument, Btc1VerificationMethod, IntermediateDidDocument } from '../../utils/did-document.js';
+import { Btc1DidDocument, Btc1VerificationMethod, IntermediateDidDocument } from '../../utils/did-document/index.js';
 import { Btc1Identifier } from '../../utils/identifier.js';
+import { getNetwork } from '../../bitcoin/network.js';
 
 /**
  * Implements section {@link https://dcdpr.github.io/did-btc1/#create | 4.1 Create}.
@@ -39,35 +40,35 @@ export class Btc1Create {
     // Set idType to "KEY"
     const idType = Btc1CreateIdTypes.KEY;
 
-    // Set publicKey to genesisBytes
-    const genesisBytes = pubKeyBytes;
-
-    // Set beaconType to "SingletonBeacon"
-    const beaconType = 'SingletonBeacon';
-
     // Call the the did:btc1 Identifier Encoding algorithm
-    const did = Btc1Identifier.encode({ version, network, idType, genesisBytes, });
+    const identifier = Btc1Identifier.encode({ version, network, idType, genesisBytes: pubKeyBytes });
 
     // Instantiate PublicKey object and get the multibase formatted publicKey
-    const publicKeyMultibase = new PublicKey(genesisBytes).multibase;
+    const { bytes: publicKey, multibase: publicKeyMultibase } = new PublicKey(pubKeyBytes);
 
-    // Generate SingletonBeacon services
-    const services = BeaconUtils.generateBeaconServices({ publicKey: genesisBytes, network, beaconType, });
+    // Generate the service field for the DID Document
+    const service = BeaconUtils.generateBeaconServices({
+      identifier,
+      publicKey,
+      network : getNetwork(network),
+      type    : 'SingletonBeacon',
+    });
 
     // Create initialDocument ensuring conformant to spec as Btc1DidDocument
     const initialDocument = new Btc1DidDocument({
-      id                 : did,
-      service            : services,
+      id                 : identifier,
+      controller         : [identifier],
       verificationMethod : [{
-        id                 : '#initialKey',
-        type               : 'Multikey',
-        controller         : did,
+        id         : `${identifier}#initialKey`,
+        type       : 'Multikey',
+        controller : identifier,
         publicKeyMultibase,
       }],
+      service,
     });
 
     // Return did & initialDocument
-    return { did, initialDocument };
+    return { did: identifier, initialDocument };
   }
 
   /**

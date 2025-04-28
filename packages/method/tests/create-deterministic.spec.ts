@@ -1,7 +1,7 @@
 import { PublicKey } from '@did-btc1/key-pair';
 import { expect } from 'chai';
 import { DidBtc1 } from '../src/did-btc1.js';
-import { BeaconUtils, Btc1DidDocument } from '../src/index.js';
+import { BeaconUtils, Btc1DidDocument, getNetwork } from '../src/index.js';
 
 /**
  * DidBtc1 Create Key Test Cases
@@ -30,11 +30,6 @@ describe('DidBtc1 Create Deterministic', () => {
   ]);
   const publicKey = new PublicKey(pubKeyBytes);
   const publicKeyMultibase = publicKey.multibase;
-  const service = BeaconUtils.generateBeaconServices({
-    network    : 'bitcoin',
-    beaconType : 'SingletonBeacon',
-    publicKey  : publicKey.bytes
-  });
 
   it('should create a deterministic key identifier and DID document from a publicKey',
     async () => {
@@ -47,6 +42,12 @@ describe('DidBtc1 Create Deterministic', () => {
           publicKeyMultibase
         }
       ];
+      const service = BeaconUtils.generateBeaconServices({
+        identifier : did,
+        network    : getNetwork('bitcoin'),
+        type       : 'SingletonBeacon',
+        publicKey  : publicKey.bytes
+      });
       const didDocument = new Btc1DidDocument({ id: did, verificationMethod, service });
       expect(did).to.equal(expectedDidMap.get('bitcoin'));
       expect(initialDocument).to.be.instanceOf(Btc1DidDocument);
@@ -70,6 +71,12 @@ describe('DidBtc1 Create Deterministic', () => {
           publicKeyMultibase
         }
       ];
+      const service = BeaconUtils.generateBeaconServices({
+        identifier : did,
+        network    : getNetwork('bitcoin'),
+        type       : 'SingletonBeacon',
+        publicKey  : publicKey.bytes
+      });
       const didDocument = new Btc1DidDocument({ id: did, verificationMethod, service });
       expect(did).to.equal(did);
       expect(initialDocument).to.be.instanceOf(Btc1DidDocument);
@@ -95,6 +102,12 @@ describe('DidBtc1 Create Deterministic', () => {
                 publicKeyMultibase
               }
             ];
+            const service = BeaconUtils.generateBeaconServices({
+              identifier : did,
+              network    : getNetwork('bitcoin'),
+              type       : 'SingletonBeacon',
+              publicKey  : publicKey.bytes
+            });
             const didDocument = new Btc1DidDocument({ id: did, verificationMethod, service });
             const result = await DidBtc1.create({ idType, pubKeyBytes, options: { network } });
             expect(result.did).to.equal(did);

@@ -1,9 +1,9 @@
-import { BTC1_DID_DOCUMENT_CONTEXT, DidDocumentError, ID_PLACEHOLDER_VALUE, INVALID_DID_DOCUMENT, Logger } from '@did-btc1/common';
+import { BTC1_DID_DOCUMENT_CONTEXT, Btc1CreateIdTypes, Btc1IdentifierHrp, DidDocumentError, ID_PLACEHOLDER_VALUE, INVALID_DID_DOCUMENT, Logger } from '@did-btc1/common';
 import { DidService, DidVerificationMethod, DidDocument as IDidDocument } from '@web5/dids';
-import { BeaconService } from '../interfaces/ibeacon.js';
-import { Btc1Appendix } from './appendix.js';
-import { BeaconUtils } from './beacons.js';
-import { Btc1Identifier } from './identifier.js';
+import { BeaconService } from '../../interfaces/ibeacon.js';
+import { Btc1Appendix } from '../appendix.js';
+import { BeaconUtils } from '../beacons.js';
+import { Btc1Identifier } from '../identifier.js';
 
 /**
  * DID BTC1 Verification Method extends the DidVerificationMethod class adding helper methods and properties
@@ -57,6 +57,8 @@ export class Btc1DidDocument implements IBtc1DidDocument {
   service: Array<BeaconService>;
 
   constructor(document: Btc1DidDocument) {
+    const isKey = document.id.includes('k1');
+
     // Deconstruct the document
     const {
       id,
@@ -105,6 +107,13 @@ export class Btc1DidDocument implements IBtc1DidDocument {
     this.capabilityInvocation = capabilityInvocation;
     // Set the capabilityDelegation
     this.capabilityDelegation = capabilityDelegation;
+
+    if(isKey) {
+      this.authentication = authentication || [`${id}#initialKey`];
+      this.assertionMethod = assertionMethod || [`${id}#initialKey`];
+      this.capabilityInvocation = capabilityInvocation || [`${id}#initialKey`];
+      this.capabilityDelegation = capabilityDelegation || [`${id}#initialKey`];
+    }
 
     // Sanitize the DID Document
     Btc1DidDocument.sanitize(this);

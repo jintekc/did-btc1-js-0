@@ -30,9 +30,10 @@ import {
 } from '../../types/crud.js';
 import { Btc1Appendix, DidComponents } from '../../utils/appendix.js';
 import { BeaconUtils } from '../../utils/beacons.js';
-import { Btc1DidDocument } from '../../utils/did-document.js';
+import { Btc1DidDocument } from '../../utils/did-document/index.js';
 import { Btc1Identifier } from '../../utils/identifier.js';
 import { BeaconFactory } from '../beacons/factory.js';
+import { getNetwork } from '../../bitcoin/network.js';
 
 export type FindNextSignalsRestParams = {
   connection: BitcoinRest;
@@ -129,21 +130,26 @@ export class Btc1Read {
     // Deconstruct the components
     const { network, genesisBytes } = components;
 
-    // Construct a new PublicKey
+    // Construct a new PublicKey and deconstruct the publicKey and publicKeyMultibase
     const { bytes: publicKey, multibase: publicKeyMultibase } = new PublicKey(genesisBytes);
-    const beaconType = 'SingletonBeacon';
-    const service = BeaconUtils.generateBeaconServices({ network, beaconType, publicKey });
+
+    // Generate the service field for the DID Document
+    const service = BeaconUtils.generateBeaconServices({
+      identifier,
+      publicKey,
+      network : getNetwork(network),
+      type    : 'SingletonBeacon',
+    });
 
     return new Btc1DidDocument({
       id                 : identifier,
+      controller         : [identifier],
       verificationMethod : [{
-        id         : '#initialKey',
+        id         : `${identifier}#initialKey`,
         type       : 'Multikey',
         controller : identifier,
-        // Encode the public key to publicKeyMultibase
         publicKeyMultibase
       }],
-      // Generate the beacon services from the network and public key
       service
     });
   }
@@ -205,7 +211,7 @@ export class Btc1Read {
    * @throws {DidError} InvalidDidDocument if genesisBytes !== initialDocument hashBytes
    */
   public static async sidecar({ components, initialDocument }: Btc1ReadSidecar): Promise<Btc1DidDocument> {
-    // 5. Replace the placeholder did with the identifier throughout the initialDocument.
+    // Replace the placeholder did with the identifier throughout the initialDocument.
     const intermediateDocument = JSON.parse(
       JSON.stringify(initialDocument).replaceAll(initialDocument.id, ID_PLACEHOLDER_VALUE)
     );
