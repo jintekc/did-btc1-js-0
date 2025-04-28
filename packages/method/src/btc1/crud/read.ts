@@ -20,7 +20,7 @@ import BitcoinRest, { RestClientConfig } from '../../bitcoin/rest-client.js';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
 import { DidResolutionOptions } from '../../interfaces/crud.js';
 import { BeaconService, BeaconServiceAddress, BeaconSignal } from '../../interfaces/ibeacon.js';
-import { BlockHeight, BlockV3, RawTransactionV2, RpcClientConfig } from '../../types/bitcoin.js';
+import { BlockHeight, BlockV3, RawTransactionV2 } from '../../types/bitcoin.js';
 import {
   CIDAggregateSidecar,
   SidecarData,
@@ -654,7 +654,7 @@ export class Btc1Read {
 
     // Toggle RPC or REST connection based on the connection type
     const connection: BitcoinConnection = connectionType === 'rpc'
-      ? new BitcoinRpc(config)
+      ? BitcoinRpc.connect(config)
       : new BitcoinRest(new RestClientConfig(config));
 
     // Create an default beaconSignal and beaconSignals array

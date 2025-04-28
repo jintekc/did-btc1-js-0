@@ -1,4 +1,4 @@
-import { BitcoinNetworkNames, BitcoinRpcError, Btc1Error, UnixTimestamp } from '@did-btc1/common';
+import { BitcoinRpcError, Btc1Error, UnixTimestamp } from '@did-btc1/common';
 import {
   BlockResponse,
   BlockV0,
@@ -9,6 +9,7 @@ import {
   TxInPrevout,
   VerbosityLevel
 } from '../types/bitcoin.js';
+import { DEFAULT_REST_CLIENT_CONFIG } from './constants.js';
 
 export type TransactionStatus = {
   confirmed: boolean;
@@ -47,14 +48,14 @@ export interface RawTransactionRest {
 }
 
 export interface RestClientConfigParams {
-  network: BitcoinNetworkNames;
+  network: string;
   host: string;
   port: number;
   headers?: { [key: string]: string };
 }
 
 export class RestClientConfig {
-  network: BitcoinNetworkNames;
+  network: string;
   host: string;
   port: number;
   headers?: { [key: string]: string };
@@ -111,9 +112,8 @@ export default class BitcoinRestClient {
    * const alice = BitcoinRpc.connect();
    * ```
    */
-  public static connect(config?: RestClientConfig): BitcoinRpc {
-    const client = this.initialize(config ?? DEFAULT_RPC_CLIENT_CONFIG);
-    return new BitcoinRpc(client);
+  public static connect(config?: RestClientConfig): BitcoinRestClient {
+    return new BitcoinRestClient(config ?? DEFAULT_REST_CLIENT_CONFIG);
   }
 
   private async exec({ path, url, method, body, responseType }: ApiCallParams): Promise<any> {
