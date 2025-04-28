@@ -654,7 +654,7 @@ export class Btc1Read {
 
     // Toggle RPC or REST connection based on the connection type
     const connection: BitcoinConnection = connectionType === 'rpc'
-      ? new BitcoinRpc(new RpcClientConfig(config))
+      ? new BitcoinRpc(config)
       : new BitcoinRest(new RestClientConfig(config));
 
     // Create an default beaconSignal and beaconSignals array

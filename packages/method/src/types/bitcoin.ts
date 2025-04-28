@@ -32,6 +32,7 @@ export class RpcClientConfig implements IClientConfig {
   version?: string;
   wallet?: string;
   allowDefaultWallet?: boolean;
+
   constructor(options: IClientConfig = {
     headers            : {},
     host               : 'localhost',

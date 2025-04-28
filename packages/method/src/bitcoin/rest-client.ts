@@ -47,17 +47,19 @@ export interface RawTransactionRest {
 }
 
 export interface RestClientConfigParams {
+  network: BitcoinNetworkNames;
   host: string;
   port: number;
   headers?: { [key: string]: string };
 }
 
 export class RestClientConfig {
-  network?: BitcoinNetworkNames;
+  network: BitcoinNetworkNames;
   host: string;
   port: number;
   headers?: { [key: string]: string };
-  constructor({ host, port, headers }: RestClientConfigParams) {
+  constructor({ network, host, port, headers }: RestClientConfigParams) {
+    this.network = network;
     this.host = host;
     this.port = port;
     this.headers = headers;
@@ -97,6 +99,21 @@ export default class BitcoinRestClient {
   constructor(config: RestClientConfig){
     this._config = config;
     this.api = { call: this.exec };
+  }
+
+  /**
+   * Static method connects to a bitcoin node running a esplora REST API.
+   *
+   * @param {?RestClientConfig} config The configuration object for the client (optional).
+   * @returns A new {@link BitcoinRpc} instance.
+   * @example
+   * ```
+   * const alice = BitcoinRpc.connect();
+   * ```
+   */
+  public static connect(config?: RestClientConfig): BitcoinRpc {
+    const client = this.initialize(config ?? DEFAULT_RPC_CLIENT_CONFIG);
+    return new BitcoinRpc(client);
   }
 
   private async exec({ path, url, method, body, responseType }: ApiCallParams): Promise<any> {
