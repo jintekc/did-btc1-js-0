@@ -47,46 +47,83 @@ export interface IBtc1DidDocument extends IDidDocument {
  */
 export class Btc1DidDocument implements IBtc1DidDocument {
   id: string;
-  '@context'?: string | (string | Record<string, any>)[] = BTC1_DID_DOCUMENT_CONTEXT;
-  verificationMethod: Btc1VerificationMethod[];
-  authentication?: (string | Btc1VerificationMethod)[] = ['#initialKey'];
-  assertionMethod?: (string | Btc1VerificationMethod)[] = ['#initialKey'];
-  capabilityInvocation?: (string | Btc1VerificationMethod)[] = ['#initialKey'];
-  capabilityDelegation?: (string | Btc1VerificationMethod)[] = ['#initialKey'];
-  service: BeaconService[];
+  controller?: Array<string>;
+  '@context'?: Array<string | (string | Record<string, any>)> = BTC1_DID_DOCUMENT_CONTEXT;
+  authentication?: Array<(string | Btc1VerificationMethod)>;
+  assertionMethod?: Array<(string | Btc1VerificationMethod)>;
+  capabilityInvocation?: Array<(string | Btc1VerificationMethod)>;
+  capabilityDelegation?: Array<(string | Btc1VerificationMethod)>;
+  verificationMethod: Array<Btc1VerificationMethod>;
+  service: Array<BeaconService>;
 
-  constructor({ id, verificationMethod, service }: Btc1DidDocument) {
-    // Set the id
-    this.id = id;
-    // Set the service
-    this.service = service;
-    // Set the verification method
-    this.verificationMethod = verificationMethod;
-
-    // Set isIntermediate to true if the id is a placeholder value
-    if(id === ID_PLACEHOLDER_VALUE) {
-      return;
-    }
+  constructor(document: Btc1DidDocument) {
+    // Deconstruct the document
+    const {
+      id,
+      controller,
+      verificationMethod,
+      authentication,
+      assertionMethod,
+      capabilityInvocation,
+      capabilityDelegation,
+      service
+    } = document;
 
     // Validate the id
     if (!Btc1DidDocument.isValidId(id)) {
       throw new DidDocumentError('Invalid "id"', INVALID_DID_DOCUMENT, { id });
     }
 
+    // Set the id
+    this.id = id;
+
     // Validate the verification method
     if (!Btc1DidDocument.isValidVerificationMethods(verificationMethod)) {
       throw new DidDocumentError('Invalid "verificationMethod"', INVALID_DID_DOCUMENT, { verificationMethod });
     }
 
+    // Set the verification method
+    this.verificationMethod = verificationMethod;
 
     // Validate the service
     if (!Btc1DidDocument.isValidServices(service)) {
       throw new DidDocumentError('Invalid "service"', INVALID_DID_DOCUMENT, { service });
     }
 
+    // Set the service
+    this.service = service;
 
-    // Validate the DID Document
-    Btc1DidDocument.validate(this);
+    // Set the @context
+    this['@context'] = document['@context'] || BTC1_DID_DOCUMENT_CONTEXT;
+    // Set the controller
+    this.controller = controller || [id];
+    // Set the authentication
+    this.authentication = authentication;
+    // Set the assertionMethod
+    this.assertionMethod = assertionMethod;
+    // Set the capabilityInvocation
+    this.capabilityInvocation = capabilityInvocation;
+    // Set the capabilityDelegation
+    this.capabilityDelegation = capabilityDelegation;
+
+    // Sanitize the DID Document
+    Btc1DidDocument.sanitize(this);
+
+    // If the DID Document is not an intermediateDocument, validate it
+    if(id !== ID_PLACEHOLDER_VALUE) Btc1DidDocument.validate(this);
+  }
+
+  /**
+   * Sanitize the DID Document by removing undefined values
+   * @returns {Btc1DidDocument} The sanitized DID Document
+   */
+  public static sanitize(doc: Btc1DidDocument): Btc1DidDocument {
+    for (const key of Object.keys(doc)) {
+      if (doc[key as keyof Btc1DidDocument] === undefined) {
+        delete doc[key as keyof Btc1DidDocument];
+      }
+    }
+    return doc;
   }
 
   /**
@@ -160,16 +197,29 @@ export class Btc1DidDocument implements IBtc1DidDocument {
    * @private
    */
   private static isValidVerificationRelationships(didDocument: Btc1DidDocument): boolean {
-    const verificationRelationships: (keyof Btc1DidDocument)[] = [
+    // Define the available verification relationships
+    const possibleVerificationRelationships: (keyof Btc1DidDocument)[] = [
       'authentication',
       'assertionMethod',
       'capabilityInvocation',
       'capabilityDelegation'
     ];
 
-    return verificationRelationships.every((key) =>
+    // Get the DID Document keys
+    const verificationRelationships = Object.keys(didDocument) as Array<keyof Btc1DidDocument>;
+
+    // Filter the DID Document keys to only those that are in the available verification relationships
+    const availableVerificationRelationships = possibleVerificationRelationships.filter(
+      key => verificationRelationships.includes(key as keyof Btc1DidDocument)
+    ) as (keyof Btc1DidDocument)[];
+
+    // Check if all available verification relationships are valid
+    return availableVerificationRelationships.every((key) =>
+      // Check if the key exists in the DID Document
       didDocument[key] &&
+      // Check if the key is an array
       Array.isArray(didDocument[key]) &&
+      // Check that every value in the array is a string or DidVerificationMethod
       didDocument[key].every(
         entry => typeof entry === 'string' || Btc1Appendix.isDidVerificationMethod(entry)
       ));

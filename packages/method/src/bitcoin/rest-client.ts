@@ -99,7 +99,7 @@ export default class BitcoinRestClient {
 
   constructor(config: RestClientConfig){
     this._config = config;
-    this.api = { call: this.exec };
+    this.api = { call: this.call };
   }
 
   /**
@@ -116,7 +116,7 @@ export default class BitcoinRestClient {
     return new BitcoinRestClient(config ?? DEFAULT_REST_CLIENT_CONFIG);
   }
 
-  private async exec({ path, url, method, body, responseType }: ApiCallParams): Promise<any> {
+  private async call({ path, url, method, body, responseType }: ApiCallParams): Promise<any> {
     // Construct the URL if not provided
     url ??= `http://${this._config.host}:${this._config.port}/${path}`;
 
@@ -157,6 +157,15 @@ export default class BitcoinRestClient {
   get config() {
     return this._config;
   }
+
+  /**
+   * Returns the blockheight of the most-work fully-validated chain. The genesis block has height 0.
+   * @returns {Blockheight} The number of the blockheight with the most-work of the fully-validated chain.
+   */
+  public async getBlockCount(): Promise<number> {
+    return await this.api.call({ path: '/blocks/tip/height' });
+  }
+
 
   /**
    * Returns the block data associated with a `blockhash` of a valid block.

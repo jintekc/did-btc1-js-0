@@ -10,6 +10,12 @@ declare global {
         last(): T | undefined;
         [-1](): T | undefined;
     }
+
+    /** Extend the Set class interface */
+    interface Set<T> {
+      difference(other: Set<T>): Set<T>;
+    }
+
     /** Extend the JSON class interface */
     interface JSON {
         /** Check if an object is a JSON object */
@@ -23,15 +29,17 @@ declare global {
         /** Normalize unprototyped JSON object to prototyped JSON object */
         normalize(unknown: Maybe<Unprototyped>): Prototyped;
         /** Shallow copy of JSON object */
-        copy(obj: JSONObject): JSONObject;
+        copy(o: JSONObject): JSONObject;
         /** Deep copy of JSON object */
-        deepCopy(obj: JSONObject): JSONObject;
+        deepCopy(o: JSONObject): JSONObject;
         /** Check if two objects are strictly equal */
         equal(a: any, b: any): boolean;
         /** Check if two objects are deeply equal */
         deepEqual(a: any, b: any): boolean;
-        /** Delete a key from JSON object */
-        delete({ obj, key }: { obj: JSONObject, key: string }): JSONObject;
+        /** Delete key/value pair(s) from a JSON object */
+        delete(o: JSONObject, keys: Array<string | number | symbol>): JSONObject;
+        /** Sanitize a JSON object by removing any keys whose value is undefined */
+        sanitize(o: JSONObject): JSONObject;
         /** Canonicalization object */
         canonicalization: Canonicalization;
         /** JSON Patch (IETF RFC 6902) */
@@ -99,13 +107,13 @@ JSON.normalize = function (unknown: Maybe<Unprototyped>): Prototyped {
 };
 
 // Use Object.assign to create a shallow copy
-JSON.copy = function (obj: JSONObject): JSONObject {
-  return Object.assign({}, obj);
+JSON.copy = function (o: JSONObject): JSONObject {
+  return Object.assign({}, o);
 };
 
 // Create deep copy using JSON serialization
-JSON.deepCopy = function (unknown: Maybe<JSONObject>): JSONObject {
-  return JSON.parse(JSON.stringify(unknown));
+JSON.deepCopy = function (o: Maybe<JSONObject>): JSONObject {
+  return JSON.parse(JSON.stringify(o));
 };
 
 // Check for strict equality
@@ -159,23 +167,34 @@ JSON.deepEqual = function (a: any, b: any): boolean {
   return false;
 };
 
-JSON.delete = function({ obj, key }: { obj: JSONObject, key: string }): JSONObject {
+JSON.delete = function(o: JSONObject, keys: Array<string | number | symbol>): JSONObject {
   // Ensure it's an object and not null
-  if (!JSON.is(obj)) return obj;
+  if (!JSON.is(o)) return o;
 
-  // If the key exists at the current level, delete it
-  if (Object.prototype.hasOwnProperty.call(obj, key)) {
-    delete obj[key];
-  }
+  for(const key of keys) {
+    // If the key exists at the current level, delete it
+    if (Object.prototype.hasOwnProperty.call(o, key)) {
+      delete o[key];
+    }
 
-  // Recursively check nested objects and arrays
-  for (const key in obj) {
-    if (typeof obj[key] === 'object') {
-      obj[key] = this.delete({ obj: obj[key], key });
+    // Recursively check nested objects and arrays
+    for (const key in o) {
+      if (typeof o[key] === 'object') {
+        o[key] = this.delete(o[key], [key]);
+      }
     }
   }
 
-  return obj;
+  return o;
+};
+
+JSON.sanitize = function (o: JSONObject): JSONObject {
+  for (const key of Object.keys(o)) {
+    if (o[key] === undefined) {
+      delete o[key];
+    }
+  }
+  return o;
 };
 
 JSON.canonicalization = new Canonicalization();

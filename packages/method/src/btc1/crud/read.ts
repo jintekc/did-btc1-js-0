@@ -16,7 +16,7 @@ import { Cryptosuite, DataIntegrityProof, Multikey } from '@did-btc1/cryptosuite
 import { KeyPair, PublicKey } from '@did-btc1/key-pair';
 import { bytesToHex } from '@noble/hashes/utils';
 import { DEFAULT_BLOCK_CONFIRMATIONS, DEFAULT_RPC_CLIENT_CONFIG, GENESIS_TX_ID, TXIN_WITNESS_COINBASE } from '../../bitcoin/constants.js';
-import BitcoinRest, { RestClientConfig } from '../../bitcoin/rest-client.js';
+import BitcoinRest from '../../bitcoin/rest-client.js';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
 import { DidResolutionOptions } from '../../interfaces/crud.js';
 import { BeaconService, BeaconServiceAddress, BeaconSignal } from '../../interfaces/ibeacon.js';
@@ -210,14 +210,6 @@ export class Btc1Read {
       JSON.stringify(initialDocument).replaceAll(initialDocument.id, ID_PLACEHOLDER_VALUE)
     );
 
-    /** Set the document.id to {@link ID_PLACEHOLDER_VALUE} */
-    // intermediateDocument.id = ID_PLACEHOLDER_VALUE;
-
-    /** Set the document.verificationMethod[i].controller to {@link ID_PLACEHOLDER_VALUE} */
-    // intermediateDocument.verificationMethod =
-    //   Btc1Appendix.getVerificationMethods({ didDocument: intermediateDocument })
-    //     .map((vm: Btc1VerificationMethod) => ({ ...vm, controller: intermediateDocument.id }));
-
     // Canonicalize and sha256 hash the intermediateDocument
     const hashBytes = await JSON.canonicalization.process(intermediateDocument, 'hex');
 
@@ -227,8 +219,8 @@ export class Btc1Read {
     // If the genesisBytes do not match the hashBytes, throw an error
     if (genesisBytes !== hashBytes) {
       throw new Btc1Error(
-        INVALID_DID_DOCUMENT,
-        `Initial document mismatch: genesisBytes ${genesisBytes} !== hashBytes ${hashBytes}`
+        `Initial document mismatch: genesisBytes ${genesisBytes} !== hashBytes ${hashBytes}`,
+        INVALID_DID_DOCUMENT, { genesisBytes, hashBytes }
       );
     }
 
@@ -528,12 +520,16 @@ export class Btc1Read {
 
         //  9.2. If update.targetVersionId equals currentVersionId + 1:
       } else if (update.targetVersionId === currentVersionId + 1) {
+        // Prepend the sourceHash if it does not start with `z`
+        const sourceHash = update.sourceHash.startsWith('z')
+          ? update.sourceHash
+          : `z${update.sourceHash}`;
+
         //  9.2.1. Check that update.sourceHash equals contemporaryHash, else MUST raise latePublishing error.
-        if (update.sourceHash !== contemporaryHash.slice(1)) {
+        if (sourceHash !== contemporaryHash) {
           throw new Btc1ReadError(
             `Hash mismatch: update.sourceHash ${update.sourceHash} !== contemporaryHash ${contemporaryHash}`,
-            LATE_PUBLISHING_ERROR,
-            { update, contemporaryHash }
+            LATE_PUBLISHING_ERROR, { sourceHash: update.sourceHash, contemporaryHash }
           );
         }
 
@@ -655,7 +651,7 @@ export class Btc1Read {
     // Toggle RPC or REST connection based on the connection type
     const connection: BitcoinConnection = connectionType === 'rpc'
       ? BitcoinRpc.connect(config)
-      : new BitcoinRest(new RestClientConfig(config));
+      : BitcoinRest.connect(config);
 
     // Create an default beaconSignal and beaconSignals array
     const beaconSignals: BeaconSignals = [];
@@ -741,7 +737,13 @@ export class Btc1Read {
       }
 
       height += 1;
-      console.log(`Searching for signals in block ${height}...`);
+      const tip = await connection.getBlockCount();
+      if(height > tip) {
+        Logger.info(`Chain tip reached ${height}, breaking ...`);
+        break;
+      }
+
+      Logger.info(`Searching for signals in block ${height}...`);
       // Reset the block to the next block
       block = await connection.getBlock({ height }) as BlockV3;
     }
