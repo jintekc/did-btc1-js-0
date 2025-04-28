@@ -4,7 +4,6 @@ import { networks, payments } from 'bitcoinjs-lib';
 import { BeaconFactory } from '../btc1/beacons/factory.js';
 import { BeaconService, BeaconServiceAddress } from '../interfaces/ibeacon.js';
 import { Btc1Appendix } from './appendix.js';
-import { getNetwork } from '../bitcoin/network.js';
 
 /**
  * Required parameters for generating Beacon Services.

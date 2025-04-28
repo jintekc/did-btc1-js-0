@@ -1,4 +1,4 @@
-import { BTC1_DID_DOCUMENT_CONTEXT, Btc1CreateIdTypes, Btc1IdentifierHrp, DidDocumentError, ID_PLACEHOLDER_VALUE, INVALID_DID_DOCUMENT, Logger } from '@did-btc1/common';
+import { BTC1_DID_DOCUMENT_CONTEXT, DidDocumentError, ID_PLACEHOLDER_VALUE, INVALID_DID_DOCUMENT, Logger } from '@did-btc1/common';
 import { DidService, DidVerificationMethod, DidDocument as IDidDocument } from '@web5/dids';
 import { BeaconService } from '../../interfaces/ibeacon.js';
 import { Btc1Appendix } from '../appendix.js';
