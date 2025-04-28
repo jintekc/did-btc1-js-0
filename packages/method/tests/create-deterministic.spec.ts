@@ -36,7 +36,7 @@ describe('DidBtc1 Create Deterministic', () => {
       const { did, initialDocument } = await DidBtc1.create({ idType, pubKeyBytes });
       const verificationMethod = [
         {
-          id                 : '#initialKey',
+          id                 : `${did}#initialKey`,
           type               : 'Multikey',
           controller         : did,
           publicKeyMultibase
@@ -65,7 +65,7 @@ describe('DidBtc1 Create Deterministic', () => {
       const { did, initialDocument } = await DidBtc1.create({ idType, pubKeyBytes, options: { version } });
       const verificationMethod = [
         {
-          id                 : '#initialKey',
+          id                 : `${did}#initialKey`,
           type               : 'Multikey',
           controller         : did,
           publicKeyMultibase
@@ -96,7 +96,7 @@ describe('DidBtc1 Create Deterministic', () => {
           async ([network, did]) => {
             const verificationMethod = [
               {
-                id                 : '#initialKey',
+                id                 : `${did}#initialKey`,
                 type               : 'Multikey',
                 controller         : did,
                 publicKeyMultibase

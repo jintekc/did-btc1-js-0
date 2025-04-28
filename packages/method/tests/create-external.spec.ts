@@ -2,7 +2,7 @@ import { ID_PLACEHOLDER_VALUE } from '@did-btc1/common';
 import { PublicKey } from '@did-btc1/key-pair';
 import { expect } from 'chai';
 import { DidBtc1 } from '../src/did-btc1.js';
-import { BeaconUtils, Btc1DidDocument, IntermediateDidDocument } from '../src/index.js';
+import { BeaconUtils, Btc1DidDocument, getNetwork, IntermediateDidDocument } from '../src/index.js';
 
 /**
  * DidBtc1 Create External Test Cases
@@ -31,13 +31,14 @@ describe('DidBtc1 Create External', () => {
   const publicKey = new PublicKey(pubKeyBytes);
   const publicKeyMultibase = publicKey.multibase;
   const service = BeaconUtils.generateBeaconServices({
-    network    : 'bitcoin',
-    beaconType : 'SingletonBeacon',
+    identifier : ID_PLACEHOLDER_VALUE,
+    network    : getNetwork('bitcoin'),
+    type       : 'SingletonBeacon',
     publicKey  : publicKey.bytes
   });
   const verificationMethod = [
     {
-      id                 : '#initialKey',
+      id                 : `${ID_PLACEHOLDER_VALUE}#initialKey`,
       type               : 'Multikey',
       controller         : ID_PLACEHOLDER_VALUE,
       publicKeyMultibase
