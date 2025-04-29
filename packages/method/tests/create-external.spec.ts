@@ -22,11 +22,11 @@ describe('DidBtc1 Create External', () => {
   const networkDidEntries = Object.entries(expectedDidMap);
   const idType = 'EXTERNAL';
   const pubKeyBytes = new Uint8Array([
-    3, 147,  88, 104, 169, 222, 126,
-    240, 163,  35, 114, 143, 194, 209,  28,
-    255,  72, 250, 175, 176, 247, 124, 245,
-    215,  91, 220, 129, 191,  13,  20,  58,
-    47,  32
+    3, 160,  75,  44, 228,  87,  13, 199,
+    6, 166, 173, 231, 173, 253, 224, 174,
+    97, 241,  44, 212, 127, 192, 209, 160,
+    165, 225,  85,  90, 173,  76, 122, 123,
+    157
   ]);
   const publicKey = new PublicKey(pubKeyBytes);
   const publicKeyMultibase = publicKey.multibase;

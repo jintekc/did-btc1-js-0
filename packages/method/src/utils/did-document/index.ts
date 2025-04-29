@@ -57,6 +57,9 @@ export class Btc1DidDocument implements IBtc1DidDocument {
   service: Array<BeaconService>;
 
   constructor(document: Btc1DidDocument) {
+    const isIntermediate = document.id === ID_PLACEHOLDER_VALUE;
+    console.log('document.id:', document.id);
+    console.log('!isIntermediate:', !isIntermediate);
     const isKey = document.id.includes('k1');
 
     // Deconstruct the document
@@ -71,27 +74,27 @@ export class Btc1DidDocument implements IBtc1DidDocument {
       service
     } = document;
 
-    // Validate the id
-    if (!Btc1DidDocument.isValidId(id)) {
-      throw new DidDocumentError('Invalid "id"', INVALID_DID_DOCUMENT, { id });
+    if(!isIntermediate) {
+      // Validate the id
+      if (!Btc1DidDocument.isValidId(id)) {
+        throw new DidDocumentError('Invalid "id"', INVALID_DID_DOCUMENT, { id });
+      }
+
+      // Validate the verification method
+      if (!Btc1DidDocument.isValidVerificationMethods(verificationMethod)) {
+        throw new DidDocumentError('Invalid "verificationMethod"', INVALID_DID_DOCUMENT, { verificationMethod });
+      }
+
+      // Validate the service
+      if (!Btc1DidDocument.isValidServices(service)) {
+        throw new DidDocumentError('Invalid "service"', INVALID_DID_DOCUMENT, { service });
+      }
     }
 
     // Set the id
     this.id = id;
-
-    // Validate the verification method
-    if (!Btc1DidDocument.isValidVerificationMethods(verificationMethod)) {
-      throw new DidDocumentError('Invalid "verificationMethod"', INVALID_DID_DOCUMENT, { verificationMethod });
-    }
-
     // Set the verification method
     this.verificationMethod = verificationMethod;
-
-    // Validate the service
-    if (!Btc1DidDocument.isValidServices(service)) {
-      throw new DidDocumentError('Invalid "service"', INVALID_DID_DOCUMENT, { service });
-    }
-
     // Set the service
     this.service = service;
 
@@ -119,7 +122,7 @@ export class Btc1DidDocument implements IBtc1DidDocument {
     Btc1DidDocument.sanitize(this);
 
     // If the DID Document is not an intermediateDocument, validate it
-    if(id !== ID_PLACEHOLDER_VALUE) Btc1DidDocument.validate(this);
+    if(!isIntermediate) Btc1DidDocument.validate(this);
   }
 
   /**

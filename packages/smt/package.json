@@ -36,7 +36,6 @@
         "lint:fix": "eslint . --fix",
         "test": "pnpm c8 mocha",
         "test:unit": "[ -z \"$FILE_NAME\" ] && echo 'ERROR: FILE_NAME is not set' || pnpm tsx lib/test-$FILE_NAME.ts",
-        "posttest": "sed -i '' \"s|$(pwd)|.|g\" coverage/cobertura-coverage.xml",
         "build:test": "pnpm build && pnpm build:tests && pnpm c8 mocha",
         "build:lint:test": "pnpm build && pnpm build:tests && pnpm lint:fix",
         "prepublish": "pnpm build && pnpm release",
