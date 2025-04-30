@@ -622,6 +622,7 @@ export class Btc1Read {
   }): Promise<Array<BeaconSignal>> {
     // Determine bitcoin node connection type from the environment variable
     const connectionType = process.env.BITCOIN_CONNECTION?.toLowerCase() ?? 'rpc';
+    Logger.debug(`Connection type: ${connectionType}`);
     if (!connectionType || !['rpc', 'rest'].includes(connectionType)) {
       throw new Btc1Error(
         'Connection type invalid: must be "rpc" or "rest"',
@@ -633,6 +634,7 @@ export class Btc1Read {
     // Grab the connection configuration from the environment variable or default to the rpc config
     // TODO: Make the default config a 3rd party Esplora node (e.g. https://blockstream.info or btc01.gl1.dcdpr.com)
     const connectionConfig = process.env.BITCOIN_CONNECTION_CONFIG ?? JSON.stringify(DEFAULT_RPC_CLIENT_CONFIG);
+    Logger.debug(`Connection type:`, connectionConfig);
     if (!connectionConfig) {
       throw new Btc1Error(
         'Credentials not found: must provide a way to connect to a bitcoin node',
@@ -644,7 +646,7 @@ export class Btc1Read {
     // Ensure the connection config is a stringified object
     if (!JSON.parsable(connectionConfig)) {
       throw new Btc1Error(
-        'Credentials malformed: mustbe a stringified object',
+        'Credentials malformed: must be a parsable stringified JSON object',
         'INVALID_BITCOIN_CREDENTIALS',
         { connectionConfig }
       );
@@ -653,20 +655,20 @@ export class Btc1Read {
     // Parse the connection config and set the network
     const config = JSON.parse(connectionConfig);
     config.network = network;
+    Logger.debug('config:', config);
 
     // Toggle RPC or REST connection based on the connection type
-    const connection: BitcoinConnection = connectionType === 'rpc'
+    let connection: BitcoinConnection = connectionType === 'rpc'
       ? BitcoinRpc.connect(config)
       : BitcoinRest.connect(config);
+    Logger.debug('connection:', connection.config);
 
     // Create an default beaconSignal and beaconSignals array
-    const beaconSignals: BeaconSignals = [];
+    let beaconSignals: BeaconSignals = [];
 
     if (connectionType === 'rest') {
-      const nextSignalsRest = await this.findSignalsRest({ connection: connection as BitcoinRest, beacons });
-      if (!nextSignalsRest || nextSignalsRest.length === 0) {
-        return beaconSignals;
-      }
+      connection = connection as BitcoinRest;
+      return await this.findSignalsRest({ connection, beacons });
     }
 
     // Use connection to get the block data at the blockhash
@@ -771,14 +773,15 @@ export class Btc1Read {
     connection: BitcoinRest;
     beacons: Array<BeaconService>;
   }): Promise<Array<BeaconSignal>> {
+    Logger.log('findSignalsRest beacons', beacons);
     // Empty array of beaconSignals
     const beaconSignals = new Array<BeaconSignal>();
 
     // Iterate over each beacon
-    for (let beacon of beacons) {
-
+    for (let beacon of BeaconUtils.toBeaconServiceAddress(beacons)) {
+      Logger.debug('findSignalsRest beacon', beacon);
       // Get the transactions for the beacon address via REST
-      const transactions = await connection.getAddressTransactions(beacon.beaconAddress);
+      const transactions = await connection.getAddressTransactions(beacon.address);
 
       // If no transactions are found, continue
       if (!transactions || transactions.length === 0) {

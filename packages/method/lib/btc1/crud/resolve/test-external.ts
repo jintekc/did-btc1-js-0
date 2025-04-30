@@ -1,7 +1,7 @@
 import { Btc1Identifier, Btc1Read, DidBtc1, DidResolutionOptions } from '../../../../src/index.js';
-import resolutionOptions from '../../../in/external/resolutionOptions.json' with { type: 'json' };
+import resolutionOptions from '../../../in/x1qttd/resolutionOptions.json' with { type: 'json' };
 const options = resolutionOptions as DidResolutionOptions;
-options.versionTime = Date.now();
+options.versionTime = 1745944297;
 
 const identifier = 'did:btc1:x1qtdr376lhfvyxe466n67kyl2hzdxeh59z3axv4ud5jsxul75xac0yyrwykt';
 const components = Btc1Identifier.decode(identifier);

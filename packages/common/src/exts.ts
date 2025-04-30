@@ -8,11 +8,13 @@ declare global {
     interface Array<T> {
         /** Get the last element of the array */
         last(): T | undefined;
+        /** Get the last element of the array */
         [-1](): T | undefined;
     }
 
     /** Extend the Set class interface */
     interface Set<T> {
+      /** Get the difference between two sets */
       difference(other: Set<T>): Set<T>;
     }
 
@@ -47,16 +49,25 @@ declare global {
     }
 
     interface Date {
+      /** Get the UTC date and time in ISO 8601 format */
       getUTCDateTime(): string;
+      /** Convert date to Unix timestamp */
       toUnix(): number;
     }
 
     interface String {
+      /** Convert to SCREAMING_SNAKE_CASE */
       toSnakeScream(): string;
+      /** Convert to snake_case */
       toSnake(): string;
+      /** Remove the last character from a string */
+      chop(): string;
+      /** Replace the end of a string */
+      replaceEnd(e: string | RegExp, r?: string): string;
     }
 }
 
+/** Array Interface Extensions */
 Array.prototype.last = function <T>(): T | undefined {
   return this[this.length - 1] ?? undefined;
 };
@@ -65,6 +76,18 @@ Array.prototype[-1] = function <T>(): T | undefined {
   return this.last();
 };
 
+/** Set Interface Extensions */
+Set.prototype.difference = function <T>(other: Set<T>): Set<T> {
+  const result = new Set<T>(this);
+  for (const item of other) {
+    if (result.has(item)) {
+      result.delete(item);
+    }
+  }
+  return result;
+};
+
+/** JSON Interface Extensions */
 JSON.is = function (unknown: Maybe<JSONObject>): boolean {
   if (unknown === null || typeof unknown !== 'object') return false;
   if (Array.isArray(unknown))
@@ -106,51 +129,39 @@ JSON.normalize = function (unknown: Maybe<Unprototyped>): Prototyped {
   }
 };
 
-// Use Object.assign to create a shallow copy
 JSON.copy = function (o: JSONObject): JSONObject {
   return Object.assign({}, o);
 };
 
-// Create deep copy using JSON serialization
 JSON.deepCopy = function (o: Maybe<JSONObject>): JSONObject {
   return JSON.parse(JSON.stringify(o));
 };
 
-// Check for strict equality
 JSON.equal = function (a: any, b: any): boolean {
   return a === b;
 };
 
-// Check for deep equality
 JSON.deepEqual = function (a: any, b: any): boolean {
-  // If they're strictly equal, they're immediately the same (handles primitives as well).
   if(JSON.equal(a, b)) return true;
 
-  // If either is null or their types differ, they can't be equal.
   if (a === null || b === null || typeof a !== typeof b) return false;
 
-  // If both are objects, compare their properties
   if (typeof a === 'object') {
-    // Check if they're both arrays
     const isArrayA = Array.isArray(a);
     const isArrayB = Array.isArray(b);
     if (isArrayA !== isArrayB) return false;
 
     if (isArrayA && isArrayB) {
-      // Compare array lengths first
       if (a.length !== b.length) return false;
-      // Compare each array element
       for (let i = 0; i < a.length; i++) {
         if (!this.deepEqual(a[i], b[i])) return false;
       }
       return true;
     } else {
-      // Compare object keys
       const keysA = Object.keys(a);
       const keysB = Object.keys(b);
       if (keysA.length !== keysB.length) return false;
 
-      // Compare each key's value
       for (const key of keysA) {
         if (!Object.prototype.hasOwnProperty.call(b, key)) {
           return false;
@@ -163,21 +174,17 @@ JSON.deepEqual = function (a: any, b: any): boolean {
     }
   }
 
-  // Otherwise, they're different primitives (e.g. number vs. string)
   return false;
 };
 
 JSON.delete = function(o: JSONObject, keys: Array<string | number | symbol>): JSONObject {
-  // Ensure it's an object and not null
   if (!JSON.is(o)) return o;
 
   for(const key of keys) {
-    // If the key exists at the current level, delete it
     if (Object.prototype.hasOwnProperty.call(o, key)) {
       delete o[key];
     }
 
-    // Recursively check nested objects and arrays
     for (const key in o) {
       if (typeof o[key] === 'object') {
         o[key] = this.delete(o[key], [key]);
@@ -200,6 +207,7 @@ JSON.sanitize = function (o: JSONObject): JSONObject {
 JSON.canonicalization = new Canonicalization();
 JSON.patch = new Patch();
 
+/** Date Interface Extensions */
 Date.prototype.getUTCDateTime = function (): string {
   return `${this.toISOString().slice(0, -5)}Z`;
 };
@@ -212,6 +220,7 @@ Date.prototype.toUnix = function (): number {
   return time;
 };
 
+/** String Interface Extensions */
 String.prototype.toSnake = function (): string {
   return this
     .replace(/([a-z])([A-Z])/g, '$1_$2')
@@ -220,6 +229,18 @@ String.prototype.toSnake = function (): string {
 
 String.prototype.toSnakeScream = function (): string {
   return this.toSnake().toUpperCase();
+};
+
+String.prototype.chop = function (): string {
+  return this.length > 0 ? this.slice(0, -1) : '';
+};
+
+String.prototype.replaceEnd = function (e: string | RegExp, r?: string): string {
+  const pattern = e instanceof RegExp
+    ? new RegExp(e.source.endsWith('$') ? e.source : `${e.source}$`, e.flags.replace('g', ''))
+    : new RegExp(`${e.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}$`);
+
+  return this.replace(pattern, r ?? '');
 };
 
 export default global;

@@ -12,8 +12,7 @@ export const DEFAULT_RPC_CLIENT_CONFIG = {
 };
 export const DEFAULT_REST_CLIENT_CONFIG = {
   network : 'regtest',
-  host    : 'http://localhost',
-  port    : 3000,
+  host    : 'http://localhost:3000'
 };
 export const DEFAULT_BLOCK_CONFIRMATIONS = 7;
 export const TXIN_WITNESS_COINBASE = '0000000000000000000000000000000000000000000000000000000000000000';

@@ -1,4 +1,4 @@
-import { BitcoinRpcError, Btc1Error, UnixTimestamp } from '@did-btc1/common';
+import { BitcoinRpcError, Btc1Error, Logger, UnixTimestamp } from '@did-btc1/common';
 import {
   BlockResponse,
   BlockV0,
@@ -50,19 +50,16 @@ export interface RawTransactionRest {
 export interface RestClientConfigParams {
   network: string;
   host: string;
-  port: number;
   headers?: { [key: string]: string };
 }
 
 export class RestClientConfig {
   network: string;
   host: string;
-  port: number;
   headers?: { [key: string]: string };
-  constructor({ network, host, port, headers }: RestClientConfigParams) {
+  constructor({ network, host, headers }: RestClientConfigParams) {
     this.network = network;
     this.host = host;
-    this.port = port;
     this.headers = headers;
   }
 }
@@ -89,17 +86,13 @@ export default class BitcoinRestClient {
    * The encapsulated {@link RestClientConfig} object.
    * @private
    */
-  private _config: {
-    host: string;
-    port: number;
-    headers?: { [key: string]: string };
-  };
+  private _config: RestClientConfig;
 
   public api: { call: ({ path, url, method, body, responseType }: ApiCallParams) => Promise<any> };
 
   constructor(config: RestClientConfig){
-    this._config = config;
-    this.api = { call: this.call };
+    this._config = new RestClientConfig(config);
+    this.api = { call: this.call.bind(this) };
   }
 
   /**
@@ -117,8 +110,9 @@ export default class BitcoinRestClient {
   }
 
   private async call({ path, url, method, body, responseType }: ApiCallParams): Promise<any> {
+    Logger.debug('RestClient.call', { path, url, method, body, responseType });
     // Construct the URL if not provided
-    url ??= `http://${this._config.host}:${this._config.port}/${path}`;
+    url ??= `${this.config.host.replaceEnd('/')}/${path}`;
 
     // Set the method to GET if not provided
     method ??= 'GET';
@@ -127,13 +121,13 @@ export default class BitcoinRestClient {
     responseType ??= 'text';
 
     // Construct the request options
-    const requestInit = { method, headers: this._config.headers } as any;
+    const requestInit = { method, headers: this.config.headers } as any;
 
     // If the method is POST or PUT, add the body to the request
     if(body) {
       requestInit.body = JSON.stringify(body);
     }
-
+    Logger.debug('RestClient.call: url, requestInit', url, requestInit);
     // Make the request
     const response = await fetch(url, requestInit) as RestResponse;
 
@@ -154,8 +148,9 @@ export default class BitcoinRestClient {
    * Get the configuration object.
    * @private
    */
-  get config() {
-    return this._config;
+  get config(): RestClientConfig {
+    const conf = this._config;
+    return conf;
   }
 
   /**
