@@ -48,7 +48,7 @@ export interface IBtc1DidDocument extends IDidDocument {
 export class Btc1DidDocument implements IBtc1DidDocument {
   id: string;
   controller?: Array<string>;
-  '@context'?: Array<string | (string | Record<string, any>)> = BTC1_DID_DOCUMENT_CONTEXT;
+  '@context'?: Array<string | Record<string, any>> = BTC1_DID_DOCUMENT_CONTEXT;
   authentication?: Array<(string | Btc1VerificationMethod)>;
   assertionMethod?: Array<(string | Btc1VerificationMethod)>;
   capabilityInvocation?: Array<(string | Btc1VerificationMethod)>;

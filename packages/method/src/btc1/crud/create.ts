@@ -1,11 +1,11 @@
-import { Btc1CreateIdTypes, Btc1Error, ID_PLACEHOLDER_VALUE, INVALID_DID_DOCUMENT, PublicKeyBytes } from '@did-btc1/common';
+import { Btc1CreateIdTypes, Btc1Error, INVALID_DID_DOCUMENT, PublicKeyBytes } from '@did-btc1/common';
 import { PublicKey } from '@did-btc1/key-pair';
+import { getNetwork } from '../../bitcoin/network.js';
 import { Btc1CreateResponse } from '../../did-btc1.js';
 import { Btc1Appendix } from '../../utils/appendix.js';
 import { BeaconUtils } from '../../utils/beacons.js';
 import { Btc1DidDocument, Btc1VerificationMethod, IntermediateDidDocument } from '../../utils/did-document/index.js';
 import { Btc1Identifier } from '../../utils/identifier.js';
-import { getNetwork } from '../../bitcoin/network.js';
 
 /**
  * Implements section {@link https://dcdpr.github.io/did-btc1/#create | 4.1 Create}.
@@ -117,19 +117,11 @@ export class Btc1Create {
       throw new Btc1Error('Invalid service object(s)', INVALID_DID_DOCUMENT, service);
     }
 
-    /** Set the document.id to {@link ID_PLACEHOLDER_VALUE} */
-    if (intermediateDocument.id !== ID_PLACEHOLDER_VALUE) {
-      intermediateDocument.id = ID_PLACEHOLDER_VALUE;
-    }
-
-    /** Set the document.verificationMethod[i].controller to {@link ID_PLACEHOLDER_VALUE} */
-    intermediateDocument.verificationMethod = verificationMethod.map(
-      (vm: Btc1VerificationMethod) => ({ ...vm, controller: intermediateDocument.id })
-    );
+    intermediateDocument = new IntermediateDidDocument(intermediateDocument);
 
     // 4. Set genesisBytes to the result of passing intermediateDocument into the JSON Canonicalization and Hash
     //    algorithm.
-    const genesisBytes = await JSON.canonicalization.canonicalhash(intermediateDocument);
+    const genesisBytes = await JSON.canonicalization.canonicalhash(new IntermediateDidDocument(intermediateDocument));
 
     // Set did to result of createIdentifier
     const did = Btc1Identifier.encode({ idType: Btc1CreateIdTypes.EXTERNAL, genesisBytes, version, network });
