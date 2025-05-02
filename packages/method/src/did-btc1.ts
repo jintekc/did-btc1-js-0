@@ -1,5 +1,5 @@
 import {
-  Btc1CreateIdTypes,
+  Btc1IdentifierTypes,
   Btc1Error,
   INVALID_DID,
   INVALID_DID_DOCUMENT,
@@ -111,7 +111,7 @@ export class DidBtc1 implements DidMethod {
     const { version = 1, network = 'bitcoin' } = options;
 
     // If idType is key, call Btc1Create.deterministic
-    if(idType === Btc1CreateIdTypes.KEY) {
+    if(idType === Btc1IdentifierTypes.KEY) {
       // Deconstruct the pubKeyBytes from the params
       const { pubKeyBytes } = params;
 
@@ -120,7 +120,7 @@ export class DidBtc1 implements DidMethod {
     }
 
     // If idType is external, call Btc1Create.external
-    if(idType === Btc1CreateIdTypes.EXTERNAL) {
+    if(idType === Btc1IdentifierTypes.EXTERNAL) {
       // Deconstruct the intermediateDocument from the params
       const { intermediateDocument } = params;
 

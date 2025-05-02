@@ -1,10 +1,10 @@
-import { Btc1CreateIdTypes, Btc1Error, INVALID_DID_DOCUMENT, PublicKeyBytes } from '@did-btc1/common';
+import { Btc1IdentifierTypes, Btc1Error, INVALID_DID_DOCUMENT, PublicKeyBytes } from '@did-btc1/common';
 import { PublicKey } from '@did-btc1/key-pair';
 import { getNetwork } from '../../bitcoin/network.js';
 import { Btc1CreateResponse } from '../../did-btc1.js';
 import { Btc1Appendix } from '../../utils/appendix.js';
 import { BeaconUtils } from '../../utils/beacons.js';
-import { Btc1DidDocument, Btc1VerificationMethod, IntermediateDidDocument } from '../../utils/did-document/index.js';
+import { Btc1DidDocument, IntermediateDidDocument } from '../../utils/did-document/index.js';
 import { Btc1Identifier } from '../../utils/identifier.js';
 
 /**
@@ -38,7 +38,7 @@ export class Btc1Create {
     pubKeyBytes: PublicKeyBytes;
   }): Btc1CreateResponse {
     // Set idType to "KEY"
-    const idType = Btc1CreateIdTypes.KEY;
+    const idType = Btc1IdentifierTypes.KEY;
 
     // Call the the did:btc1 Identifier Encoding algorithm
     const identifier = Btc1Identifier.encode({ version, network, idType, genesisBytes: pubKeyBytes });
@@ -117,25 +117,19 @@ export class Btc1Create {
       throw new Btc1Error('Invalid service object(s)', INVALID_DID_DOCUMENT, service);
     }
 
-    intermediateDocument = new IntermediateDidDocument(intermediateDocument);
+    IntermediateDidDocument.validate(intermediateDocument);
 
     // 4. Set genesisBytes to the result of passing intermediateDocument into the JSON Canonicalization and Hash
     //    algorithm.
-    const genesisBytes = await JSON.canonicalization.canonicalhash(new IntermediateDidDocument(intermediateDocument));
+    const genesisBytes = await JSON.canonicalization.canonicalhash(intermediateDocument);
 
-    // Set did to result of createIdentifier
-    const did = Btc1Identifier.encode({ idType: Btc1CreateIdTypes.EXTERNAL, genesisBytes, version, network });
+    // 5. Pass idType, version, network, and genesisBytes to the did:btc1 Identifier Encoding algorithm, retrieving id.
+    // 6. Set did to id
+    const did = Btc1Identifier.encode({ idType: Btc1IdentifierTypes.EXTERNAL, genesisBytes, version, network });
 
-    // Set initialDocument id to did.
-    intermediateDocument.id = did;
-
-    // Set verificationMethod.controller to did.
-    intermediateDocument.verificationMethod = verificationMethod.map(
-      (vm: Btc1VerificationMethod) => ({ ...vm, controller: intermediateDocument.id })
-    );
-
-    // Convert intermediateDocument to Btc1DidDocument
-    const initialDocument = new Btc1DidDocument(intermediateDocument);
+    // 7. Set initialDocument to a copy of the intermediateDocument.
+    // 8. Replace all did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx values in the initialDocument with the did.
+    const initialDocument = intermediateDocument.toBtc1DidDocument(did);
 
     // Return DID & DID Document.
     return { did, initialDocument };

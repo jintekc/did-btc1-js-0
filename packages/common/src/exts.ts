@@ -32,8 +32,10 @@ declare global {
         normalize(unknown: Maybe<Unprototyped>): Prototyped;
         /** Shallow copy of JSON object */
         copy(o: JSONObject): JSONObject;
-        /** Deep copy of JSON object */
-        deepCopy(o: JSONObject): JSONObject;
+        /** Clone (deep copy) of JSON object */
+        clone(o: JSONObject): JSONObject;
+        /** Deep copy of JSON object with replacement */
+        cloneReplace(o: JSONObject, e: RegExp, r: string): JSONObject;
         /** Check if two objects are strictly equal */
         equal(a: any, b: any): boolean;
         /** Check if two objects are deeply equal */
@@ -133,8 +135,12 @@ JSON.copy = function (o: JSONObject): JSONObject {
   return Object.assign({}, o);
 };
 
-JSON.deepCopy = function (o: Maybe<JSONObject>): JSONObject {
+JSON.clone = function (o: JSONObject): JSONObject {
   return JSON.parse(JSON.stringify(o));
+};
+
+JSON.cloneReplace = function (o: JSONObject, e: RegExp, r: string): JSONObject {
+  return JSON.parse(JSON.stringify(o).replaceAll(e, r));
 };
 
 JSON.equal = function (a: any, b: any): boolean {
