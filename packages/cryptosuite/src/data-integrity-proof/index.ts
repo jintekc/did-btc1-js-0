@@ -1,4 +1,4 @@
-import { Btc1Error, DidUpdateInvocation, Logger, Proof, PROOF_GENERATION_ERROR, PROOF_PARSING_ERROR, } from '@did-btc1/common';
+import { Btc1Error, DidUpdateInvocation, Proof, PROOF_GENERATION_ERROR, PROOF_PARSING_ERROR } from '@did-btc1/common';
 import { Cryptosuite } from '../cryptosuite/index.js';
 import { VerificationResult } from '../cryptosuite/interface.js';
 import { AddProofParams, IDataIntegrityProof } from './interface.js';
@@ -38,7 +38,7 @@ export class DataIntegrityProof implements IDataIntegrityProof {
 
     // Deconstruct the domain from the proof object and check:
     // if the options domain is defined, ensure it matches the proof domain
-    Logger.warn('// TODO: Adjust the domain check to match the spec (domain as a list of urls)');
+    // Logger.warn('// TODO: Adjust the domain check to match the spec (domain as a list of urls)');
     const { domain } = proof;
     if (options.domain && options.domain !== domain) {
       throw new Btc1Error('Domain mismatch between options and domain passed', PROOF_GENERATION_ERROR, proof);

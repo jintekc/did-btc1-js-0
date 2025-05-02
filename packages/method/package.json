@@ -16,19 +16,17 @@
     "scripts": {
         "clean": "rimraf dist coverage tests/compiled",
         "clean:build": "rimraf dist",
-        "clean:coverage": "rimraf coverage",
-        "clean:tests": "rimraf tests/compiled",
-        "clean:test-coverage": "pnpm clean:tests && pnpm clean:coverage",
+        "clean:tests": "rimraf coverage tests/compiled",
         "wipe": "rimraf node_modules pnpm-lock.json",
         "wipe:clean": "pnpm wipe && pnpm clean",
         "wipe:install": "pnpm wipe && pnpm install",
         "clean:install": "pnpm clean && pnpm install",
         "wipe:clean:install": "pnpm wipe:clean && pnpm install",
         "reinstall": "pnpm install --force",
-        "build": "pnpm clean && pnpm build:esm && pnpm build:cjs",
+        "build": "pnpm clean:build && pnpm build:esm && pnpm build:cjs",
         "build:esm": "rimraf dist/esm dist/types && pnpm tsc -p tsconfig.json",
         "build:cjs": "rimraf dist/cjs && tsc -p tsconfig.cjs.json && echo '{\"type\": \"commonjs\"}' > ./dist/cjs/package.json",
-        "build:tests": "pnpm tsc -p tests/tsconfig.json",
+        "build:tests": "pnpm clean:tests && pnpm tsc -p tests/tsconfig.json",
         "build:docs": "typedoc --options typedoc.json",
         "build:all": "pnpm build && pnpm build:tests && pnpm build:docs",
         "release": "pnpm build && pnpm pack && mv *.tgz ../../release/method",
@@ -41,7 +39,9 @@
         "prepublish": "pnpm build && pnpm release",
         "version": "pnpm version",
         "version:no-git": "pnpm version --no-commit-hooks --no-git-tag-version",
-        "version:new": "[ -z \"$NEW_VERSION\" ] && echo 'ERROR: NEW_VERSION is not set' || (git checkout -b $NEW_VERSION && git tag $NEW_VERSION && pnpm version:no-git $NEW_VERSION)"
+        "version:new": "[ -z \"$NEW_VERSION\" ] && echo 'ERROR: NEW_VERSION is not set' || (git checkout -b $NEW_VERSION && git tag $NEW_VERSION && pnpm version:no-git $NEW_VERSION)",
+        "do": "pnpm tsx",
+        "do:lib":   "lib/index.sh"
     },
     "contributors": [
         {

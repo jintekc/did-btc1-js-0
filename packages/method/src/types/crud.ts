@@ -1,6 +1,6 @@
 import { DidUpdatePayload, ProofBytes } from '@did-btc1/common';
 import { BeaconService } from '../interfaces/ibeacon.js';
-import { Btc1DidDocument } from '../utils/did-document/index.js';
+import { Btc1DidDocument } from '../utils/did-document.js';
 import { BlockV3 } from './bitcoin.js';
 
 export type FindNextSignals = {

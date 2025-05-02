@@ -1,4 +1,4 @@
-import { BitcoinRpcError, Btc1Error, Logger, UnixTimestamp } from '@did-btc1/common';
+import { BitcoinRpcError, Btc1Error, UnixTimestamp } from '@did-btc1/common';
 import {
   BlockResponse,
   BlockV0,
@@ -69,7 +69,6 @@ export interface ApiCallParams {
   url?: string;
   method?: string;
   body?: any
-  responseType?: string;
 };
 
 export interface RestResponse extends Response {
@@ -88,7 +87,7 @@ export default class BitcoinRestClient {
    */
   private _config: RestClientConfig;
 
-  public api: { call: ({ path, url, method, body, responseType }: ApiCallParams) => Promise<any> };
+  public api: { call: ({ path, url, method, body }: ApiCallParams) => Promise<any> };
 
   constructor(config: RestClientConfig){
     this._config = new RestClientConfig(config);
@@ -109,25 +108,27 @@ export default class BitcoinRestClient {
     return new BitcoinRestClient(config ?? DEFAULT_REST_CLIENT_CONFIG);
   }
 
-  private async call({ path, url, method, body, responseType }: ApiCallParams): Promise<any> {
-    Logger.debug('RestClient.call', { path, url, method, body, responseType });
+  private async call({ path, url, method, body }: ApiCallParams): Promise<any> {
     // Construct the URL if not provided
-    url ??= `${this.config.host.replaceEnd('/')}/${path}`;
+    url ??= `${this.config.host.replaceEnd('/')}${path}`;
 
     // Set the method to GET if not provided
     method ??= 'GET';
 
-    // Set the response type to JSON if not provided
-    responseType ??= 'text';
-
     // Construct the request options
-    const requestInit = { method, headers: this.config.headers } as any;
+    const requestInit = {
+      method,
+      headers : {
+        'Content-Type' : 'application/json',
+        ...this.config.headers,
+      }
+    } as any;
 
     // If the method is POST or PUT, add the body to the request
     if(body) {
       requestInit.body = JSON.stringify(body);
     }
-    Logger.debug('RestClient.call: url, requestInit', url, requestInit);
+
     // Make the request
     const response = await fetch(url, requestInit) as RestResponse;
 
@@ -141,7 +142,7 @@ export default class BitcoinRestClient {
     }
 
     // Parse the response as JSON and return it
-    return await response[responseType]();
+    return await response.json();
   }
 
   /**

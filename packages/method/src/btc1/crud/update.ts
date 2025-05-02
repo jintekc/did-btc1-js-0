@@ -17,7 +17,7 @@ import { BeaconService } from '../../interfaces/ibeacon.js';
 import { TxId } from '../../types/bitcoin.js';
 import { Metadata, SignalsMetadata } from '../../types/crud.js';
 import { Btc1Appendix } from '../../utils/appendix.js';
-import { Btc1DidDocument, Btc1VerificationMethod } from '../../utils/did-document/index.js';
+import { Btc1DidDocument, Btc1VerificationMethod } from '../../utils/did-document.js';
 import { BeaconFactory } from '../beacons/factory.js';
 import { Btc1KeyManager } from '../key-manager/index.js';
 

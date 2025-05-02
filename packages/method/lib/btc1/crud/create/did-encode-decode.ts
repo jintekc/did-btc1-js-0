@@ -12,7 +12,7 @@ for(let {did, identifierComponents: idcomps} of vectors) {
 
   Logger.log('Decoding', encoded);
   const {version, network, genesisBytes} = Btc1Identifier.decode(encoded);
-
+  console.log('genesisBytes', genesisBytes);
   if(version !== idcomps.version) {
     console.log(`decoded.version ${version} !== ${idcomps.version}`);
   }

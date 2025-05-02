@@ -85,8 +85,7 @@
       "@ipshipyard/node-datachannel",
       "classic-level",
       "dtrace-provider",
-      "esbuild",
-      "@sphereon/pex"
+      "esbuild"
     ]
   },
   "dependencies": {

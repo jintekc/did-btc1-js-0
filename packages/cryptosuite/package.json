@@ -95,7 +95,6 @@
     "@did-btc1/key-pair": "workspace:*",
     "@noble/curves": "^1.8.1",
     "@noble/hashes": "^1.7.1",
-    "@sphereon/ssi-types": "^0.32.0",
     "@web5/dids": "^1.2.0",
     "jsonld-document-loader": "^2.3.0",
     "jsonld-signatures": "^11.5.0",

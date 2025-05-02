@@ -54,6 +54,7 @@ export const CURVE = {
   Gx,
   Gy
 };
+
 export const W3C_DID_V1 = 'https://www.w3.org/ns/did/v1';
 export const W3C_DID_V1_1 =  'https://www.w3.org/TR/did-1.1';
 export const W3C_DATA_INTEGRITY_V1 = 'https://w3id.org/security/data-integrity/v1';
@@ -81,7 +82,8 @@ export const CONTEXT_URL_MAP = {
 };
 
 export const BTC1_DID_DOCUMENT_CONTEXT = [
-  CONTEXT_URL_MAP.w3c.did.v1,
+  CONTEXT_URL_MAP.w3c.did.v1_1,
+  CONTEXT_URL_MAP.btc1.method.v1,
 ];
 export const BTC1_MULTIKEY_CONTEXT = [
   CONTEXT_URL_MAP.w3c.did.v1,

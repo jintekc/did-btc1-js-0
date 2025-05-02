@@ -1,9 +1,17 @@
-import { BTC1_DID_DOCUMENT_CONTEXT, Btc1IdentifierTypes, DidDocumentError, ID_PLACEHOLDER_VALUE, INVALID_DID_DOCUMENT, JSONObject, Logger } from '@did-btc1/common';
+import {
+  BTC1_DID_DOCUMENT_CONTEXT,
+  Btc1IdentifierTypes,
+  DidDocumentError,
+  ID_PLACEHOLDER_VALUE,
+  INVALID_DID_DOCUMENT,
+  JSONObject,
+  Logger
+} from '@did-btc1/common';
 import { DidService, DidVerificationMethod, DidDocument as IDidDocument } from '@web5/dids';
-import { BeaconService } from '../../interfaces/ibeacon.js';
-import { Btc1Appendix } from '../appendix.js';
-import { BeaconUtils } from '../beacons.js';
-import { Btc1Identifier } from '../identifier.js';
+import { BeaconService } from '../interfaces/ibeacon.js';
+import { Btc1Appendix } from './appendix.js';
+import { BeaconUtils } from './beacons.js';
+import { Btc1Identifier } from './identifier.js';
 
 export const BECH32M_CHARS = '';
 export const BTC1_DID_REGEX = /did:btc1:(x1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]*)/g;
@@ -114,15 +122,20 @@ export class Btc1DidDocument implements IBtc1DidDocument {
 
     // Validate ID and parts for non-intermediate
     const isIntermediate = document.id === ID_PLACEHOLDER_VALUE;
+    // Deconstruct the document parts for validation
+    const { id, controller, verificationMethod: vm, service } = document;
     if (!isIntermediate) {
-      if (!Btc1DidDocument.isValidId(document.id)) {
-        throw new DidDocumentError('Invalid "id"', INVALID_DID_DOCUMENT, { id: document.id });
+      if (!Btc1DidDocument.isValidId(id)) {
+        throw new DidDocumentError(`Invalid id: ${id}`, INVALID_DID_DOCUMENT, document);
       }
-      if (!Btc1DidDocument.isValidVerificationMethods(document.verificationMethod)) {
-        throw new DidDocumentError('Invalid "verificationMethod"', INVALID_DID_DOCUMENT, { verificationMethod: document.verificationMethod });
+      if(!Btc1DidDocument.isValidController(controller ?? [id])) {
+        throw new DidDocumentError(`Invalid controller: ${controller}`, INVALID_DID_DOCUMENT, document);
       }
-      if (!Btc1DidDocument.isValidServices(document.service)) {
-        throw new DidDocumentError('Invalid "service"', INVALID_DID_DOCUMENT, { service: document.service });
+      if (!Btc1DidDocument.isValidVerificationMethods(vm)) {
+        throw new DidDocumentError('Invalid verificationMethod: ' + vm, INVALID_DID_DOCUMENT, document);
+      }
+      if (!Btc1DidDocument.isValidServices(service)) {
+        throw new DidDocumentError('Invalid service: ' + service, INVALID_DID_DOCUMENT, document);
       }
     }
 
@@ -154,6 +167,8 @@ export class Btc1DidDocument implements IBtc1DidDocument {
     // If the DID Document is not an intermediateDocument, validate it
     if (!isIntermediate) {
       Btc1DidDocument.validate(this);
+    } else {
+      this.validateIntermediate();
     }
   }
 
@@ -260,8 +275,8 @@ export class Btc1DidDocument implements IBtc1DidDocument {
    */
   private static isValidContext(context: Btc1DidDocument['@context']): boolean {
     if(!context) return false;
-    if(!Array.isArray(context) && typeof context !== 'string') return false;
-    if(Array.isArray(context) && !context.every(ctx => typeof ctx === 'string' && BTC1_DID_DOCUMENT_CONTEXT.includes(ctx))) return false;
+    if(!Array.isArray(context)) return false;
+    if(!context.every(ctx => typeof ctx === 'string' && BTC1_DID_DOCUMENT_CONTEXT.includes(ctx))) return false;
     return true;
   }
 
@@ -279,6 +294,18 @@ export class Btc1DidDocument implements IBtc1DidDocument {
       Logger.error('Invalid DID Document ID', error);
       return false;
     }
+  }
+
+  /**
+   * Validates that the controller exists and is correctly formatted.
+   * @param {Array<string>} controller The controller to validate.
+   * @returns {boolean} True if the controller is valid.
+   */
+  private static isValidController(controller: Array<string>): boolean {
+    if(!controller) return false;
+    if(!Array.isArray(controller)) return false;
+    if(!controller.every(c => typeof c === 'string')) return false;
+    return true;
   }
 
   /**
@@ -341,11 +368,42 @@ export class Btc1DidDocument implements IBtc1DidDocument {
    * @returns {Btc1DidDocument} Validated DID Document.
    * @throws {DidDocumentError} If the DID Document is invalid.
    */
-  public static validate(didDocument: Btc1DidDocument): Btc1DidDocument {
+  public static validate(didDocument: Btc1DidDocument | IntermediateDidDocument): Btc1DidDocument {
     // Validate the DID Document
-    Btc1DidDocument.isValid(didDocument);
+    if (didDocument.id === ID_PLACEHOLDER_VALUE) {
+      (didDocument as IntermediateDidDocument).validateIntermediate();
+    } else {
+      Btc1DidDocument.isValid(didDocument);
+    }
     // Return the DID Document
     return didDocument;
+  }
+
+  /**
+   * Validate the IntermediateDidDocument.
+   * @returns {boolean} True if the IntermediateDidDocument is valid.
+   */
+  public validateIntermediate(): void {
+    // Validate the id
+    if(this.id !== ID_PLACEHOLDER_VALUE) {
+      throw new DidDocumentError('Invalid IntermediateDidDocument ID', INVALID_DID_DOCUMENT, this);
+    }
+    // Validate the controller
+    if(!this.controller?.every(c => c === ID_PLACEHOLDER_VALUE)) {
+      throw new DidDocumentError('Invalid IntermediateDidDocument controller', INVALID_DID_DOCUMENT, this);
+    }
+    // Validate the verificationMethod
+    if(!this.verificationMethod.every(vm => vm.id.includes(ID_PLACEHOLDER_VALUE) && vm.controller === ID_PLACEHOLDER_VALUE)) {
+      throw new DidDocumentError('Invalid IntermediateDidDocument verificationMethod', INVALID_DID_DOCUMENT, this);
+    }
+    // Validate the service
+    if(!this.service.every(svc => svc.id.includes(ID_PLACEHOLDER_VALUE))) {
+      throw new DidDocumentError('Invalid IntermediateDidDocument service', INVALID_DID_DOCUMENT, this);
+    }
+    if(!Btc1DidDocument.isValidVerificationRelationships(this)) {
+      // Return true if all validations pass
+      throw new DidDocumentError('Invalid IntermediateDidDocument assertionMethod', INVALID_DID_DOCUMENT, this);
+    }
   }
 
   /**
@@ -394,7 +452,7 @@ export class IntermediateDidDocument extends Btc1DidDocument {
         })
       ],
       service,
-    } as IBtc1DidDocument);
+    });
   }
 
   /**
@@ -409,40 +467,11 @@ export class IntermediateDidDocument extends Btc1DidDocument {
   }
 
   /**
-   * Validate the IntermediateDidDocument.
-   * @returns {boolean} True if the IntermediateDidDocument is valid.
-   */
-  public validate(): boolean {
-    // Validate the id
-    if(this.id !== ID_PLACEHOLDER_VALUE) {
-      throw new DidDocumentError('Invalid IntermediateDidDocument ID', INVALID_DID_DOCUMENT, this);
-    }
-    // Validate the controller
-    if(!this.controller?.every(c => c === ID_PLACEHOLDER_VALUE)) {
-      throw new DidDocumentError('Invalid IntermediateDidDocument controller', INVALID_DID_DOCUMENT, this);
-    }
-    // Validate the verificationMethod
-    if(!this.verificationMethod.every(vm => vm.id.includes(ID_PLACEHOLDER_VALUE) && vm.controller === ID_PLACEHOLDER_VALUE)) {
-      throw new DidDocumentError('Invalid IntermediateDidDocument verificationMethod', INVALID_DID_DOCUMENT, this);
-    }
-    // Validate the service
-    if(!this.service.every(svc => svc.id.includes(ID_PLACEHOLDER_VALUE))) {
-      throw new DidDocumentError('Invalid IntermediateDidDocument service', INVALID_DID_DOCUMENT, this);
-    }
-    if(!Btc1DidDocument.isValidVerificationRelationships(this)) {
-    // Return true if all validations pass
-      throw new DidDocumentError('Invalid IntermediateDidDocument assertionMethod', INVALID_DID_DOCUMENT, this);
-    }
-    // Return true if all validations pass
-    return true;
-  }
-
-  /**
    * Create a Btc1DidDocument from a JSON object.
    * @param {JSONObject} object The JSON object to convert.
    * @returns {Btc1DidDocument} The created Btc1DidDocument.
    */
   public static from(object: JSONObject): Btc1DidDocument {
-    return new IntermediateDidDocument(object as IBtc1DidDocument);
+    return new IntermediateDidDocument(object as IBtc1DidDocument).toBtc1DidDocument(object.id as string);
   }
 }

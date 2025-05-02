@@ -1,7 +1,7 @@
-import { /*Btc1Identifier, Btc1Read,*/ DidBtc1, DidResolutionOptions } from '../../../../src/index.js';
+import { /*Btc1Identifier, Btc1Read,*/ Btc1Identifier, Btc1Read, DidBtc1, DidResolutionOptions } from '../../../../src/index.js';
 import resolutionOptions from '../../../in/resolve/k1qgp6/resolutionOptions.json' with { type: 'json' };
 const options =  resolutionOptions as DidResolutionOptions;
-options.versionTime = 1746015204;
+options.versionTime = 1746015324;
 
 const identifier = 'did:btc1:k1qgp6haekj3w5zgk56h92juynjl4ag4pt2p9wl4ajwu7yhklyp0ngcfskwzack';
 // const components = Btc1Identifier.decode(identifier);
